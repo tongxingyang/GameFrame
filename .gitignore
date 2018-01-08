@@ -1,4 +1,6 @@
 [Ll]ibrary/
+.idea
+Assets/Plugins/Editor
 [Tt]emp/
 [Oo]bj/
 [Bb]uild/
