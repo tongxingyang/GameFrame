@@ -1,13 +1,15 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using GameFrame;
 using UnityEngine;
-
+using Junfine.Debuger;
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
-
+    
     public override void Init()
     {
+        
         base.Init();
     }
 
@@ -18,7 +20,8 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void Awake()
     {
-
+       Debuger.Log( DateTime.Now.Ticks.ToString("d" + 32));
+       Debuger.Log( DateTime.Now.Ticks.ToString());
     }
 
     void InitBaseSys()
