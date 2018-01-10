@@ -6,15 +6,35 @@ using UnityEngine;
 
 public static  class WebRequestExtensions  {
 
-	public static WebResponse TryGetEndGetresponse(this WebRequest webRequest, IAsyncResult ansycResult)
-	{
-		try
+		public static WebResponse BetterEndGetResponse(this WebRequest request, IAsyncResult asyncResult)
 		{
-			return webRequest.EndGetResponse(ansycResult);
+			try
+			{
+				return request.EndGetResponse(asyncResult);
+			}
+			catch (WebException wex)
+			{
+				if (wex.Response != null)
+				{
+					return wex.Response;
+				}
+				throw;
+			}
 		}
-		catch (Exception e)
+
+		public static WebResponse BetterGetResponse(this WebRequest request)
 		{
-			throw;
+			try
+			{
+				return request.GetResponse();
+			}
+			catch (WebException wex)
+			{
+				if (wex.Response != null)
+				{
+					return wex.Response;
+				}
+				throw;
+			}
 		}
 	}
-}

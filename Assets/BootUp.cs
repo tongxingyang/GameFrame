@@ -17,7 +17,7 @@ public class BootUp : MonoBehaviour
         //		TestTimeManager();
         
         //minvalue    ok
-        MUDebug.IsOpenDebug
+        
        
     }
 
