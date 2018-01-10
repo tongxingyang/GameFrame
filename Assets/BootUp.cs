@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Net;
 using GameFrame;
+using Junfine.Debuger;
 using UnityEngine;
 
 public class BootUp : MonoBehaviour
@@ -12,6 +15,10 @@ public class BootUp : MonoBehaviour
         Singleton<EventManager>.GetInstance().AddEventListener(enEventID.Test, TestEventManager1);
         Singleton<EventManager>.GetInstance().AddEventListener(enEventID.Test, TestEventManager2);
         //		TestTimeManager();
+        
+        //minvalue    ok
+        MUDebug.IsOpenDebug
+       
     }
 
     void TestTimeManager()

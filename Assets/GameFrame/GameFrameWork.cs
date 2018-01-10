@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net;
 using GameFrame;
 using UnityEngine;
 using Junfine.Debuger;
@@ -20,8 +21,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void Awake()
     {
-       Debuger.Log( DateTime.Now.Ticks.ToString("d" + 32));
-       Debuger.Log( DateTime.Now.Ticks.ToString());
+       
     }
 
     void InitBaseSys()
