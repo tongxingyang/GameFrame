@@ -6,7 +6,19 @@ using UnityEngine;
 using UnityEngine.UI;
 namespace GameFrame
 {
-    //public class UpdateManager
+    public enum enClientState
+    {
+        State_Init,
+        State_InitSDK,
+        State_UnZipData,
+        State_UpdateApp,
+        State_UpdateResource,
+        State_GetServerList,
+        State_Start,
+        State_Game,
+        State_LoadScene,
+    }
+
     public class UpdateManager : Singleton<UpdateManager>
     {
         /// <summary>
@@ -32,6 +44,7 @@ namespace GameFrame
 
         private Action<bool> UpdateCallback;
         private bool m_isBeginUpdate = false;
+        private float m_UpdateLastTime;
         public override void Init()
         {
             base.Init();
@@ -71,8 +84,13 @@ namespace GameFrame
             CancelButton = UpdateGameObject.transform.Find("Alert/Cancel").GetComponent<Button>();
 
             ProgressSliber = UpdateGameObject.transform.Find("Slider").GetComponent<Slider>();
-
+            m_UpdateLastTime = Time.time;
             m_isBeginUpdate = true;
+        }
+
+        public void Update()
+        {
+            
         }
     }
 

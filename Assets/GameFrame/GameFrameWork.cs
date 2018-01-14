@@ -86,6 +86,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     void Update()
     {
         Singleton<TimeManager>.GetInstance().Update();
+        Singleton<UpdateManager>.GetInstance().Update();
     }
 
     private void OnDestroy()
