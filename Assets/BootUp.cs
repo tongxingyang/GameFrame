@@ -12,8 +12,8 @@ public class BootUp : MonoBehaviour
     void Start()
     {
         SingletonMono<GameFrameWork>.GetInstance();
-        Singleton<EventManager>.GetInstance().AddEventListener(enEventID.Test, TestEventManager1);
-        Singleton<EventManager>.GetInstance().AddEventListener(enEventID.Test, TestEventManager2);
+        //Singleton<EventManager>.GetInstance().AddEventListener(enEventID.Test, TestEventManager1);
+        //Singleton<EventManager>.GetInstance().AddEventListener(enEventID.Test, TestEventManager2);
         //		TestTimeManager();
         
         //minvalue    ok

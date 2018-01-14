@@ -7,7 +7,7 @@ using UnityEngine;
 using Junfine.Debuger;
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
-    
+    private bool CheckUpdate = false;
 #if UNITY_IPHONE
     private const int Resolution = 1080;
 #else
@@ -33,12 +33,18 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
     }
 
-    void Satrt()
+    void Start()
     {
         //play Logo
         PlayLogoVider("logo.mp4",false);
+        Singleton<UpdateManager>.GetInstance();
+        Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
     }
 
+    private void UpdateCallback(bool isok)
+    {
+        
+    }
     void PlayLogoVider(string filename,bool cancancel)
     {
         #if UNITY_ANDROID
@@ -75,10 +81,6 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<LauncherString>.GetInstance();
         Singleton<TimeManager>.GetInstance();
         Singleton<EventManager>.GetInstance();
-    }
-    void Start()
-    {
-
     }
 
     void Update()
