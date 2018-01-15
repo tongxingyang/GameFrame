@@ -31,6 +31,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Application.targetFrameRate = 30;
         QualitySettings.blendWeights = BlendWeights.TwoBones;//动画期间可影响某个指定顶点的骨骼的数量。可用的选项有一、二或四根骨骼
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
+        
     }
 
     void Start()

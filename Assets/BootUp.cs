@@ -20,7 +20,7 @@ public class BootUp : MonoBehaviour
 //        HttpWebRequest http = WebRequest.Create("http://120.132.45.44/qyz/exe_version.txt?version="+System.DateTime.Now.Ticks.ToString()) as HttpWebRequest;
 //        http.Timeout = 30000;
 //        HttpWebResponse httpweb = http.GetResponse()as HttpWebResponse;
-        Debug.LogError(DateTime.Now.Ticks.ToString());
+//        Debug.LogError(DateTime.Now.Ticks.ToString());
         
     }
 

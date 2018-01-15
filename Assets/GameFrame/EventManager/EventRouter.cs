@@ -5,12 +5,13 @@ using UnityEngine;
 
 namespace GameFrame
 {
-    public class EventRouter : Singleton<EventProvider>
+    public class EventRouter : Singleton<EventRouter>
     {
         private Dictionary<string, Delegate> m_eventMap = null;
 
         public override void Init()
         {
+            base.Init();
             m_eventMap = new Dictionary<string, Delegate>();
         }
 

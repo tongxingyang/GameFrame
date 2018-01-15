@@ -6,7 +6,6 @@ using UnityEngine;
 namespace GameFrame
 {
     public class PathResolver :Singleton<PathResolver> {
-        
 
     }
 }

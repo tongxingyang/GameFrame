@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using GameFrame;
+using Junfine.Debuger;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 using Path = System.IO.Path;
 
 namespace GameFrame
@@ -87,7 +90,7 @@ namespace GameFrame
             {
                 try
                 {
-                    FileInfo fileInfo = new FileInfo(filePath);
+                    System.IO.FileInfo fileInfo = new  System.IO.FileInfo(filePath);
                     result = (int)fileInfo.Length;
                 }
                 catch (Exception e)
@@ -274,6 +277,10 @@ namespace GameFrame
             return result;
         }
 
+        public static string GetFileFullName(string filename)
+        {
+            return Platform.Path + "/" + filename;
+        }
         public static bool CopyDirectory(string srcDir,string desDir)
         {
             bool result = false;
@@ -306,5 +313,54 @@ namespace GameFrame
             return result;
         }
 
+        public static IEnumerator StartCopyInitialFile(string localname)
+        {
+            yield return CopyStreamingAssetsToFile(GetInitialFileName(localname), GetFileFullName(localname));
+        }
+
+        public static IEnumerator CopyStreamingAssetsToFile(string src,string des)
+        {
+#if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
+            src = "file:///" + src;
+#endif
+            using (WWW w = new WWW(src))
+            {
+                yield return w;
+                if (string.IsNullOrEmpty(w.error))
+                {
+                    while (w.isDone == false)
+                    {
+                        yield return null;
+                    }
+                    WriteBytesToFile(des,w.bytes,w.bytes.Length);
+                }
+                else
+                {
+                    Debuger.LogError(w.error);
+                }
+            }
+        }
+
+        public static void WriteBytesToFile(string path, byte[] bytes, int length)
+        {
+            string directory = Path.GetDirectoryName(path);
+            if (!FileManager.IsDirectoryExist(directory))
+            {
+                FileManager.CreateDirectory(directory);
+            }
+            System.IO.FileInfo fileInfo = new System.IO.FileInfo(path);
+            using (Stream sw = fileInfo.Open(FileMode.Create,FileAccess.ReadWrite))
+            {
+                if (bytes != null && length > 0)
+                {
+                    sw.Write(bytes,0,length);
+                }
+            }
+        }
+
+        public static string GetInitialFileName(string flie)
+        {
+            return Platform.InitalPath + "/" + flie;
+        }
     }
 }
