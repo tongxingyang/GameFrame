@@ -70,43 +70,15 @@ namespace GameFrame
         private string initalVersion;
         private string currentVersion;
         private string onlineVersion;
+        private string initalResVersion;
+        private string currentResVersion;
+        private string onlineResVersion;
         private bool isLoadOldTableAndVersion = false;
         public override void Init()
         {
             base.Init();
             CanvasObj = GameObject.Find("Canvas");
             //加载本地文件列表
-//            string oldmd5file = Platform.InitalPath + Platform.Md5FileName;
-//            oldmd5Table.Clear();
-//            using (StreamReader sr = File.OpenText(oldmd5file))
-//            {
-//                string line;
-//                while ((line = sr.ReadLine())!=null)
-//                {
-//                    var pair = line.Split(',');
-//                    if (pair.Length == 3)
-//                    {
-//                        FileInfo fileInfo = new FileInfo();
-//                        fileInfo.fullname = pair[0];
-//                        fileInfo.md5 = pair[1];
-//                        fileInfo.size = int.Parse(pair[2]);
-//                        oldmd5Table[pair[0]] = fileInfo;
-//                    }else if (pair.Length == 2)
-//                    {
-//                        FileInfo fileInfo = new FileInfo();
-//                        fileInfo.fullname = pair[0];
-//                        fileInfo.md5 = pair[1];
-//                        fileInfo.size = 0;
-//                        oldmd5Table[pair[0]] = fileInfo;
-//                    }
-//                }
-//            }
-//            //
-//            string version = Platform.InitalPath + Platform.AppVerFileName;
-//            using (StreamReader sr = File.OpenText(version))
-//            {
-//                initalVersion = sr.ReadToEnd();
-//            }
             SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(LoadOldTableAndVersion());
         }
 
@@ -126,6 +98,20 @@ namespace GameFrame
                     yield break;
                 }
                 initalVersion = w.text;
+            }
+             filepath = Platform.Path + Platform.ResVersionFileName;
+#if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
+            filepath = "file:///" + filepath;
+#endif
+            using (WWW w = new WWW(filepath))
+            {
+                yield return w;
+                if (w.error != null)
+                {
+                    Debuger.LogError(w.error);
+                    yield break;
+                }
+                initalResVersion = w.text;
             }
             filepath = Platform.Path + Platform.Md5FileName;
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
@@ -202,7 +188,7 @@ namespace GameFrame
 
         public void Update()
         {
-            if (m_isBeginUpdate)
+            if (m_isBeginUpdate && isLoadOldTableAndVersion)
             {
                 switch (State)
                 { 
