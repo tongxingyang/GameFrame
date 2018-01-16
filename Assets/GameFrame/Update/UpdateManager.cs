@@ -484,6 +484,7 @@ namespace GameFrame
         IEnumerator UpdateApp()
         {
             m_updateState = 1;
+            isUpdateAppDone = false;
             m_urlIndex = Singleton<ServerConfig>.GetInstance().UpdateServer.Length - 1;
             m_loadOver = false;
             while (!m_loadOver && m_urlIndex>=0)
@@ -535,6 +536,8 @@ namespace GameFrame
                                   }
                               }
                           }
+                          //下载安装包// todo 
+                          
                       }
                       yield break;
                   case CompareResult.Less:
