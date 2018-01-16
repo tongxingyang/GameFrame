@@ -279,7 +279,7 @@ namespace GameFrame
 
         public static string GetFileFullName(string filename)
         {
-            return Platform.Path + "/" + filename;
+            return Platform.Path +  filename;
         }
         public static bool CopyDirectory(string srcDir,string desDir)
         {
@@ -320,9 +320,12 @@ namespace GameFrame
 
         public static IEnumerator CopyStreamingAssetsToFile(string src,string des)
         {
+            
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
             src = "file:///" + src;
 #endif
+//            Debug.LogError("拷贝原路径 安装目录    "+src);
+//            Debug.LogError("沙河目录   "+des);
             using (WWW w = new WWW(src))
             {
                 yield return w;
@@ -360,7 +363,7 @@ namespace GameFrame
 
         public static string GetInitialFileName(string flie)
         {
-            return Platform.InitalPath + "/" + flie;
+            return Platform.InitalPath + flie;
         }
     }
 }

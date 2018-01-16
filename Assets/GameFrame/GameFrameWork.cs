@@ -38,7 +38,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     {
         //play Logo
         PlayLogoVider("logo.mp4",false);
-        Singleton<UpdateManager>.GetInstance();
+        //Singleton<UpdateManager>.GetInstance();
         Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
     }
 

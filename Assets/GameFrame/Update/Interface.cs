@@ -14,7 +14,7 @@ namespace GameFrame
 
         public void InitPlugin()
         {
-
+            SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(ChangeFinish());
         }
 
         IEnumerator ChangeFinish()

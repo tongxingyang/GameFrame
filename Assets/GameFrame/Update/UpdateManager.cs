@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
+using System.Web;
 using GameFrame;
 using Junfine.Debuger;
 using UnityEngine;
@@ -74,6 +75,20 @@ namespace GameFrame
         private string currentResVersion;
         private string onlineResVersion;
         private bool isLoadOldTableAndVersion = false;
+        private bool isCopyDone = false;
+        private bool isUpdateAppDone = false;
+        private int filecount = 0;
+        private int currentcopycount = 0;
+
+        public int UpdateState
+        {
+            get { return m_updateState; }
+        }
+
+        private int m_updateState = 0;
+        private bool m_loadOver = true;
+        private int m_urlIndex = 2;
+        private string SrcUrl = string.Empty;
         public override void Init()
         {
             base.Init();
@@ -85,7 +100,7 @@ namespace GameFrame
         private IEnumerator LoadOldTableAndVersion()
         {
             isLoadOldTableAndVersion = false;
-            string filepath = Platform.Path + Platform.AppVerFileName;
+            string filepath = Platform.InitalPath + Platform.AppVerFileName;
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
             filepath = "file:///" + filepath;
 #endif
@@ -94,12 +109,11 @@ namespace GameFrame
                 yield return w;
                 if (w.error != null)
                 {
-                    Debuger.LogError(w.error);
                     yield break;
                 }
                 initalVersion = w.text;
             }
-             filepath = Platform.Path + Platform.ResVersionFileName;
+             filepath = Platform.InitalPath + Platform.ResVersionFileName;
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
             filepath = "file:///" + filepath;
 #endif
@@ -108,21 +122,21 @@ namespace GameFrame
                 yield return w;
                 if (w.error != null)
                 {
-                    Debuger.LogError(w.error);
+                    Debug.LogError(w.error);
                     yield break;
                 }
                 initalResVersion = w.text;
             }
-            filepath = Platform.Path + Platform.Md5FileName;
+            filepath = Platform.InitalPath + Platform.Md5FileName;
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
             filepath = "file:///" + filepath;
 #endif
+            
             using (WWW w = new WWW(filepath))
             {
                 yield return w;
                 if (w.error != null)
                 {
-                    Debuger.LogError(w.error);
                     yield break;
                 }
                 string str = w.text;
@@ -147,6 +161,7 @@ namespace GameFrame
                     }
                 }
             }
+            filecount = oldmd5Table.Count;
             isLoadOldTableAndVersion = true;
         }
         public void SetUpdateCallback(Action<bool> action)
@@ -184,6 +199,9 @@ namespace GameFrame
             ProgressSliber = UpdateGameObject.transform.Find("Slider").GetComponent<Slider>();
             m_UpdateLastTime = Time.time;
             m_isBeginUpdate = true;
+            
+            //测试模式
+            ClearDataOath();
         }
 
         public void Update()
@@ -196,6 +214,7 @@ namespace GameFrame
                         if (!m_isCheckSDK)
                         {
                             m_isCheckSDK = true;
+                            
                             SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(CheckSDK());
                         }
                         break;
@@ -206,12 +225,35 @@ namespace GameFrame
                         if (Singleton<Interface>.GetInstance().IsCaheckSDKFinish())
                         {
                             this.State = enClientState.State_UnZipData;
-                            
+                            CheckVersion();
                         }
                         break;
                     case enClientState.State_UnZipData:
+                        if (isCopyDone)
+                        {
+                             //获取网络信息
+                            if (Application.internetReachability == NetworkReachability.NotReachable)
+                            {
+                                //没有网络
+                                StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_OffLine");
+                            }
+                            else
+                            {
+                                State = enClientState.State_UpdateApp;
+                                Singleton<ServerConfig>.GetInstance().Read();
+                                SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(UpdateApp());
+                            }
+                            ProgressSliber.value = 1;
+                            ProgressText.text = string.Format("{0}%,100");
+                            
+                        }
+                        else
+                        {
+                           RefLauncherInfo();
+                        }
                         break;
                     case  enClientState.State_UpdateApp:
+                        
                         break;
                     case  enClientState.State_UpdateResource:
                         break;
@@ -239,7 +281,7 @@ namespace GameFrame
 //                yield return w;
 //                if (w.error != null)
 //                {
-//                    Debuger.LogError(w.error);
+//                    //Debuger.LogError(w.error);
 //                    yield break;
 //                }
 //                initalVersion = w.text;
@@ -266,7 +308,7 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    Debuger.LogError(e.Message);
+                    //Debuger.LogError(e.Message);
                     return null;
                 }
             }
@@ -280,10 +322,11 @@ namespace GameFrame
         }
         private void CheckVersion()
         {
-            string filepath = Platform.Path + "hasupdate.txtx";
+            string filepath = Platform.Path + "hasupdate.txt";//沙河目录
             bool needUnzip = false;
             if (FileManager.IsFileExist(filepath))
             {
+                
                // yield return GetInitialVersion();//安装包的app版本
                 GetCurrentVersion();
                 if (currentVersion != null && initalVersion != null)
@@ -293,6 +336,7 @@ namespace GameFrame
                     {
                         ClearDataOath();
                         needUnzip = true;
+                        
                     }
                     
                 }else if (currentVersion == null && initalVersion != null)
@@ -307,7 +351,13 @@ namespace GameFrame
             }
             if (needUnzip)
             {
+//                Debug.LogError("需要解压拷贝文件 oldtable legth"+oldmd5Table.Count);
+//                Debug.LogError(" md5 文件路径 " + Platform.InitalPath+Platform.Md5FileName);
                 SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(Preprocess());
+            }
+            else
+            {
+                isCopyDone = true;
             }
         }
 
@@ -353,6 +403,45 @@ namespace GameFrame
                 return CompareResult.Less;
             return CompareResult.Equal;
         }
+
+        private void RefProgress(float value)
+        {
+            if (UpdateGameObject)
+            {
+                ProgressText.text = string.Format("{0}%", Math.Round(value,2)*100);
+                ProgressSliber.value = value;
+            }
+        }
+
+        private void RefVersion(string oldv,string newv)
+        {
+            if (UpdateGameObject)
+            {
+                
+            }
+        }
+
+        private void RefLauncherInfo()
+        {
+            if (State == enClientState.State_UnZipData)
+            {
+                StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_Unzip");
+                RefProgress((float)currentcopycount/filecount);
+
+            }else if (State == enClientState.State_GetServerList)
+            {
+                
+            }else if (State == enClientState.State_UpdateApp)
+            {
+                
+            }else if (State == enClientState.State_UpdateResource)
+            {
+                
+            }else if (State == enClientState.State_Game)
+            {
+                
+            }
+        }
         IEnumerator Preprocess()
         {
             //创建目录
@@ -374,8 +463,10 @@ namespace GameFrame
                 }
                 //拷贝文件
                 yield return FileManager.StartCopyInitialFile(fileInfo.fullname);
+                currentcopycount++;
             }
             itr.Dispose();
+            isCopyDone = true;
             Debuger.LogError("拷贝成功");
         }
 
@@ -384,11 +475,93 @@ namespace GameFrame
         IEnumerator CheckSDK()
         {
             StatusText.text = LauncherString.GetInstance().GetString("Resource_CheckSDK");
+            ProgressText.text = string.Format("{0}%", 0);
             Singleton<Interface>.GetInstance().Init();
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(15);
             State = enClientState.State_InitSDK;
         }
 
+        IEnumerator UpdateApp()
+        {
+            m_updateState = 1;
+            m_urlIndex = Singleton<ServerConfig>.GetInstance().UpdateServer.Length - 1;
+            m_loadOver = false;
+            while (!m_loadOver && m_urlIndex>=0)
+            {
+                yield return SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(DownloadAppFile());
+                m_urlIndex--;
+            }
+            //下载服务器版本结束
+            //获取沙河目录app版本  比较本地与服务器的高低
+            var result = CompareVersion(onlineVersion, currentVersion);
+            switch (result)
+            {
+                  case CompareResult.Equal:
+                      isUpdateAppDone = true;
+                      yield break;
+                  case CompareResult.Error:
+                      isUpdateAppDone = true;
+                      yield break;
+                  case CompareResult.Greater:
+                      m_updateState = 2;
+#if UNITY_ANDROID
+                      int channelId = 9;
+#elif UNITY_IPHONE
+                      int channelId = 9;    
+#endif
+                      using (var www = new WWW(Singleton<ServerConfig>.GetInstance().UpdateAppUrl))
+                      {
+                          yield return www;
+                          if (www.error != null)
+                          {
+                              yield break;
+                          }
+                          string line = www.text.Trim();
+                          string appurl = null;
+                          using (StringReader br = new StringReader(line))
+                          {
+                              string str;
+                              while ((str = br.ReadLine()) != null)
+                              {
+                                  var pair = str.Split(',');
+                                  if (pair.Length == 2)
+                                  {
+                                      int id = int.Parse(pair[0]);
+                                      if (id == channelId)
+                                      {
+                                          appurl = pair[1];
+                                          break;
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                      yield break;
+                  case CompareResult.Less:
+                      isUpdateAppDone = true;
+                      yield break;
+            }
+
+        }
+
+        public IEnumerator DownloadAppFile()
+        {
+            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+            string url = SrcUrl + Platform.AppVerFileName;
+            string suffix = "?version=" + DateTime.Now.Ticks.ToString();
+            url += suffix;
+            using (WWW w = new WWW(url))
+            {
+                yield return w;
+                if (w.error != null)
+                {
+                    m_loadOver = true;
+                    yield return null;
+                }
+                onlineVersion = w.text.Trim();//服务器上的app版本
+                m_loadOver = true;
+            }
+        }
         #endregion
     }
 
