@@ -7,47 +7,68 @@ using UnityEngine;
 
 public class ServerConfig : Singleton<ServerConfig>
 {
-	private const string m_filePath = "config/urlconfig.xml";
+	class LocalHandler : SmallXmlParser.IContentHandler
+	{
+		public void OnStartParsing(SmallXmlParser parser) { }
+		public void OnEndParsing(SmallXmlParser parser) { }
+		public void OnStartElement(string name, SmallXmlParser.IAttrList attrs)
+		{
+			ServerConfig local = Instance;
+
+			var values = attrs.Values;
+			switch (name)
+			{
+                    
+				case "UpdateServer":
+					local.UpdateServer = values[0].Split('|');
+					break;
+				case "AndroidServerListUrl":
+					local.AndroidServerlistUrl = values[0];
+					break;
+				case "IosServerListUrl":
+					local.IosServerlistUrl = values[0];
+					break;
+				case "UpdateAppUrl":
+					local.UpdateAppUrl = values[0];
+					break;
+				default:
+					break;
+			}
+		}
+		public void OnEndElement(string name) { }
+		public void OnChars(string s) { }
+		public void OnIgnorableWhitespace(string s) { }
+		public void OnProcessingInstruction(string name, string text) { }
+	}
+	private const string m_FilePath = "config/urlconfig.xml";
 	public string[] UpdateServer { get; private set; }
 	public string AndroidServerlistUrl { get; private set; }
 	public string IosServerlistUrl { get; private set; }
 	public string UpdateAppUrl { get; private set; }
-	public override void Init()
-	{
-		base.Init();
-		
-	}
 
-	public void Read()
+	public void Load()
 	{
 		try
 		{
-			string filepath = Platform.Path + m_filePath;
-			if (!FileManager.IsFileExist(filepath))
+			string path = Platform.Path+m_FilePath;
+			if (!File.Exists(path))
 			{
 				return;
 			}
-			FileStream fileStream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
-			string xmlStr = fileStream.ToString();
-		    SecurityParser parse = new SecurityParser();
-			parse.LoadXml(xmlStr);
-			SecurityElement se = parse.ToXml();
-			foreach (SecurityElement element in se.Children)
+			using (var stream = new FileStream(path, FileMode.Open))
+			using (var reader = new System.IO.StreamReader(stream))
 			{
-				if (element.Tag.Equals("root"))
-				{
-					UpdateServer = element.Attribute("UpdateServer").ToString().Split('|');
-					AndroidServerlistUrl = element.Attribute("AndroidServerListUrl").ToString();
-					IosServerlistUrl = element.Attribute("IosServerListUrl").ToString();
-					UpdateAppUrl = element.Attribute("UpdateAppUrl").ToString();
-				}
+				var parser = new SmallXmlParser();
+				var handler = new LocalHandler();
+				parser.Parse(reader, handler);
 			}
 		}
-		catch (Exception e)	
+		catch (System.Exception ex)
 		{
-			Debug.LogError(e.Message);
+			UnityEngine.Debug.LogError(ex);
 		}
 	}
+	
 	
 	
 }

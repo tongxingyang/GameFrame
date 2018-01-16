@@ -2,14 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Runtime.CompilerServices;
-using System.Web;
 using GameFrame;
 using Junfine.Debuger;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements.StyleEnums;
 using UnityEngine.UI;
 namespace GameFrame
 {
@@ -240,11 +235,15 @@ namespace GameFrame
                             else
                             {
                                 State = enClientState.State_UpdateApp;
-                                Singleton<ServerConfig>.GetInstance().Read();
+                                Singleton<ServerConfig>.GetInstance().Load();
+//                                Debug.LogError(Singleton<ServerConfig>.GetInstance().AndroidServerlistUrl);
+//                                Debug.LogError(Singleton<ServerConfig>.GetInstance().IosServerlistUrl);
+//                                Debug.LogError(Singleton<ServerConfig>.GetInstance().UpdateAppUrl);
+//                                Debug.LogError(Singleton<ServerConfig>.GetInstance().UpdateServer);
                                 SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(UpdateApp());
                             }
                             ProgressSliber.value = 1;
-                            ProgressText.text = string.Format("{0}%,100");
+                            ProgressText.text = string.Format("{0}%",100);
                             
                         }
                         else
@@ -374,6 +373,7 @@ namespace GameFrame
         }
         public CompareResult CompareVersion(string ver1, string ver2)
         {
+            
             int[] vervalue1 = null, vervalue2 = null;
             string[] strver1, strver2;
             strver1 = ver1.Split('.');
