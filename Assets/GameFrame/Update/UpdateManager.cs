@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using GameFrame;
 using Junfine.Debuger;
+using UIFrameWork;
 using UnityEngine;
 using UnityEngine.UI;
 namespace GameFrame
@@ -63,18 +64,26 @@ namespace GameFrame
         private enClientState State = enClientState.State_Init;
         private Dictionary<string,FileInfo> oldmd5Table = new Dictionary<string, FileInfo>();
         private Dictionary<string,FileInfo> newmd5Table = new Dictionary<string, FileInfo>();
+        public readonly HashSet<string> ResourcesHasUpdate = new HashSet<string>();
         private string initalVersion;
         private string currentVersion;
         private string onlineVersion;
-        private string initalResVersion;
-        private string currentResVersion;
-        private string onlineResVersion;
+        private int initalResVersion;
+        private int currentResVersion;
+        private int onlineResVersion;
         private bool isLoadOldTableAndVersion = false;
         private bool isCopyDone = false;
         private bool isUpdateAppDone = false;
         private int filecount = 0;
         private int currentcopycount = 0;
 
+        private int TotalDownloadSize = 0;
+        private bool isDoneloadDone = false;
+
+        public bool IsDoneloadDone
+        {
+            get { return isDoneloadDone; }
+        }
         public int UpdateState
         {
             get { return m_updateState; }
@@ -236,10 +245,6 @@ namespace GameFrame
                             {
                                 State = enClientState.State_UpdateApp;
                                 Singleton<ServerConfig>.GetInstance().Load();
-//                                Debug.LogError(Singleton<ServerConfig>.GetInstance().AndroidServerlistUrl);
-//                                Debug.LogError(Singleton<ServerConfig>.GetInstance().IosServerlistUrl);
-//                                Debug.LogError(Singleton<ServerConfig>.GetInstance().UpdateAppUrl);
-//                                Debug.LogError(Singleton<ServerConfig>.GetInstance().UpdateServer);
                                 SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(UpdateApp());
                             }
                             ProgressSliber.value = 1;
@@ -252,7 +257,13 @@ namespace GameFrame
                         }
                         break;
                     case  enClientState.State_UpdateApp:
-                        
+                        if (isUpdateAppDone)
+                        {
+                            State = enClientState.State_UpdateResource;
+                            //开始检查本地与服务器资源资源
+                            SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(UpdateResource());
+                        }
+                        RefLauncherInfo();
                         break;
                     case  enClientState.State_UpdateResource:
                         break;
@@ -266,26 +277,7 @@ namespace GameFrame
                         break;
                 }
             }
-           
         }
-
-//        private IEnumerator GetInitialVersion()
-//        {
-//            string filepath = Platform.Path + Platform.AppVerFileName;
-//#if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
-//            filepath = "file:///" + filepath;
-//#endif
-//            using (WWW w = new WWW(filepath))
-//            {
-//                yield return w;
-//                if (w.error != null)
-//                {
-//                    //Debuger.LogError(w.error);
-//                    yield break;
-//                }
-//                initalVersion = w.text;
-//            }
-//        }
 
         public string GetCurrentVersion()
         {
@@ -350,8 +342,6 @@ namespace GameFrame
             }
             if (needUnzip)
             {
-//                Debug.LogError("需要解压拷贝文件 oldtable legth"+oldmd5Table.Count);
-//                Debug.LogError(" md5 文件路径 " + Platform.InitalPath+Platform.Md5FileName);
                 SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(Preprocess());
             }
             else
@@ -433,6 +423,18 @@ namespace GameFrame
                 
             }else if (State == enClientState.State_UpdateApp)
             {
+                if (UpdateState == 1)
+                {
+                    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_CheckVersion");
+                    ProgressSliber.value = 0;
+                    ProgressText.text = string.Format("{0}%", 0);
+                }
+                else if (UpdateState == 2)
+                {
+                    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_DownloadNewApp");
+                    ProgressSliber.value = 0;
+                    ProgressText.text = string.Format("{0}%", 0);
+                }
                 
             }else if (State == enClientState.State_UpdateResource)
             {
@@ -441,6 +443,202 @@ namespace GameFrame
             {
                 
             }
+        }
+        /// <summary>
+        /// 读取沙河目录的md5文件
+        /// </summary>
+        private void LoadCurrentMd5Table()
+        {
+            string filename = Platform.Path + Platform.Md5FileName;
+            oldmd5Table.Clear();
+            using (StreamReader sr = File.OpenText(filename))
+            {
+                string line;
+                while ((line = sr.ReadLine())!=null)
+                {
+                    var pair = line.Split(',');
+                    if (pair.Length == 3)
+                    {
+                        FileInfo fileInfo = new FileInfo();
+                        fileInfo.fullname = pair[0];
+                        fileInfo.md5 = pair[1];
+                        fileInfo.size = int.Parse(pair[2]);
+                        oldmd5Table[fileInfo.fullname] = fileInfo;
+                    }else if (pair.Length == 2)
+                    {
+                        FileInfo fileInfo = new FileInfo();
+                        fileInfo.fullname = pair[0];
+                        fileInfo.md5 = pair[1];
+                        fileInfo.size = 0;
+                        oldmd5Table[fileInfo.fullname] = fileInfo;
+                    }
+                }
+            }
+        }
+
+        private void LoadHasUpdateSet()
+        {
+            string filename = Platform.Path + Platform.HasUpdateFileName;
+            using (StreamReader sr = File.OpenText(filename))
+            {
+                string line;
+                while ((line=sr.ReadLine())!=null)
+                {
+                    ResourcesHasUpdate.Add(line);
+                }
+            }
+        }
+
+        private bool CheckOldMd5File()
+        {
+            List<string> lostFiles = new List<string>();
+            foreach (KeyValuePair<string,FileInfo> keyValuePair in oldmd5Table)
+            {
+                FileInfo fileInfo = keyValuePair.Value;
+                string filename = Platform.Path + fileInfo.fullname;
+                //从沙河目录读取的md5 文件 遍历文件夹 寻找丢失的文件 加入到lostList中
+                //或者resourcehasupdate 里面包含 并且在沙河目录中存在这个文件跳过 否则加入lostList里
+                if (fileInfo.fullname.StartsWith("config") || fileInfo.fullname.StartsWith("scripts"))
+                {
+                    if (FileManager.IsFileExist(filename))
+                    {
+                        continue;
+                    }
+                    lostFiles.Add(fileInfo.fullname);
+                }
+                else
+                {
+                    if (ResourcesHasUpdate.Contains(fileInfo.fullname))
+                    {
+                        if (FileManager.IsFileExist(fileInfo.fullname))
+                        {
+                            continue;
+                        }
+                        lostFiles.Add(fileInfo.fullname);
+                    }
+                }
+            }
+            foreach (var file in lostFiles)
+            {
+                oldmd5Table.Remove(file);
+            }
+            if (lostFiles.Count>0)
+            {
+                return true;
+            }
+            return false;
+        }
+        /// <summary>
+        /// 删除没用的文件
+        /// </summary>
+        private void DeleteUselessFiles()
+        {
+            
+        }
+        /// <summary>
+        /// 获得下载的文件列表
+        /// </summary>
+        private void GetDownloadFileList()
+        {
+            
+        }
+        #region 协成
+
+        IEnumerator UpdateResource()
+        {
+            m_updateState = 1;
+            isDoneloadDone = false;
+            //读取沙河md5
+            LoadCurrentMd5Table();
+            //读取hasUpdate文本
+            LoadHasUpdateSet();
+            //从沙河目录读取的md5 文件 遍历文件夹 寻找丢失的文件 加入到lostList中
+            //或者resourcehasupdate 里面包含 并且在沙河目录中存在这个文件跳过 否则加入lostList里
+            bool bCheck = CheckOldMd5File();
+            m_urlIndex = Singleton<ServerConfig>.GetInstance().UpdateServer.Length - 1;
+            m_loadOver = false;
+            while (!m_loadOver && m_urlIndex>0)
+            {
+                //下载服务器的resVersion 文件 todo
+               // yield return 
+                m_urlIndex--;
+            }
+            if (!m_loadOver)
+            {
+                m_updateState = 4;
+                yield break;
+            }
+            bool bVersion = true;
+            // 加载本地 resVersion
+            if (currentResVersion < onlineResVersion)
+            {
+                bVersion = false;
+            }
+            Debug.LogError("是否需要更新资源= "+bVersion+", 沙河目录的res版本 = "+currentResVersion+", 服务器上的res版本 = "+onlineResVersion);
+            RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
+            if (!bCheck && bVersion)//沙河目录文件没有问题 并且 版本相同
+            {
+                m_updateState = 3;
+                isDoneloadDone = true;
+                yield break;
+            }
+            m_urlIndex = Singleton<ServerConfig>.GetInstance().UpdateServer.Length-1;
+            m_loadOver = false;//重置 为了下次下载做准备
+            while (!m_loadOver && m_urlIndex>0)
+            {
+                // todo 开始下载md5文件
+                m_urlIndex++;
+            }
+            if (!m_loadOver)
+            {
+                m_updateState = 4;
+                yield break;
+            }
+            DeleteUselessFiles();
+            GetDownloadFileList(); //如果要下载的列表为0 isdownloaddone = true
+            if (!isDoneloadDone)
+            {
+                NetworkReachability networkState = Application.internetReachability;
+                if (networkState == NetworkReachability.ReachableViaCarrierDataNetwork)
+                {
+                    if (TotalDownloadSize > 1048576) //2m
+                    {
+                        AlertContextText.text =
+                            string.Format(Singleton<LauncherString>.GetInstance().GetString("DownloadSizeAlert"),
+                                TotalDownloadSize / 1048576f);
+                        AlertObject.SetActive(true);
+                        EventTriggerListener.Get(CancelButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
+                            (a, b, c) =>
+                            {
+                                Debug.LogError("cancel");
+                                Application.Quit();
+                            });
+                        EventTriggerListener.Get(SureButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
+                            (a, b, c) =>
+                            {
+                                Debug.LogError("sure");
+                                // todo 开始下载文件
+                                AlertObject.gameObject.SetActive(false);
+                            });
+                    }
+                    else
+                    {
+                        // todo 开始下载文件
+                    }
+                }
+                else
+                {
+                    //todo 开始下载文件
+                }
+            }
+            else
+            {
+                //todo saveresourceversion
+                m_updateState = 3;
+                currentResVersion = onlineResVersion;
+                RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
+            }
+            
         }
         IEnumerator Preprocess()
         {
@@ -469,9 +667,7 @@ namespace GameFrame
             isCopyDone = true;
             Debuger.LogError("拷贝成功");
         }
-
-        #region 协成
-
+        
         IEnumerator CheckSDK()
         {
             StatusText.text = LauncherString.GetInstance().GetString("Resource_CheckSDK");
@@ -537,7 +733,22 @@ namespace GameFrame
                               }
                           }
                           //下载安装包// todo 
-                          
+                          AlertContextText.text = Singleton<LauncherString>.GetInstance()
+                              .GetString("Resource_DownloadNewApp");
+                          AlertObject.SetActive(true);
+                          EventTriggerListener.Get(CancelButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
+                              (a, b, c) =>
+                              {
+                                  Debug.LogError("cancel"); 
+                                  Application.Quit();
+                              });
+                          EventTriggerListener.Get(SureButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
+                              (a, b, c) =>
+                              {
+                                  Debug.LogError("sure"); 
+                                  Application.OpenURL(appurl);
+                                  Application.Quit();
+                              });
                       }
                       yield break;
                   case CompareResult.Less:
