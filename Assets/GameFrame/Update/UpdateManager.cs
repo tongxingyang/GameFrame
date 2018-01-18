@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Threading;
 using GameFrame;
 using Junfine.Debuger;
@@ -78,7 +80,20 @@ namespace GameFrame
         
         public  readonly object m_obj = new object();//线程安全锁 对象
 
-        
+        public float DownLoadProgress
+        {
+            get
+            {
+                if (TotalDownloadSize == 0)
+                {
+                    return 1f;
+                }
+                else
+                {
+                    return (float) DownloadSize / TotalDownloadSize;
+                }
+            }
+        }
         private string initalVersion;
         private string currentVersion;
         private string onlineVersion;
@@ -289,10 +304,37 @@ namespace GameFrame
                         RefLauncherInfo();
                         break;
                     case  enClientState.State_UpdateResource:
+                        if (isDoneloadDone)
+                        {
+                            State = enClientState.State_GetServerList;
+                            SingletonMono<GameFrameWork>.GetInstance()
+                                .StartCoroutine(Singleton<ServerListManager>.GetInstance().GetServerList());
+                            //开始获取可用的服务器列表
+                        }
+                        else
+                        {
+                            update();//调用文件下载成功回调
+                            RefLauncherInfo();
+                        }
                         break;
                     case  enClientState.State_GetServerList:
+                        if (Singleton<ServerListManager>.GetInstance().DownloadDone)
+                        {
+                            this.State = enClientState.State_Start;
+                            RefLauncherInfo();
+                            //加载Lua 虚拟机 todo
+                            //初始化resources manager todo
+                            Debug.LogError("加载Lua虚拟机 初始化资源manager");
+                            Debug.LogError("开始游戏");
+                        }
+                        else
+                        {
+                            RefLauncherInfo();
+                        }
+                        
                         break;
                     case  enClientState.State_Start:
+                        //开始游戏
                         break;
                     case  enClientState.State_LoadScene:
                         break;
@@ -428,8 +470,14 @@ namespace GameFrame
         {
             if (UpdateGameObject)
             {
-                
+                LocalResVersionText.text = oldv.ToString();
+                OnlineResVersionText.text = newv.ToString();
             }
+        }
+
+        private void RefAppVersion(string newappversion)
+        {
+            AppVersion.text = newappversion;
         }
 
         private void RefLauncherInfo()
@@ -442,6 +490,10 @@ namespace GameFrame
             }else if (State == enClientState.State_GetServerList)
             {
                 
+                StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_GetServerList");
+                ProgressSliber.value = 0;
+                ProgressText.text = string.Format("{0}%", 0);
+
             }else if (State == enClientState.State_UpdateApp)
             {
                 if (UpdateState == 1)
@@ -459,10 +511,40 @@ namespace GameFrame
                 
             }else if (State == enClientState.State_UpdateResource)
             {
+                if (UpdateState == 0)
+                {
+                    StatusText.text = "";
+                    ProgressSliber.value = 0;
+                    ProgressText.text = string.Format("{0}%", 0);
+                }else if (UpdateState == 1)
+                {
+                    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_CheckResource");
+                    ProgressSliber.value = 0;
+                    ProgressText.text = string.Format("{0}%", 0);
+                }else if (UpdateState == 2)
+                {
+                    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_UpdateResource");
+                    ProgressSliber.value = DownLoadProgress;
+                    ProgressText.text = string.Format("{0}%",Math.Round(DownLoadProgress,2)*100);
+
+                }else if (UpdateState == 3)
+                {
+                    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_StartGame");
+                    ProgressSliber.value = 1;
+                    ProgressText.text = string.Format("{0}%", 100);
+                    
+                }else if (UpdateState == 4)
+                {
+                    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_OffLine");
+                    ProgressSliber.value = 1;
+                    ProgressText.text = string.Format("{0}%", 0);
+                }
                 
-            }else if (State == enClientState.State_Game)
+            }else if (State == enClientState.State_Start)
             {
-                
+                StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_StartGame");
+                ProgressSliber.value = 1;
+                ProgressText.text = string.Format("{0}%", 100);
             }
         }
         /// <summary>
@@ -774,6 +856,23 @@ namespace GameFrame
                 Debug.LogError(e.Message);
             }
         }
+
+        public void update()
+        {
+            while (true)
+            {
+                UpdateAction action;
+                if (m_actions.TryDequeue(out action))
+                {
+                    action();
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        
         #region 协成
         /// <summary>
         /// 更新资源
@@ -855,19 +954,19 @@ namespace GameFrame
                                 Debug.LogError("sure");
                                 AlertObject.gameObject.SetActive(false);
                                 Debug.LogError("开始下载文件.......");
-//                                SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
+                                SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                             });
                     }
                     else
                     {
                           Debug.LogError("开始下载文件.......");
-//                        SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
+                          SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                     }
                 }
                 else
                 {
                       Debug.LogError("开始下载文件.......");
-//                    SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
+                      SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                 }
             }
             else
@@ -889,19 +988,32 @@ namespace GameFrame
             Debug.LogError("开始下载时间 "  +Time.realtimeSinceStartup);
             while (m_urlIndex < Singleton<ServerConfig>.GetInstance().UpdateServer.Length)
             {
-                SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+                //正式版本
+                //SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+                //本地测试版本
+                SrcUrl = "http://192.168.6.24:8000/Documents/qyz/trunk/dist/Data/";
                 //
                 m_taskQueue.Clear();
                 m_redownloadList.Clear();
                 foreach (string s in m_downloadList)
                 {
+                    //正式版本
+                    
+//                    string url = SrcUrl + s;
+//                    string suffix = "?version=" + newmd5Table[s].md5;
+//                    url += suffix;
+//                    string filepath = Platform.Path + s;
+                    //本地测试版本
                     string url = SrcUrl + s;
-                    string suffix = "?version=" + newmd5Table[s].md5;
-                    url += suffix;
                     string filepath = Platform.Path + s;
+//                    Debug.LogError("下载文件路径 ： "+s);
+//                    Debug.LogError("下载文件保存路径 ： "+filepath);
+//                    Debug.LogError("下载文件路径URL ： "+url);
+                    
                     DownloadTask task = new DownloadTask(url,s,filepath);
                     m_taskQueue.Enqueue(task);
                 }
+//                yield break;//  todo 测试
                 if (m_taskQueue.Count > 0)
                 {
                     m_ovverThreadNum = 0;
