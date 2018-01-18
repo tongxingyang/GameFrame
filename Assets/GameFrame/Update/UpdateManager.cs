@@ -922,8 +922,43 @@ namespace GameFrame
                     {
                         SaveMD5Table(newmd5Table);
                     }
-                    
+                    SaveResourceHasUpdateSet(ResourcesHasUpdate);
+                    isDoneloadDone = true;
+                    Debug.LogError("下载完成........");
+                    SaveResourceVersion();
+                    currentResVersion = onlineResVersion;
+                    RefVersion(currentVersion.ToString(),onlineResVersion.ToString());
+                    yield break;
                 }
+                if (m_redownloadList.Count > 0)
+                {
+                    m_downloadList.Clear();
+                    foreach (string s in m_redownloadList)
+                    {
+                        m_downloadList.Add(s);
+                    }
+                }
+                else
+                {
+                    Debug.LogError("下载结束时间  "+Time.realtimeSinceStartup);
+                    if (newmd5Table.Count > 0)
+                    {
+                        SaveMD5Table(newmd5Table);
+                    }
+                    SaveResourceHasUpdateSet(ResourcesHasUpdate);
+                    isDoneloadDone = true;
+                    Debug.LogError("下载完成..........");
+                    SaveResourceVersion();
+                    currentResVersion = onlineResVersion;
+                    RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
+                    yield break;
+                }
+                m_urlIndex++;
+            }
+            m_updateState = 4;
+            foreach (string file in m_redownloadList)
+            {
+                Debug.LogError("下载文件出错 "+file);
             }
         }
         /// <summary>
@@ -933,11 +968,13 @@ namespace GameFrame
         private IEnumerator DownloadMD5File()
         {
             newmd5Table.Clear();
-            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
-            string url = SrcUrl + Platform.Md5FileName;
-            string suffix = "?version=" + onlineResVersion;
-            url += suffix;
-            using (var www = new WWW(url))
+//            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+//            string url = SrcUrl + Platform.Md5FileName;
+//            string suffix = "?version=" + onlineResVersion;
+//            url += suffix;
+            //测试版本
+            SrcUrl = "http://192.168.6.24:8000/Documents/qyz/trunk/dist/" + Platform.Md5FileName;
+            using (var www = new WWW(SrcUrl))
             {
                 yield return www;
                 if (www.error != null)
@@ -981,11 +1018,14 @@ namespace GameFrame
         /// <returns></returns>
         private IEnumerator DownloadResourceFile()
         {
-            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
-            string url = SrcUrl + Platform.ResVersionFileName;
-            string suffix = "?version=" + DateTime.Now.Ticks.ToString();
-            url += suffix;
-            using (var www = new WWW(url))
+            //正常版本
+//            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+//            string url = SrcUrl + Platform.ResVersionFileName;
+//            string suffix = "?version=" + DateTime.Now.Ticks.ToString();
+//            url += suffix;
+            // 本地测试版本
+            SrcUrl = "http://192.168.6.24:8000/Documents/qyz/trunk/dist/" + Platform.ResVersionFileName;
+            using (var www = new WWW(SrcUrl))
             {
                 yield return www;
                 if (www.error != null)
@@ -1122,11 +1162,12 @@ namespace GameFrame
 
         public IEnumerator DownloadAppFile()
         {
-            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
-            string url = SrcUrl + Platform.AppVerFileName;
-            string suffix = "?version=" + DateTime.Now.Ticks.ToString();
-            url += suffix;
-            using (WWW w = new WWW(url))
+//            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+//            string url = SrcUrl + Platform.AppVerFileName;
+//            string suffix = "?version=" + DateTime.Now.Ticks.ToString();
+//            url += suffix;
+            SrcUrl = "http://192.168.6.24:8000/Documents/qyz/trunk/dist/apk_version.txt";
+            using (WWW w = new WWW(SrcUrl))
             {
                 yield return w;
                 if (w.error != null)
@@ -1137,6 +1178,7 @@ namespace GameFrame
                 onlineVersion = w.text.Trim();//服务器上的app版本
                 m_loadOver = true;
             }
+            Debug.LogError("服务器上的APP 版本"+onlineVersion);
         }
         #endregion
     }
