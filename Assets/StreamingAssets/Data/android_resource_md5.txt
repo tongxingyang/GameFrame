@@ -1,3 +1,7 @@
+android_resource_md5.txt
+android_version.txt
+apk_version.txt
+hasupdate.txt
 config/csv/huiwu/huiwu.data,975c26c9d0915516ff755b97f218cad3,2458
 config/csv/map/landscape.data,c2a15124facbaf16927fe873be5e3d2c,299956
 config/csv/map/ectyperegionset.data,6b11c924faafec1380567ec4431c27ad,55102

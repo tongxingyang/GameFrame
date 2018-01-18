@@ -36,14 +36,15 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void Start()
     {
-        //#if !UNITY_EDITOR || !UNITY_EDITOR_OSX
+        #if !UNITY_EDITOR || !UNITY_EDITOR_OSX
 
         //play Logo
         PlayLogoVider("logo.mp4",false);
-        //Singleton<UpdateManager>.GetInstance();
         Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
     
-        //#endif
+        #endif
+//        CompareResult result = Singleton<UpdateManager>.GetInstance().CompareVersion("1.0.2", "1.0.6");
+//        Debug.LogError(result);
     }
 
     private void UpdateCallback(bool isok)

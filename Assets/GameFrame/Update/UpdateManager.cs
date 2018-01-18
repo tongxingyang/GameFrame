@@ -129,7 +129,7 @@ namespace GameFrame
                     Debug.LogError(w.error);
                     yield break;
                 }
-                initalResVersion = w.text;
+                initalResVersion = int.Parse(w.text);
             }
             filepath = Platform.InitalPath + Platform.Md5FileName;
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
@@ -162,6 +162,13 @@ namespace GameFrame
                         fileInfo.md5 = pair[1];
                         fileInfo.size = 0;
                         oldmd5Table[pair[0]] = fileInfo;
+                    }  else if (pair.Length == 1)
+                    {
+                        FileInfo fileInfo = new FileInfo();        
+                        fileInfo.fullname = pair[0];               
+                        fileInfo.md5 = string.Empty;               
+                        fileInfo.size = 0;                         
+                        oldmd5Table[fileInfo.fullname] = fileInfo; 
                     }
                 }
             }
@@ -286,7 +293,7 @@ namespace GameFrame
                 return currentVersion;
             }
             string filename = Platform.Path + Platform.AppVerFileName;
-            if(FileManager.IsFileExist(filename))
+            if(File.Exists(filename))
             {
                 try
                 {
@@ -299,11 +306,10 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    //Debuger.LogError(e.Message);
+                    Debug.LogError(e.Message);
                     return null;
                 }
             }
-           
             return null;
         }
 
@@ -317,8 +323,6 @@ namespace GameFrame
             bool needUnzip = false;
             if (FileManager.IsFileExist(filepath))
             {
-                
-               // yield return GetInitialVersion();//安装包的app版本
                 GetCurrentVersion();
                 if (currentVersion != null && initalVersion != null)
                 {
@@ -364,7 +368,7 @@ namespace GameFrame
         public CompareResult CompareVersion(string ver1, string ver2)
         {
             
-            int[] vervalue1 = null, vervalue2 = null;
+            int[] vervalue1 = new int[3], vervalue2 = new int[3];
             string[] strver1, strver2;
             strver1 = ver1.Split('.');
             strver2 = ver2.Split('.');
@@ -372,6 +376,7 @@ namespace GameFrame
             {
                 for (int i = 0; i < 3; i++)
                 {
+                    
                     vervalue1[i] = int.Parse(strver1[i]);
                     vervalue2[i] = int.Parse(strver2[i]);
                 }
@@ -471,7 +476,15 @@ namespace GameFrame
                         fileInfo.md5 = pair[1];
                         fileInfo.size = 0;
                         oldmd5Table[fileInfo.fullname] = fileInfo;
+                    }else if (pair.Length == 1)
+                    {
+                        FileInfo fileInfo = new FileInfo();         
+                        fileInfo.fullname = pair[0];                
+                        fileInfo.md5 = string.Empty;                     
+                        fileInfo.size = 0;                          
+                        oldmd5Table[fileInfo.fullname] = fileInfo;  
                     }
+                    
                 }
             }
         }
@@ -688,9 +701,13 @@ namespace GameFrame
                 yield return SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(DownloadAppFile());
                 m_urlIndex--;
             }
+            //获取沙河目录版本
+            GetCurrentVersion();
+            Debug.LogError("沙河目录版本 "+currentVersion +" 服务器上版本 "+onlineVersion);
             //下载服务器版本结束
             //获取沙河目录app版本  比较本地与服务器的高低
             var result = CompareVersion(onlineVersion, currentVersion);
+            Debug.LogError("比较结果   "+result.ToString());
             switch (result)
             {
                   case CompareResult.Equal:
@@ -732,7 +749,8 @@ namespace GameFrame
                                   }
                               }
                           }
-                          //下载安装包// todo 
+                          Debug.LogError("下载安装包地址: "+appurl);
+                          //下载安装包
                           AlertContextText.text = Singleton<LauncherString>.GetInstance()
                               .GetString("Resource_DownloadNewApp");
                           AlertObject.SetActive(true);
