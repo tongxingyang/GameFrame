@@ -5,9 +5,12 @@ using System.Net;
 using GameFrame;
 using UnityEngine;
 using Junfine.Debuger;
+using LuaInterface;
+
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
     private bool CheckUpdate = false;
+    private bool IsUpdateDone = false;
 #if UNITY_IPHONE
     private const int Resolution = 1080;
 #else
@@ -49,7 +52,18 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     private void UpdateCallback(bool isok)
     {
-        
+        IsUpdateDone = isok;
+        //加载Lua 虚拟机 todo
+        //初始化resources manager todo
+        LuaState lua = new LuaState();
+        lua.Start();
+        string hello =
+                                @"                
+                                    print('hello tolua#')                                  
+                                ";
+        lua.DoString(hello);
+        Debug.LogError("加载Lua虚拟机 初始化资源manager");
+        Debug.LogError("开始游戏");
     }
     void PlayLogoVider(string filename,bool cancancel)
     {
@@ -92,7 +106,10 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     void Update()
     {
         Singleton<TimeManager>.GetInstance().Update();
-        Singleton<UpdateManager>.GetInstance().Update();
+        if (IsUpdateDone == false)
+        {
+            Singleton<UpdateManager>.GetInstance().Update();
+        }
     }
 
     private void OnDestroy()

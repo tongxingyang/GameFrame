@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using GameFrame;
 using Junfine.Debuger;
+using LuaInterface;
 using UIFrameWork;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,8 +25,6 @@ namespace GameFrame
         State_UpdateResource,
         State_GetServerList,
         State_Start,
-        State_Game,
-        State_LoadScene,
     }
 
     public enum CompareResult
@@ -322,10 +321,7 @@ namespace GameFrame
                         {
                             this.State = enClientState.State_Start;
                             RefLauncherInfo();
-                            //加载Lua 虚拟机 todo
-                            //初始化resources manager todo
-                            Debug.LogError("加载Lua虚拟机 初始化资源manager");
-                            Debug.LogError("开始游戏");
+                            
                         }
                         else
                         {
@@ -335,10 +331,7 @@ namespace GameFrame
                         break;
                     case  enClientState.State_Start:
                         //开始游戏
-                        break;
-                    case  enClientState.State_LoadScene:
-                        break;
-                    case  enClientState.State_Game:
+                        UpdateCallback(true);
                         break;
                 }
             }
@@ -1274,10 +1267,12 @@ namespace GameFrame
 
         public IEnumerator DownloadAppFile()
         {
+            //正式版本
 //            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
 //            string url = SrcUrl + Platform.AppVerFileName;
 //            string suffix = "?version=" + DateTime.Now.Ticks.ToString();
 //            url += suffix;
+            //本地测试版本
             SrcUrl = "http://192.168.6.24:8000/Documents/qyz/trunk/dist/apk_version.txt";
             using (WWW w = new WWW(SrcUrl))
             {
