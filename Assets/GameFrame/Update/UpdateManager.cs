@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using GameFrame;
 using Junfine.Debuger;
 using UIFrameWork;
@@ -9,6 +10,9 @@ using UnityEngine;
 using UnityEngine.UI;
 namespace GameFrame
 {
+    //定义委托
+    public delegate void UpdateAction();
+    
     public enum enClientState
     {
         State_Init,
@@ -35,6 +39,7 @@ namespace GameFrame
 
     public class UpdateManager : Singleton<UpdateManager>
     {
+        private static int DOWNLOAD_COUNT = 50;
         /// <summary>
         /// 获取组件
         /// </summary>
@@ -62,9 +67,18 @@ namespace GameFrame
         private float m_UpdateLastTime;
         
         private enClientState State = enClientState.State_Init;
-        private Dictionary<string,FileInfo> oldmd5Table = new Dictionary<string, FileInfo>();
-        private Dictionary<string,FileInfo> newmd5Table = new Dictionary<string, FileInfo>();
+        public  Dictionary<string,FileInfo> oldmd5Table = new Dictionary<string, FileInfo>();
+        public  Dictionary<string,FileInfo> newmd5Table = new Dictionary<string, FileInfo>();
+        
         public readonly HashSet<string> ResourcesHasUpdate = new HashSet<string>();
+        public List<string> m_redownloadList = new List<string>();
+        public List<string> m_downloadList = new List<string>();
+        public  readonly ConcurrentQueue<UpdateAction> m_actions = new ConcurrentQueue<UpdateAction>();
+        public  ConcurrentQueue<DownloadTask> m_taskQueue = new ConcurrentQueue<DownloadTask>();
+        
+        public  readonly object m_obj = new object();//线程安全锁 对象
+
+        
         private string initalVersion;
         private string currentVersion;
         private string onlineVersion;
@@ -77,7 +91,8 @@ namespace GameFrame
         private int filecount = 0;
         private int currentcopycount = 0;
 
-        private int TotalDownloadSize = 0;
+        public  int TotalDownloadSize = 0;
+        public int DownloadSize = 0;
         private bool isDoneloadDone = false;
 
         public bool IsDoneloadDone
@@ -92,6 +107,7 @@ namespace GameFrame
         private int m_updateState = 0;
         private bool m_loadOver = true;
         private int m_urlIndex = 2;
+        private int m_ovverThreadNum = 0;
         private string SrcUrl = string.Empty;
         public override void Init()
         {
@@ -478,11 +494,7 @@ namespace GameFrame
                         oldmd5Table[fileInfo.fullname] = fileInfo;
                     }else if (pair.Length == 1)
                     {
-                        FileInfo fileInfo = new FileInfo();         
-                        fileInfo.fullname = pair[0];                
-                        fileInfo.md5 = string.Empty;                     
-                        fileInfo.size = 0;                          
-                        oldmd5Table[fileInfo.fullname] = fileInfo;  
+                        continue;//长度等于1 直接继续  
                     }
                     
                 }
@@ -502,6 +514,25 @@ namespace GameFrame
             }
         }
 
+        private void LoadCurrentResVersion()
+        {
+            string filename = Platform.Path + Platform.ResVersionFileName;
+            if (FileManager.IsFileExist(filename))
+            {
+                using (StreamReader sr = File.OpenText(filename))
+                {
+                    currentResVersion = int.Parse(sr.ReadLine());
+                }
+            }
+            else
+            {
+                Debug.LogError("读取沙河目录的resVersion出错");
+            }
+        }
+        /// <summary>
+        /// 验证本地资源是否已经丢失了
+        /// </summary>
+        /// <returns></returns>
         private bool CheckOldMd5File()
         {
             List<string> lostFiles = new List<string>();
@@ -546,21 +577,212 @@ namespace GameFrame
         /// </summary>
         private void DeleteUselessFiles()
         {
-            
+            if (newmd5Table.Count == 0)
+            {
+                return;
+            }
+            List<string> deleteFiles = new List<string>();
+            foreach (KeyValuePair<string,FileInfo> keyValuePair in oldmd5Table)
+            {
+                if (newmd5Table.ContainsKey(keyValuePair.Key))
+                {
+                    continue;
+                }
+                if (ResourcesHasUpdate.Contains(keyValuePair.Key))
+                {
+                    ResourcesHasUpdate.Remove(keyValuePair.Key);
+                    deleteFiles.Add(keyValuePair.Key);
+                }
+            }
+            foreach (string deleteFile in deleteFiles)
+            {
+                string filename = Platform.Path + deleteFile;
+                if (FileManager.IsFileExist(filename))
+                {
+                    FileManager.DeleteFile(filename);
+                }
+            }
         }
         /// <summary>
         /// 获得下载的文件列表
         /// </summary>
         private void GetDownloadFileList()
         {
-            
+            m_downloadList.Clear();
+            TotalDownloadSize = 0;
+            foreach (var keyValuePair in newmd5Table)
+            {
+                FileInfo fileInfo = null;
+                oldmd5Table.TryGetValue(keyValuePair.Key, out fileInfo);
+                if (fileInfo != null)
+                {
+                    if (fileInfo.md5.Equals(newmd5Table[keyValuePair.Key].md5))
+                    {
+                        continue;
+                    }
+                }
+                m_downloadList.Add(keyValuePair.Key);
+                TotalDownloadSize += newmd5Table[keyValuePair.Key].size;
+            }
+            if (m_downloadList.Count == 0)
+            {
+                isDoneloadDone = true;
+            }
+            Debug.LogError("需要下载的数量 "+m_downloadList.Count +",    大小  "+TotalDownloadSize);
+        }
+
+        private void ThreadProc()
+        {
+            while (true)
+            {
+                DownloadTask task = null;
+                if (m_taskQueue.TryDequeue(out task))
+                {
+                    task.BeginDownload();
+                }
+                else
+                {
+                    break;
+                }
+            }
+            lock (m_obj)
+            {
+                m_ovverThreadNum++;
+            }
+        }
+        /// <summary>
+        /// 保存md5文件
+        /// </summary>
+        /// <param name="tabDictionary"></param>
+        private void SaveMD5Table(Dictionary<string,FileInfo> tabDictionary)
+        {
+            string filename = Platform.Path + Platform.Md5FileName;
+            if (FileManager.IsFileExist(filename))
+            {
+                FileManager.DeleteFile(filename);
+            }
+            string directory = Path.GetDirectoryName(filename);
+            if (!string.IsNullOrEmpty(directory) && !FileManager.IsDirectoryExist(directory))
+            {
+                FileManager.CreateDirectory(directory);
+            }
+            try
+            {
+                using (var write = new StreamWriter(new FileStream(filename,FileMode.Create)))
+                {
+                    foreach (KeyValuePair<string,FileInfo> keyValuePair in tabDictionary)
+                    {
+                        write.WriteLine(keyValuePair.Key+","+keyValuePair.Value.md5+","+keyValuePair.Value.size);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
+            }
+        }
+        /// <summary>
+        /// 保存hasupdate文件
+        /// </summary>
+        /// <param name="tab"></param>
+        private void SaveResourceHasUpdateSet(HashSet<string> tab)
+        {
+            string filename = Platform.Path + Platform.HasUpdateFileName;
+            if (FileManager.IsFileExist(filename))
+            {
+                FileManager.DeleteFile(filename);
+            }
+            string directory = Path.GetDirectoryName(filename);
+            if (!string.IsNullOrEmpty(directory) && !FileManager.IsDirectoryExist(directory))
+            {
+                FileManager.DeleteDirectory(directory);
+            }
+            try
+            {
+                using (var write = new StreamWriter(new FileStream(filename,FileMode.Create)))
+                {
+                    foreach (string s in tab)
+                    {
+                        write.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+               Debug.LogError(e.Message);
+            }
+        }
+        /// <summary>
+        /// 保存resversion文件
+        /// </summary>
+        private void SaveResourceVersion()
+        {
+            var filename = Platform.Path + Platform.ResVersionFileName;
+            if (FileManager.IsFileExist(filename))
+            {
+                FileManager.DeleteFile(filename);
+            }
+            try
+            {
+                using (var write = new StreamWriter(new FileStream(filename,FileMode.Create)))
+                {
+                    write.Write(onlineResVersion);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
+            }
+        }
+        /// <summary>
+        /// 向本地md5文件追加信息
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="val"></param>
+        /// <param name="size"></param>
+        public void AppendMD5File(string key,string val,int size)
+        {
+            string filename = Platform.Path + Platform.Md5FileName;
+            try
+            {
+                using (var write = new StreamWriter(new FileStream(filename,FileMode.Append)))
+                {
+                    write.WriteLine(key+","+val+","+size);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
+            }
+        }
+        /// <summary>
+        /// 向本地hasupdate文件追加信息
+        /// </summary>
+        /// <param name="key"></param>
+        public void AppendHasUpdateFile(string key)
+        {
+            string filename = Platform.Path + Platform.HasUpdateFileName;
+            try
+            {
+                using (var write = new StreamWriter(new FileStream(filename,FileMode.Append)))
+                {
+                    write.WriteLine(key);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
+            }
         }
         #region 协成
-
+        /// <summary>
+        /// 更新资源
+        /// </summary>
+        /// <returns></returns>
         IEnumerator UpdateResource()
         {
             m_updateState = 1;
-            isDoneloadDone = false;
+            isDoneloadDone = false; 
             //读取沙河md5
             LoadCurrentMd5Table();
             //读取hasUpdate文本
@@ -572,8 +794,7 @@ namespace GameFrame
             m_loadOver = false;
             while (!m_loadOver && m_urlIndex>0)
             {
-                //下载服务器的resVersion 文件 todo
-               // yield return 
+                yield return SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(DownloadResourceFile());
                 m_urlIndex--;
             }
             if (!m_loadOver)
@@ -582,7 +803,9 @@ namespace GameFrame
                 yield break;
             }
             bool bVersion = true;
-            // 加载本地 resVersion
+            //加载沙河目录的resVersion
+            LoadCurrentResVersion();
+            
             if (currentResVersion < onlineResVersion)
             {
                 bVersion = false;
@@ -599,7 +822,7 @@ namespace GameFrame
             m_loadOver = false;//重置 为了下次下载做准备
             while (!m_loadOver && m_urlIndex>0)
             {
-                // todo 开始下载md5文件
+                yield return SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(DownloadMD5File());
                 m_urlIndex++;
             }
             if (!m_loadOver)
@@ -630,28 +853,149 @@ namespace GameFrame
                             (a, b, c) =>
                             {
                                 Debug.LogError("sure");
-                                // todo 开始下载文件
                                 AlertObject.gameObject.SetActive(false);
+                                Debug.LogError("开始下载文件.......");
+//                                SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                             });
                     }
                     else
                     {
-                        // todo 开始下载文件
+                          Debug.LogError("开始下载文件.......");
+//                        SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                     }
                 }
                 else
                 {
-                    //todo 开始下载文件
+                      Debug.LogError("开始下载文件.......");
+//                    SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                 }
             }
             else
             {
-                //todo saveresourceversion
+                SaveResourceVersion();
                 m_updateState = 3;
                 currentResVersion = onlineResVersion;
                 RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
             }
             
+        }
+
+        IEnumerator BeginDownloadResource()
+        {
+            //设置最大下载数量
+            System.Net.ServicePointManager.DefaultConnectionLimit = DOWNLOAD_COUNT;
+            m_updateState = 2;
+            m_urlIndex = 0;
+            Debug.LogError("开始下载时间 "  +Time.realtimeSinceStartup);
+            while (m_urlIndex < Singleton<ServerConfig>.GetInstance().UpdateServer.Length)
+            {
+                SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+                //
+                m_taskQueue.Clear();
+                m_redownloadList.Clear();
+                foreach (string s in m_downloadList)
+                {
+                    string url = SrcUrl + s;
+                    string suffix = "?version=" + newmd5Table[s].md5;
+                    url += suffix;
+                    string filepath = Platform.Path + s;
+                    DownloadTask task = new DownloadTask(url,s,filepath);
+                    m_taskQueue.Enqueue(task);
+                }
+                if (m_taskQueue.Count > 0)
+                {
+                    m_ovverThreadNum = 0;
+                    for (int i = 0; i < 5; i++)
+                    {
+                        Thread thread = new Thread(ThreadProc);
+                        thread.Name = "download thread: " + i;
+                        thread.Start();
+                    }
+                    while (m_ovverThreadNum < 5 || m_actions.Count > 0)
+                    {
+                        yield return null; //还没下载完成
+                    }
+                }
+                else
+                {
+                    if (newmd5Table.Count > 0)
+                    {
+                        SaveMD5Table(newmd5Table);
+                    }
+                    
+                }
+            }
+        }
+        /// <summary>
+        /// 下载服务器md5
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator DownloadMD5File()
+        {
+            newmd5Table.Clear();
+            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+            string url = SrcUrl + Platform.Md5FileName;
+            string suffix = "?version=" + onlineResVersion;
+            url += suffix;
+            using (var www = new WWW(url))
+            {
+                yield return www;
+                if (www.error != null)
+                {
+                    yield break;
+                }
+                string m_line = www.text.Trim();
+                using (StringReader br = new StringReader(m_line))
+                {
+                    string line;
+                    while ((line = br.ReadLine())!=null)
+                    {
+                        var pair = line.Split(',');
+                        if (pair.Length == 3)
+                        {
+                            FileInfo fileInfo = new FileInfo();
+                            fileInfo.fullname = pair[0];
+                            fileInfo.md5 = pair[1];
+                            fileInfo.size = int.Parse(pair[2]);
+                            newmd5Table[fileInfo.fullname] = fileInfo;
+                        }else if (pair.Length == 2)
+                        {
+                            FileInfo fileInfo = new FileInfo();
+                            fileInfo.fullname = pair[0];
+                            fileInfo.md5 = pair[1];
+                            fileInfo.size = 0;
+                            newmd5Table[fileInfo.fullname] = fileInfo;
+                        }else if (pair.Length == 1)
+                        {
+                            continue;//长度等于1 直接继续  
+                        }
+                    }
+                    m_loadOver = true;
+                    Debug.LogError("下载md5 文件成功  数量为  "+newmd5Table.Count);
+                }
+            }
+        }
+        /// <summary>
+        /// 加载服务器的resVersion
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator DownloadResourceFile()
+        {
+            SrcUrl = Singleton<ServerConfig>.GetInstance().UpdateServer[m_urlIndex];
+            string url = SrcUrl + Platform.ResVersionFileName;
+            string suffix = "?version=" + DateTime.Now.Ticks.ToString();
+            url += suffix;
+            using (var www = new WWW(url))
+            {
+                yield return www;
+                if (www.error != null)
+                {
+                    yield break;
+                }
+                string line = www.text.Trim();
+                int.TryParse(line, out onlineResVersion);
+                m_loadOver = true;
+            }
         }
         IEnumerator Preprocess()
         {
