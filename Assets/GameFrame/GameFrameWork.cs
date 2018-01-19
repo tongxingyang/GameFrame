@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Net;
 using GameFrame;
 using UnityEngine;
-using Junfine.Debuger;
-using LuaInterface;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
@@ -40,8 +35,6 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     void Start()
     {
         #if !UNITY_EDITOR || !UNITY_EDITOR_OSX
-
-        //play Logo
         PlayLogoVider("logo.mp4",false);
         Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
         #endif
