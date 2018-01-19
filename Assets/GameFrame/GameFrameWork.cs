@@ -44,10 +44,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         //play Logo
         PlayLogoVider("logo.mp4",false);
         Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
-    
         #endif
-//        CompareResult result = Singleton<UpdateManager>.GetInstance().CompareVersion("1.0.2", "1.0.6");
-//        Debug.LogError(result);
     }
 
     private void UpdateCallback(bool isok)
@@ -55,13 +52,13 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         IsUpdateDone = isok;
         //加载Lua 虚拟机 todo
         //初始化resources manager todo
-        LuaState lua = new LuaState();
-        lua.Start();
-        string hello =
-                                @"                
-                                    print('hello tolua#')                                  
-                                ";
-        lua.DoString(hello);
+//        LuaState lua = new LuaState();
+//        lua.Start();
+//        string hello =
+//                                @"                
+//                                    print('hello tolua#')                                  
+//                                ";
+//        lua.DoString(hello);
         Debug.LogError("加载Lua虚拟机 初始化资源manager");
         Debug.LogError("开始游戏");
     }

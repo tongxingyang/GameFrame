@@ -71,7 +71,7 @@ namespace GameFrame
         public  Dictionary<string,FileInfo> oldmd5Table = new Dictionary<string, FileInfo>();
         public  Dictionary<string,FileInfo> newmd5Table = new Dictionary<string, FileInfo>();
         
-        public readonly HashSet<string> ResourcesHasUpdate = new HashSet<string>();
+        public Dictionary <string,FileInfo> ResourcesHasUpdate = new Dictionary<string, FileInfo>();
         public List<string> m_redownloadList = new List<string>();
         public List<string> m_downloadList = new List<string>();
         public  readonly ConcurrentQueue<UpdateAction> m_actions = new ConcurrentQueue<UpdateAction>();
@@ -584,9 +584,37 @@ namespace GameFrame
                 string line;
                 while ((line=sr.ReadLine())!=null)
                 {
-                    ResourcesHasUpdate.Add(line);
+                    string[] pair = line.Split(',');
+                    FileInfo fileInfo = new FileInfo();
+                    if (pair.Length == 3)
+                    {
+                        fileInfo.fullname = pair[0];
+                        fileInfo.md5 = pair[1];
+                        fileInfo.size = int.Parse(pair[2]);
+                    }else if (pair.Length == 2)
+                    {
+                        fileInfo.fullname = pair[0];
+                        fileInfo.md5 = pair[1];
+                        fileInfo.size = 0;
+                    }
+                    else
+                    {
+                        fileInfo.fullname = pair[0];
+                        fileInfo.md5 = " ";
+                        fileInfo.size = 0;
+                    }
+                    if (oldmd5Table.ContainsKey(fileInfo.fullname))
+                    {
+                        oldmd5Table[fileInfo.fullname] = fileInfo;
+                    }
+                    else
+                    {
+                        oldmd5Table.Add(fileInfo.fullname,fileInfo);
+                    }
+                    ResourcesHasUpdate.Add(fileInfo.fullname,fileInfo);
                 }
             }
+            Debug.LogError("加载本地hasupdate文件成功");
         }
 
         private void LoadCurrentResVersion()
@@ -605,7 +633,7 @@ namespace GameFrame
             }
         }
         /// <summary>
-        /// 验证本地资源是否已经丢失了
+        /// 验证本地资源是否已经丢失了 并从oldmd5删除对应文件
         /// </summary>
         /// <returns></returns>
         private bool CheckOldMd5File()
@@ -615,27 +643,12 @@ namespace GameFrame
             {
                 FileInfo fileInfo = keyValuePair.Value;
                 string filename = Platform.Path + fileInfo.fullname;
-                //从沙河目录读取的md5 文件 遍历文件夹 寻找丢失的文件 加入到lostList中
-                //或者resourcehasupdate 里面包含 并且在沙河目录中存在这个文件跳过 否则加入lostList里
-                if (fileInfo.fullname.StartsWith("config") || fileInfo.fullname.StartsWith("scripts"))
+                if (FileManager.IsFileExist(filename))
                 {
-                    if (FileManager.IsFileExist(filename))
-                    {
-                        continue;
-                    }
-                    lostFiles.Add(fileInfo.fullname);
+                    continue;
                 }
-                else
-                {
-                    if (ResourcesHasUpdate.Contains(fileInfo.fullname))
-                    {
-                        if (FileManager.IsFileExist(fileInfo.fullname))
-                        {
-                            continue;
-                        }
-                        lostFiles.Add(fileInfo.fullname);
-                    }
-                }
+                lostFiles.Add(fileInfo.fullname);
+                
             }
             foreach (var file in lostFiles)
             {
@@ -663,11 +676,15 @@ namespace GameFrame
                 {
                     continue;
                 }
-                if (ResourcesHasUpdate.Contains(keyValuePair.Key))
-                {
-                    ResourcesHasUpdate.Remove(keyValuePair.Key);
-                    deleteFiles.Add(keyValuePair.Key);
-                }
+                deleteFiles.Add(keyValuePair.Key);
+                //删除沙河目录下的丢失文件 todo txy
+                oldmd5Table.Remove(keyValuePair.Key);
+                
+//                if (ResourcesHasUpdate.Contains(keyValuePair.Key))
+//                {
+//                    ResourcesHasUpdate.Remove(keyValuePair.Key);
+//                    deleteFiles.Add(keyValuePair.Key);
+//                }
             }
             foreach (string deleteFile in deleteFiles)
             {
@@ -768,7 +785,7 @@ namespace GameFrame
                 FileManager.DeleteFile(filename);
             }
             string directory = Path.GetDirectoryName(filename);
-            if (!string.IsNullOrEmpty(directory) && !FileManager.IsDirectoryExist(directory))
+            if (!string.IsNullOrEmpty(directory) && FileManager.IsDirectoryExist(directory))
             {
                 FileManager.DeleteDirectory(directory);
             }
@@ -785,6 +802,28 @@ namespace GameFrame
             catch (Exception e)
             {
                Debug.LogError(e.Message);
+            }
+        }
+
+        private void ClearResourceHasUpdate()
+        {
+            string filename = Platform.Path + Platform.HasUpdateFileName;
+            if (FileManager.IsFileExist(filename))
+            {
+                FileManager.DeleteFile(filename);
+            }
+            string directory = Path.GetDirectoryName(filename);
+            if (!string.IsNullOrEmpty(directory) && !FileManager.IsDirectoryExist(directory))
+            {
+                FileManager.CreateDirectory(directory);
+            }
+            try
+            {
+                File.Create(filename);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
             }
         }
         /// <summary>
@@ -834,14 +873,14 @@ namespace GameFrame
         /// 向本地hasupdate文件追加信息
         /// </summary>
         /// <param name="key"></param>
-        public void AppendHasUpdateFile(string key)
+        public void AppendHasUpdateFile(string key,string md5,int size)
         {
             string filename = Platform.Path + Platform.HasUpdateFileName;
             try
             {
                 using (var write = new StreamWriter(new FileStream(filename,FileMode.Append)))
                 {
-                    write.WriteLine(key);
+                    write.WriteLine(key+","+md5+","+size);
                 }
             }
             catch (Exception e)
@@ -1027,7 +1066,9 @@ namespace GameFrame
                     {
                         SaveMD5Table(newmd5Table);
                     }
-                    SaveResourceHasUpdateSet(ResourcesHasUpdate);
+                    //SaveResourceHasUpdateSet(ResourcesHasUpdate);
+                    //清空hasupdate的内容
+                    ClearResourceHasUpdate();
                     isDoneloadDone = true;
                     Debug.LogError("下载完成........");
                     SaveResourceVersion();
@@ -1050,7 +1091,8 @@ namespace GameFrame
                     {
                         SaveMD5Table(newmd5Table);
                     }
-                    SaveResourceHasUpdateSet(ResourcesHasUpdate);
+                    //aveResourceHasUpdateSet(ResourcesHasUpdate);
+                    ClearResourceHasUpdate();
                     isDoneloadDone = true;
                     Debug.LogError("下载完成..........");
                     SaveResourceVersion();
@@ -1113,7 +1155,7 @@ namespace GameFrame
                         }
                     }
                     m_loadOver = true;
-                    Debug.LogError("下载md5 文件成功  数量为  "+newmd5Table.Count);
+//                    Debug.LogError("下载md5 文件成功  数量为  "+newmd5Table.Count);
                 }
             }
         }

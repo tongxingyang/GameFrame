@@ -68,16 +68,14 @@ namespace GameFrame
 						md5 = MD5Util.ComputeFileHash(m_filepath);
 					}
 					string md5_ = Singleton<UpdateManager>.GetInstance().newmd5Table[m_filename].md5;
-//					Debug.LogError("Md5  "+md5);
-//					Debug.LogError("Md5_ "+md5_);
-//					Debug.LogError("-----------------");
+
 					if (md5.Equals(md5_))
 					{
 						Debug.LogError("文件下载成功 文件名 "+m_filename);
 						FileInfo fileInfo = Singleton<UpdateManager>.Instance.newmd5Table[m_filename];
 						Singleton<UpdateManager>.Instance.DownloadSize +=
 							Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size;
-						Singleton<UpdateManager>.Instance.AppendHasUpdateFile(m_filename);
+						Singleton<UpdateManager>.Instance.AppendHasUpdateFile(m_filename,md5,Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size);
 						Singleton<UpdateManager>.Instance.AppendMD5File(m_filename, fileInfo.md5, fileInfo.size);
 					}
 					else

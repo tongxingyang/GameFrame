@@ -116,12 +116,12 @@ namespace GameFrame
                     if (platform == RuntimePlatform.Android)
                     {
                         androidDone = true;
-                        Debug.LogError("安卓服务器 字段 "+ androidContent);
+//                        Debug.LogError("安卓服务器 字段 "+ androidContent);
                     }
                     else
                     {
                         iosDone = true;
-                        Debug.LogError("IOS服务器 字段 "+ iosContent);
+//                        Debug.LogError("IOS服务器 字段 "+ iosContent);
                     }
                 }
             }
