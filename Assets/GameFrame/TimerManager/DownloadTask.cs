@@ -76,7 +76,7 @@ namespace GameFrame
 						Singleton<UpdateManager>.Instance.DownloadSize +=
 							Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size;
 						Singleton<UpdateManager>.Instance.AppendHasUpdateFile(m_filename,md5,Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size);
-						// todo 不用加载md5文件中
+						// todo 不用加载md5文件中 写不写进去都可以 不写进去写进 写进去也可以因为可以覆盖前面的
 //						Singleton<UpdateManager>.Instance.AppendMD5File(m_filename, fileInfo.md5, fileInfo.size);
 					}
 					else

@@ -1033,7 +1033,7 @@ namespace GameFrame
 //                    Debug.LogError("下载文件路径 ： "+s);
 //                    Debug.LogError("下载文件保存路径 ： "+filepath);
 //                    Debug.LogError("下载文件路径URL ： "+url);
-                    
+                    // task 下载任务
                     DownloadTask task = new DownloadTask(url,s,filepath);
                     m_taskQueue.Enqueue(task);
                 }
@@ -1046,7 +1046,7 @@ namespace GameFrame
                         thread.Name = "download thread: " + i;
                         thread.Start();
                     }
-                    while (m_ovverThreadNum < 5 || m_actions.Count > 0)
+                    while (m_ovverThreadNum < 5 || m_actions.Count > 0)// ==5 
                     {
                         yield return null; //还没下载完成
                     }
