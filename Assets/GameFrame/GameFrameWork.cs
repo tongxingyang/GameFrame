@@ -1,5 +1,6 @@
 ﻿using System;
 using GameFrame;
+using LuaInterface;
 using UnityEngine;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
@@ -9,7 +10,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 #if UNITY_IPHONE
     private const int Resolution = 1080;
 #else
-    private const int Resolution = 810;
+    private const int Resolution = 1080;
 #endif
     
     public override void Init()
@@ -38,6 +39,9 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         PlayLogoVider("logo.mp4",false);
         Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
         #endif
+        #if UNITY_EDITOR_OSX
+        UpdateCallback(true);
+#endif
     }
 
     private void UpdateCallback(bool isok)
@@ -45,15 +49,34 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         IsUpdateDone = isok;
         //加载Lua 虚拟机 todo
         //初始化resources manager todo
-//        LuaState lua = new LuaState();
-//        lua.Start();
-//        string hello =
-//                                @"                
-//                                    print('hello tolua#')                                  
-//                                ";
-//        lua.DoString(hello);
+        LuaState lua = new LuaState();
+        lua.Start();
+        string hello =
+                                @"                
+                                    print('hello tolua#')                                  
+                                ";
+        lua.DoString(hello);
+        
         Debug.LogError("加载Lua虚拟机 初始化资源manager");
         Debug.LogError("开始游戏");
+
+        Singleton<ResourceManager>.GetInstance().AddTask("sfx/s_qz_yzb_01.bundle",
+            (o) =>
+            {
+                GameObject gameObject = Instantiate(o) as GameObject;
+                gameObject.name = "hhhhhhh";
+                gameObject.SetActive(true);
+//                Singleton<ResourceManager>.GetInstance().AddTask("shaders/madfinger-3layers-alphablend.bundle", (d) =>
+//                {
+//                    Debug.LogError("----------------------------------------------------------------------- ");
+//                    Debug.LogError("type of "+d.GetType().ToString());
+//                    
+//                    //GameObject gameObjedct = Instantiate(d) as GameObject;
+//                    //gameObjedct.name = "sssssss";
+//                    //gameObjedct.SetActive(true);
+//                }, (int) (enResourceLoadType.Cache | enResourceLoadType.LoadBundleFromFile));
+            }, (int) (enResourceLoadType.Cache|enResourceLoadType.LoadBundleFromFile));
+
     }
     void PlayLogoVider(string filename,bool cancancel)
     {
@@ -91,6 +114,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<LauncherString>.GetInstance();
         Singleton<TimeManager>.GetInstance();
         Singleton<EventManager>.GetInstance();
+        Singleton<ResourceManager>.GetInstance();
     }
 
     void Update()
@@ -100,6 +124,8 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         {
             Singleton<UpdateManager>.GetInstance().Update();
         }
+        Singleton<ResourceManager>.GetInstance().Update();
+        
     }
 
     private void OnDestroy()

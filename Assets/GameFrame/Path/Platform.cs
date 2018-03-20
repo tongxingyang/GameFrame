@@ -7,7 +7,7 @@ namespace GameFrame
 {
     public class Platform
     {
-            public static string HasUpdateFileName = "hasupdate.txt";
+        public static string HasUpdateFileName = "hasupdate.txt";
 #if UNITY_EDITOR
         public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
         public static string PERSISTENT_DATA_PATH = Application.dataPath + "/PersistentAssets";

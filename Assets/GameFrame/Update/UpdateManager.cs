@@ -89,7 +89,7 @@ namespace GameFrame
                 }
             }
         }
-        private string initalVersion;
+        private string initalVersion;// 打包进去的
         private string currentVersion;
         private string onlineVersion;
         private int initalResVersion;
@@ -368,6 +368,9 @@ namespace GameFrame
         {
             string filepath = Platform.Path + "hasupdate.txt";//沙河目录
             bool needUnzip = false;
+            
+            //判断删除 todo 判断有问题
+            
             if (FileManager.IsFileExist(filepath))
             {
                 GetCurrentVersion();
@@ -643,7 +646,7 @@ namespace GameFrame
                 {
                     continue;
                 }
-                lostFiles.Add(fileInfo.fullname);
+                lostFiles.Add(fileInfo.fullname);// 没更新之前本地丢失的文件
                 
             }
             foreach (var file in lostFiles)
@@ -673,14 +676,8 @@ namespace GameFrame
                     continue;
                 }
                 deleteFiles.Add(keyValuePair.Key);
-                //删除沙河目录下的丢失文件 todo txy
+                //删除沙河目录下的没用文件 
                 oldmd5Table.Remove(keyValuePair.Key);
-                
-//                if (ResourcesHasUpdate.Contains(keyValuePair.Key))
-//                {
-//                    ResourcesHasUpdate.Remove(keyValuePair.Key);
-//                    deleteFiles.Add(keyValuePair.Key);
-//                }
             }
             foreach (string deleteFile in deleteFiles)
             {
@@ -739,7 +736,7 @@ namespace GameFrame
             }
         }
         /// <summary>
-        /// 保存md5文件
+        /// 保存md5文件 都更新成功后保存
         /// </summary>
         /// <param name="tabDictionary"></param>
         private void SaveMD5Table(Dictionary<string,FileInfo> tabDictionary)
@@ -914,8 +911,7 @@ namespace GameFrame
             LoadCurrentMd5Table();
             //读取hasUpdate文本
             LoadHasUpdateSet();
-            //从沙河目录读取的md5 文件 遍历文件夹 寻找丢失的文件 加入到lostList中
-            //或者resourcehasupdate 里面包含 并且在沙河目录中存在这个文件跳过 否则加入lostList里
+
             bool bCheck = CheckOldMd5File();
             m_urlIndex = Singleton<ServerConfig>.GetInstance().UpdateServer.Length - 1;
             m_loadOver = false;
@@ -937,7 +933,7 @@ namespace GameFrame
             {
                 bVersion = false;
             }
-            Debug.LogError("是否需要更新资源= "+bVersion+", 沙河目录的res版本 = "+currentResVersion+", 服务器上的res版本 = "+onlineResVersion);
+            Debug.LogError("是否需要更新资源= "+!bVersion+", 沙河目录的res版本 = "+currentResVersion+", 服务器上的res版本 = "+onlineResVersion);
             RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
             if (!bCheck && bVersion)//沙河目录文件没有问题 并且 版本相同
             {
@@ -1041,7 +1037,6 @@ namespace GameFrame
                     DownloadTask task = new DownloadTask(url,s,filepath);
                     m_taskQueue.Enqueue(task);
                 }
-//                yield break;//  todo 测试
                 if (m_taskQueue.Count > 0)
                 {
                     m_ovverThreadNum = 0;
@@ -1062,7 +1057,6 @@ namespace GameFrame
                     {
                         SaveMD5Table(newmd5Table);
                     }
-                    //SaveResourceHasUpdateSet(ResourcesHasUpdate);
                     //清空hasupdate的内容
                     ClearResourceHasUpdate();
                     isDoneloadDone = true;
@@ -1087,7 +1081,7 @@ namespace GameFrame
                     {
                         SaveMD5Table(newmd5Table);
                     }
-                    //aveResourceHasUpdateSet(ResourcesHasUpdate);
+                    //清空hasupdate的内容
                     ClearResourceHasUpdate();
                     isDoneloadDone = true;
                     Debug.LogError("下载完成..........");
@@ -1193,12 +1187,12 @@ namespace GameFrame
             while (itr.MoveNext())
             {
                 FileInfo fileInfo = itr.Current.Value;
-                string fullname = FileManager.GetFileFullName(fileInfo.fullname);
-                string directory = Path.GetDirectoryName(fullname);
-                if (!FileManager.IsDirectoryExist(directory))
-                {
-                    FileManager.CreateDirectory(directory);
-                }
+//                string fullname = FileManager.GetFileFullName(fileInfo.fullname);
+//                string directory = Path.GetDirectoryName(fullname);
+//                if (!FileManager.IsDirectoryExist(directory))
+//                {
+//                    FileManager.CreateDirectory(directory);
+//                }
                 //拷贝文件
                 yield return FileManager.StartCopyInitialFile(fileInfo.fullname);
                 currentcopycount++;
@@ -1276,7 +1270,7 @@ namespace GameFrame
                                   }
                               }
                           }
-                          Debug.LogError("下载安装包地址: "+appurl);
+//                          Debug.LogError("下载安装包地址: "+appurl);
                           //下载安装包
                           AlertContextText.text = Singleton<LauncherString>.GetInstance()
                               .GetString("Resource_DownloadNewApp");
@@ -1284,13 +1278,13 @@ namespace GameFrame
                           EventTriggerListener.Get(CancelButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
                               (a, b, c) =>
                               {
-                                  Debug.LogError("cancel"); 
+//                                  Debug.LogError("cancel"); 
                                   Application.Quit();
                               });
                           EventTriggerListener.Get(SureButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
                               (a, b, c) =>
                               {
-                                  Debug.LogError("sure"); 
+//                                  Debug.LogError("sure"); 
                                   Application.OpenURL(appurl);
                                   Application.Quit();
                               });
