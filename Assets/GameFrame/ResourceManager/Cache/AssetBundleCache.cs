@@ -14,6 +14,10 @@ namespace GameFrame
 			refCount++;
 		}
 
+		public int GetRefCount()
+		{
+			return refCount;
+		}
 		public void SubRefCount()
 		{
 			refCount--;

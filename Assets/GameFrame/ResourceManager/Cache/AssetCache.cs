@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace GameFrame
 {
+	/// <summary>
+	/// asset 资源缓存
+	/// </summary>
 	public class AssetCache : IAssetCache
 	{
 		protected string name;
@@ -19,6 +22,30 @@ namespace GameFrame
 		protected virtual float CacheDisposeTime
 		{
 			get { return 300f; }
+		}
+		private int refCount = 0;
+		public int RefCount{get { return refCount; }}
+
+		public void AddRefCount()
+		{
+			refCount++;
+		}
+
+		public int GetRefCount()
+		{
+			return refCount;
+		}
+		public void SubRefCount()
+		{
+			refCount--;
+			if (refCount < 0)
+			{
+				refCount = 0;
+			}
+			if (refCount == 0)
+			{
+				SetLastUseTime(Time.time);
+			}
 		}
 		public void SetName(string name)
 		{
@@ -43,7 +70,11 @@ namespace GameFrame
 			get
 			{
 				if (permanentMemory) return false;
-				return asset == null || Time.time - lastUseTime >= CacheDisposeTime;
+				if (refCount == 0)
+				{
+					return asset == null || Time.time - lastUseTime >= CacheDisposeTime;
+				}
+				return false;
 			}
 		}
 		public virtual void Dispose()
@@ -52,13 +83,13 @@ namespace GameFrame
 			{
 				if (!permanentMemory)//不是常驻内存 才会处理
 				{
-					if (asset is GameObject)
+//					if (asset is GameObject)
+//					{
+//						Object.DestroyImmediate(asset, true);//gameobject 
+//					}
+//					else
 					{
-						Object.DestroyImmediate(asset, true);
-					}
-					else
-					{
-						Resources.UnloadAsset(asset);
+						Resources.UnloadAsset(asset); // 普通资源类型
 					}
 					asset = null;
 				}
@@ -70,11 +101,11 @@ namespace GameFrame
 		{
 			if (asset)
 			{
-				if (asset is GameObject)
-				{
-					Object.DestroyImmediate(asset, true);
-				}
-				else
+//				if (asset is GameObject)
+//				{
+//					Object.DestroyImmediate(asset, true);
+//				}
+//				else
 				{
 					Resources.UnloadAsset(asset);
 				}

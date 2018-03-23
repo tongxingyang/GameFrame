@@ -5,27 +5,38 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
 using Object = UnityEngine.Object;
-/*
-jar:file:///data/app/com.xxx.xxx-1.apk!/assets
-           /data/app/com.xxx.xxx-1.apk
 
-
-android  Application.dataPath + "!assets"     loadfromfile loadfromfileasyn 
-ios streamingasset
- 
-android applicationstreamingasset               www
-ios  file://application.streamingassetpaths
-*/
 namespace GameFrame
 {
 	class ResourceLoadTask
 	{
+		/// <summary>
+		/// ID
+		/// </summary>
 		public uint ID;
+		/// <summary>
+		/// 谁依赖我
+		/// </summary>
 		public List<uint> ParentTaskIDs;
+		/// <summary>
+		/// 加载类型
+		/// </summary>
 		public int LoadType;
+		/// <summary>
+		/// 路径
+		/// </summary>
 		public string Path;
+		/// <summary>
+		/// 加载完成的回调
+		/// </summary>
 		public Action<Object> Actions;
+		/// <summary>
+		/// 我依赖的资源
+		/// </summary>
 		public List<string> Dependencies;
+		/// <summary>
+		/// 加载的依赖文件个数
+		/// </summary>
 		public int LoadedDependenciesCount = 0;
 
 		public void Reset()
@@ -43,12 +54,6 @@ namespace GameFrame
 	{
 		public ResourceLoadTask task;
 		public AssetBundle ab;
-	}
-
-	class CachedResource
-	{
-		public Object Obj;
-		public float LastUseTime;
 	}
 	
 	public class ResourceManager : Singleton<ResourceManager> {
@@ -68,7 +73,7 @@ namespace GameFrame
 		/// </summary>
 		private readonly ObjectPool<ResourceLoadTask> m_resourceLoadTaskPool = new ObjectPool<ResourceLoadTask>();
 		/// <summary>
-		/// 缓存超过最大加载数量的队列
+		/// 缓存加载队列
 		/// </summary>
 		private readonly Queue<ResourceLoadTask>m_delayLoadTasks = new Queue<ResourceLoadTask>();
 		/// <summary>
@@ -103,7 +108,6 @@ namespace GameFrame
 		/// 预加载文件列表
 		/// </summary>
 		private List<string> m_preLoadList = new List<string>();
-
 		public bool IsPreLoadDone { get { return m_currentPreLoadCount >= m_preLoadList.Count; } }
 		
 		private static uint m_nextTaskID;
@@ -121,9 +125,8 @@ namespace GameFrame
 				MaxTaskCount = 5;
 			}
 			LoadDependencyConfig(m_dependencyPath);
-			//LoadPreLoadList(m_preLoadListPath);
-			
-			//PreLoadResource();
+			LoadPreLoadList(m_preLoadListPath);
+			PreLoadResource();
 		}
 
 		private void LoadDependencyConfig(string path)
@@ -215,7 +218,7 @@ namespace GameFrame
 		/// </summary>
 		public void CleanCacheInterval()
 		{
-			if (Time.time > m_cleanupCacheLastTime + CleanCacheIntervalTime)
+			if (Time.time > (m_cleanupCacheLastTime + CleanCacheIntervalTime) && m_canStartCleanupCache)
 			{
 				CleanAssetCacheNow();
 			}
@@ -229,7 +232,7 @@ namespace GameFrame
 			}
 		}
 		
-		private IEnumerator ClearAssetCacheAsyn()
+		private IEnumerator ClearAssetCacheAsyn()//没有引用过期的asset缓存和assetbundle缓存
 		{
 			List<IAssetCache> caches= new List<IAssetCache>(Singleton<AssetCacheManager>.GetInstance().Caches.Values);
 			bool disposed = false;
@@ -269,7 +272,7 @@ namespace GameFrame
 		/// </summary>
 		public void CleanMemoryInterval()
 		{
-			if (Time.time > m_cleanupMemoryLastTime + CleanMemoryIntervalTime)
+			if (Time.time > (m_cleanupMemoryLastTime + CleanMemoryIntervalTime) && m_canStartCleanupMemory)
 			{
 				CleanMemoryNow();
 			}
@@ -369,7 +372,12 @@ namespace GameFrame
 			}
 			return id;
 		}
-
+		/// <summary>
+		/// 判断加载类型是不是loadtype
+		/// </summary>
+		/// <param name="task"></param>
+		/// <param name="loadType"></param>
+		/// <returns></returns>
 		private bool IsType(ResourceLoadTask task, enResourceLoadType loadType)
 		{
 			return (task.LoadType & (int)loadType) != 0;
@@ -419,6 +427,9 @@ namespace GameFrame
 			}else if (IsType(task, enResourceLoadType.LoadBundleFromFile))
 			{
 				LoadBundleFromFile(task);
+			}else if (IsType(task, enResourceLoadType.LoadBundleFromFileAsync))
+			{
+				SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(LoadBundleFromFileAsync(task));
 			}
 			else
 			{
@@ -426,25 +437,45 @@ namespace GameFrame
 				Debug.LogError("loadtype 出错");
 			}
 		}
-
+		/// <summary>
+		/// 同步加载资源
+		/// </summary>
+		/// <param name="task"></param>
 		private void LoadBundleFromFile(ResourceLoadTask task)
 		{
 			string path = Application.streamingAssetsPath + "/"+task.Path;
 			AssetBundle ab = AssetBundle.LoadFromFile(path);
 			OnBundleLoaded(task,ab);
 		}
-
-		private IEnumerator LoadBundleFromWWW(ResourceLoadTask task)
+		/// <summary>
+		/// 异步加载资源
+		/// </summary>
+		/// <param name="task"></param>
+		/// <returns></returns>
+		private IEnumerator LoadBundleFromFileAsync(ResourceLoadTask task)
 		{
+			string path = Application.streamingAssetsPath + "/"+task.Path;
+			AssetBundleCreateRequest ab = AssetBundle.LoadFromFileAsync(path);
+			yield return ab;
+			OnBundleLoaded(task,ab.assetBundle);
+		}
+		/// <summary>
+		/// www加载资源
+		/// </summary>
+		/// <param name="task"></param>
+		/// <returns></returns>
+		private IEnumerator LoadBundleFromWWW(ResourceLoadTask task)
+		{	
 			string path = PathResolver.GetBundlePath(task.Path);
-			var www = new WWW(path);
-			yield return www;
-			if (null != www.error)
+			using (WWW www = new WWW(path))
 			{
-				Debug.LogError("LoadAssetbundle 失败");
+				yield return www;
+				if (null != www.error)
+				{
+					Debug.LogError("LoadAssetbundle 失败");
+				}
+				OnBundleLoaded(task,www.assetBundle);
 			}
-			OnBundleLoaded(task,www.assetBundle);
-			www.Dispose();
 		}
 
 		private void OnBundleLoaded(ResourceLoadTask task, AssetBundle ab)
@@ -597,14 +628,20 @@ namespace GameFrame
 			task.Reset();
 			m_resourceLoadTaskPool.PutObject(task);
 		}
-
-		
-
+		/// <summary>
+		/// taskid的任务是否正在加载
+		/// </summary>
+		/// <param name="taskId"></param>
+		/// <returns></returns>
 		public bool IsLoading(uint taskId)
 		{
 			return m_loadingTasks.ContainsKey(taskId);
 		}
-
+		/// <summary>
+		/// 移除taskid的回调
+		/// </summary>
+		/// <param name="taskId"></param>
+		/// <param name="action"></param>
 		public void RemoveTask(uint taskId, Action<UnityEngine.Object> action)
 		{
 			if (IsLoading(taskId))
@@ -619,7 +656,9 @@ namespace GameFrame
 				}
 			}
 		}
-
+		/// <summary>
+		/// 释放AssetCacheManager缓存
+		/// </summary>
 		public void Release()
 		{
 			foreach (KeyValuePair<string,IAssetCache> keyValuePair in Singleton<AssetCacheManager>.GetInstance().Caches)
@@ -627,7 +666,6 @@ namespace GameFrame
 				keyValuePair.Value.ForcedDispose();
 			}
 			Singleton<AssetCacheManager>.GetInstance().Caches.Clear();
-
 		}
 	}
 }
