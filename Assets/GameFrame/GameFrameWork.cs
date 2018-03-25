@@ -1,8 +1,11 @@
 ﻿using System;
 using GameFrame;
+using UIFrameWork;
 //using LuaInterface;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using  UIFrameWork;
+using System.Collections;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
@@ -66,7 +69,14 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         //    {
 
         //    }, (int) (enResourceLoadType.Cache|enResourceLoadType.LoadBundleFromFile));
-        SceneManager.LoadScene("Login", LoadSceneMode.Single);
+        StartCoroutine(ChangeScence());
+    }
+    IEnumerator ChangeScence()
+    {
+        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("Login", LoadSceneMode.Single);
+        yield return asyncOperation;
+        Singleton<WindowManager>.Instance.InitWindowManager();
+
     }
     void PlayLogoVider(string filename,bool cancancel)
     {
