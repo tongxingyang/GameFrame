@@ -83,27 +83,27 @@ namespace UIFrameWork
     
         void Awake()
         {
-            OnAwake();
+            OnWindowAwake();
         }
     
         void Start()
         {
-            OnStart();
+            OnWindowStart();
         }
     
         void Update()
         {
-            OnUpdate(Time.deltaTime);
+            OnWindowUpdate(Time.deltaTime);
         }
     
         void OnDestroy()
         {
-            Destory();
+            OnWindowDestory();
         }
-        protected virtual void OnAwake(){}
-        protected virtual void OnStart(){}
-        protected virtual void OnUpdate(float t){}
-        protected virtual void Destory(){}
+        protected virtual void OnWindowAwake(){}
+        protected virtual void OnWindowStart(){}
+        protected virtual void OnWindowUpdate(float t){}
+        protected virtual void OnWindowDestory(){}
         #endregion
     
         #region 自定义界面相关事件
@@ -120,13 +120,21 @@ namespace UIFrameWork
                 return;
             }
             this._CacheGameObject.SetActive(true);
+            PlayEnterAnim();
+            PlayEnterMusic();
             _isActivied = true;
             OnEnter(context);
         }
     
         public void Exit(WindowContext context = null)
         {
+            if (this._isActivied == false)
+            {
+                return;
+            }
             OnExit(context);
+            PlayExitAnim();
+            PlayExitMusic();
             this._CacheGameObject.SetActive(false);
             this._isActivied = false;
         }
@@ -163,7 +171,7 @@ namespace UIFrameWork
     
         public virtual void PlayEnterAnim(){}
         public virtual void PlayExitAnim(){}
-        public virtual void PlayOpenMusic(){}
+        public virtual void PlayEnterMusic(){}
         public virtual void PlayExitMusic(){}
     
         #endregion
@@ -176,7 +184,7 @@ namespace UIFrameWork
             OnColliderCallBack();
         }
         /// <summary>
-        /// 如果需要自定义背景collider的处理时间 重写此方法即可
+        /// 如果需要自定义背景collider的处理事件 重写此方法即可
         /// </summary>
         protected  virtual void OnColliderCallBack(){}
     }

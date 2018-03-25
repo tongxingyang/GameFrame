@@ -832,7 +832,12 @@ public class ManagedResource : MonoBehaviour
         {
             callback(t);
         }
-    }   
+    }
+    public T LoadResource<T>(string name) where T : Object
+    {
+        T t = Resources.Load<T>(name);
+        return t;
+    }
     #endregion
 }
 

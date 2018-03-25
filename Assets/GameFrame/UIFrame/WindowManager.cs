@@ -74,12 +74,12 @@ namespace UIFrameWork
 			GameObject evebtRoot = new GameObject("EventSystem",typeof(EventSystem),typeof(StandaloneInputModule));
 			evebtRoot.transform.localPosition = Vector3.zero;
 			evebtRoot.transform.localScale = Vector3.one;
-			
-			//mUICamera = new GameObject("Camera",typeof(Camera));
-			//mUICamera.transform.localPosition = Vector3.zero;
-			//mUICamera.transform.localScale = Vector3.one;
-			
-			mainRoot = new GameObject("main");
+
+            mUICamera = new GameObject("Camera", typeof(Camera));
+            mUICamera.transform.localPosition = Vector3.zero;
+            mUICamera.transform.localScale = Vector3.one;
+
+            mainRoot = new GameObject("main");
 			mainRoot.transform.parent = uiRoot.transform;
 			mainRoot.transform.localPosition = Vector3.one;
 			mainRoot.transform.localScale = Vector3.zero;
@@ -115,7 +115,7 @@ namespace UIFrameWork
 		{
 			if (mUICamera == null)
 			{
-				mUICamera = new GameObject("Camear",typeof(Camera));
+				mUICamera = new GameObject("Camera",typeof(Camera));
 				mUICamera.transform.localPosition= Vector3.zero;
 				mUICamera.transform.localScale = Vector3.one;
 			}
@@ -127,9 +127,6 @@ namespace UIFrameWork
 			{
 			 	case ShowMode.Fixed:
 					 return fixedRoot;
-			 		break;
-			 	case ShowMode.Follow:
-					 return followRoot;
 			 		break;
 			 	case ShowMode.Main:
 					 return mainRoot;
@@ -256,8 +253,8 @@ namespace UIFrameWork
 
 		public WindowBase CreateWindowInstance(WindowInfo windowInfo)
 		{
-			//TODO 以后会写一个资源加载的脚本 暂时先这样
-			var prefab = Resources.Load<GameObject>(windowInfo.PerfabPath);
+			
+			var prefab = Singleton<ResourceManager>.Instance.LoadResource<GameObject>(windowInfo.PerfabPath);
 			var go = GameObject.Instantiate(prefab);
 			if (go == null)
 			{
@@ -265,7 +262,6 @@ namespace UIFrameWork
 				return null;
 			}
 			go.name = windowInfo.PerfabPath.Substring(windowInfo.PerfabPath.LastIndexOf('/') + 1);
-			//TODO require lua脚本 
 			WindowBase windowBase = go.GetComponent<WindowBase>();
 			if (windowBase == null)
 			{
@@ -377,10 +373,6 @@ namespace UIFrameWork
 				windowStackData.WindowBase = sscript;
 				windowStackDatas.Push(windowStackData);
 			}
-//			if (windowInfo.ShowMode == ShowMode.PopUp)
-//			{
-//				sscript.PrevousWindowInfo = 
-//			}
 			return sscript;
 		}
 
@@ -408,9 +400,12 @@ namespace UIFrameWork
 						case OpenAction.DoNothing:
 							break;
 						case OpenAction.HideAll:
-							break;
+						    for (int i = 0; i < windowStackData.HistoryWindowBases.Count; i++)
+						    {
+						        PullFromCache(windowStackData.HistoryWindowBases[i].windowInfo, false, null);
+						    }
+                            break;
 						case OpenAction.HideNormalAndMain:
-							//将隐藏的界面显示出来
 							for (int i = 0; i < windowStackData.HistoryWindowBases.Count; i++)
 							{
 								PullFromCache(windowStackData.HistoryWindowBases[i].windowInfo, false, null);

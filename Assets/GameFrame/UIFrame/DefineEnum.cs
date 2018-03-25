@@ -25,10 +25,7 @@ namespace UIFrameWork
         /// 弹出界面 信息对话框
         /// </summary>
         PopUp,
-        /// <summary>
-        /// 跟随目标
-        /// </summary>
-        Follow,
+
     }
     /// <summary>
     /// 界面打开时的行为
