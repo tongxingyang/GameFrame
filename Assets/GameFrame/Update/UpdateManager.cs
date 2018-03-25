@@ -1242,9 +1242,11 @@ namespace GameFrame
 #if UNITY_ANDROID
                       int channelId = 9;
 #elif UNITY_IPHONE
-                      int channelId = 9;    
+                      int channelId = 9; 
+#elif UNITY_EDITOR_WIN
+                      int channelId = 9;  
 #endif
-                      using (var www = new WWW(Singleton<ServerConfig>.GetInstance().UpdateAppUrl))
+                    using (var www = new WWW(Singleton<ServerConfig>.GetInstance().UpdateAppUrl))
                       {
                           yield return www;
                           if (www.error != null)

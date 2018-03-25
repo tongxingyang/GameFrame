@@ -1,7 +1,8 @@
 ﻿using System;
 using GameFrame;
-using LuaInterface;
+//using LuaInterface;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
@@ -35,13 +36,13 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void Start()
     {
-        #if !UNITY_EDITOR || !UNITY_EDITOR_OSX
+        #if UNITY_ANDROID || UNITY_IPHONE
         PlayLogoVider("logo.mp4",false);
         Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
         #endif
-        #if UNITY_EDITOR_OSX
+        #if UNITY_EDITOR_OSX || UNITY_EDITOR_WIN
         UpdateCallback(true);
-#endif
+        #endif
     }
 
     private void UpdateCallback(bool isok)
@@ -49,34 +50,23 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         IsUpdateDone = isok;
         //加载Lua 虚拟机 todo
         //初始化resources manager todo
-        LuaState lua = new LuaState();
-        lua.Start();
-        string hello =
-                                @"                
-                                    print('hello tolua#')                                  
-                                ";
-        lua.DoString(hello);
+        //LuaState lua = new LuaState();
+        //lua.Start();
+        //string hello =
+        //                        @"                
+        //                            print('hello tolua#')                                  
+        //                        ";
+        //lua.DoString(hello);
         
         Debug.LogError("加载Lua虚拟机 初始化资源manager");
         Debug.LogError("开始游戏");
 
-        Singleton<ResourceManager>.GetInstance().AddTask("sfx/s_qz_yzb_01.bundle",
-            (o) =>
-            {
-                GameObject gameObject = Instantiate(o) as GameObject;
-                gameObject.name = "hhhhhhh";
-                gameObject.SetActive(true);
-//                Singleton<ResourceManager>.GetInstance().AddTask("shaders/madfinger-3layers-alphablend.bundle", (d) =>
-//                {
-//                    Debug.LogError("----------------------------------------------------------------------- ");
-//                    Debug.LogError("type of "+d.GetType().ToString());
-//                    
-//                    //GameObject gameObjedct = Instantiate(d) as GameObject;
-//                    //gameObjedct.name = "sssssss";
-//                    //gameObjedct.SetActive(true);
-//                }, (int) (enResourceLoadType.Cache | enResourceLoadType.LoadBundleFromFile));
-            }, (int) (enResourceLoadType.Cache|enResourceLoadType.LoadBundleFromFile));
+        //Singleton<ResourceManager>.GetInstance().AddTask("sfx/s_qz_yzb_01.bundle",
+        //    (o) =>
+        //    {
 
+        //    }, (int) (enResourceLoadType.Cache|enResourceLoadType.LoadBundleFromFile));
+        SceneManager.LoadScene("Login", LoadSceneMode.Single);
     }
     void PlayLogoVider(string filename,bool cancancel)
     {
