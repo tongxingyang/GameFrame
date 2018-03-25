@@ -69,14 +69,15 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         //    {
 
         //    }, (int) (enResourceLoadType.Cache|enResourceLoadType.LoadBundleFromFile));
-        //StartCoroutine(ChangeScence());
+        StartCoroutine(ChangeScence());
     }
     IEnumerator ChangeScence()
     {
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("Login", LoadSceneMode.Single);
         yield return asyncOperation;
         Singleton<WindowManager>.Instance.InitWindowManager();
-
+        Singleton<WindowManager>.Instance.OpenWindow(new WindowInfo(WindowType.LoginAndRegister, ShowMode.Normal,
+            OpenAction.DoNothing, ColliderMode.Node));
     }
     void PlayLogoVider(string filename,bool cancancel)
     {

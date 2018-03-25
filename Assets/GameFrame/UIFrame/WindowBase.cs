@@ -118,7 +118,7 @@ using UnityEngine;
             {
                 return;
             }
-            this._CacheGameObject.SetActive(true);
+            this.CacheGameObject.SetActive(true);
             PlayEnterAnim();
             PlayEnterMusic();
             _isActivied = true;
@@ -134,7 +134,7 @@ using UnityEngine;
             OnExit(context);
             PlayExitAnim();
             PlayExitMusic();
-            this._CacheGameObject.SetActive(false);
+            this.CacheGameObject.SetActive(false);
             this._isActivied = false;
         }
     
@@ -144,7 +144,7 @@ using UnityEngine;
             {
                 return;
             }
-            this._CacheGameObject.SetActive(false);
+            this.CacheGameObject.SetActive(false);
             this._isActivied = false;
             OnPause(context);
         }
@@ -155,7 +155,7 @@ using UnityEngine;
             {
                 return;
             }
-            this._CacheGameObject.SetActive(true);
+            this.CacheGameObject.SetActive(true);
             this._isActivied = true;
             OnResume(context);
         }

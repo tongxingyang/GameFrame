@@ -76,30 +76,31 @@ public class WindowManager:Singleton<WindowManager>
         mUICamera.transform.localPosition = Vector3.zero;
         mUICamera.transform.localScale = Vector3.one;
 
-        mainRoot = new GameObject("main");
+        mainRoot = new GameObject("main", typeof(RectTransform));
         mainRoot.transform.parent = uiRoot.transform;
         mainRoot.transform.localPosition = Vector3.zero;
         mainRoot.transform.localScale = Vector3.one;
-
-        fixedRoot = new GameObject("fixed");
+        (mainRoot.transform as RectTransform).sizeDelta = new Vector2(1280,720);
+        fixedRoot = new GameObject("fixed", typeof(RectTransform));
         fixedRoot.transform.parent = uiRoot.transform;
         fixedRoot.transform.localPosition = Vector3.zero;
         fixedRoot.transform.localScale = Vector3.one;
-
-        normalRoot = new GameObject("normal");
+        (fixedRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
+        normalRoot = new GameObject("normal", typeof(RectTransform));
         normalRoot.transform.parent = uiRoot.transform;
         normalRoot.transform.localPosition = Vector3.zero;
         normalRoot.transform.localScale = Vector3.one;
-
-        popupRoot = new GameObject("popup");
+        (normalRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
+        popupRoot = new GameObject("popup", typeof(RectTransform));
         popupRoot.transform.parent = uiRoot.transform;
         popupRoot.transform.localPosition = Vector3.zero;
         popupRoot.transform.localScale = Vector3.one;
-
-        cacheRoot = new GameObject("cache");
+        (popupRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
+        cacheRoot = new GameObject("cache", typeof(RectTransform));
         cacheRoot.transform.parent = uiRoot.transform;
         cacheRoot.transform.localPosition = Vector3.zero;
         cacheRoot.transform.localScale = Vector3.one;
+        (cacheRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
     }
 
     public void RemoveCamera()
@@ -268,6 +269,8 @@ public class WindowManager:Singleton<WindowManager>
         var rectTran = go.GetComponent<RectTransform>();
         rectTran.SetParent(modeRoot.transform);
         rectTran.transform.localPosition = Vector3.zero;
+        rectTran.offsetMax = Vector2.zero;
+        rectTran.offsetMin = Vector2.zero;
         MakeWindowCollider(windowInfo, go);
         windowBase.Initantiate();
         return windowBase;
@@ -360,6 +363,10 @@ public class WindowManager:Singleton<WindowManager>
         if (windowInfo.ShowMode == ShowMode.Normal)
         {
             List<WindowBase> history = GetAffectWindowList(windowInfo);
+            if (history == null)
+            {
+                history = new List<WindowBase>();
+            }
             for (int i = 0; i < history.Count; i++)
             {
                 PushToCache(history[i], false);

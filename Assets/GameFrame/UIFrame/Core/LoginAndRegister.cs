@@ -1,3 +1,4 @@
 ﻿public class LoginAndRegister:WindowBase
 {
+
 }
