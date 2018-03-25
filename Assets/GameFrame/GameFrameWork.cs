@@ -69,7 +69,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         //    {
 
         //    }, (int) (enResourceLoadType.Cache|enResourceLoadType.LoadBundleFromFile));
-        StartCoroutine(ChangeScence());
+        //StartCoroutine(ChangeScence());
     }
     IEnumerator ChangeScence()
     {

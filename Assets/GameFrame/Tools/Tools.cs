@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UIFrameWork;
 using UnityEngine;
 
-namespace UIFrameWork
-{
+
 	public class Tools
 	{
 
@@ -14,8 +14,8 @@ namespace UIFrameWork
 			Type ret = null;
 			switch (type)
 			{
-				case WindowType.Login:
-					//ret = typeof("脚本名");
+				case WindowType.LoginAndRegister:
+				    ret = typeof(LoginAndRegister);
 					break;
 			}
 			return ret;
@@ -26,11 +26,12 @@ namespace UIFrameWork
 			string _path = String.Empty;
 			switch (type)
 			{
-				case WindowType.Login:
-					_path = UI_PREFABPATH + "/Login";
+				case WindowType.LoginAndRegister:
+					//_path = UI_PREFABPATH + "/Login";
+					_path = "LoginAndRegister";
 					break;
 			}
 			return _path;
 		}
 	}
-}
+

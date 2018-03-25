@@ -60,7 +60,7 @@ public class WindowManager:Singleton<WindowManager>
 
         var scaler = uiRoot.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1366, 768);
+        scaler.referenceResolution = new Vector2(1280, 720);
         scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         scaler.matchWidthOrHeight = 0;
 

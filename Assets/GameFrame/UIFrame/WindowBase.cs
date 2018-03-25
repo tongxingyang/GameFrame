@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using UIFrameWork;
 using UnityEngine;
 
-namespace UIFrameWork
-{
+
     
-    public class /*abstract*/ WindowBase : MonoBehaviour {
+    public class  WindowBase : MonoBehaviour {
         #region 缓存当前组件的gameobject 与 transform
     
         private Transform _CacheTransform;
@@ -189,4 +188,4 @@ namespace UIFrameWork
         protected  virtual void OnColliderCallBack(){}
     }
 
-}
+

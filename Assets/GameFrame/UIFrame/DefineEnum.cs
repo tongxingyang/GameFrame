@@ -75,8 +75,7 @@ namespace UIFrameWork
     }
     public enum WindowType
     {
-        Login,
-        Register,
+        LoginAndRegister,
         Mail,
         Rank,
     }
