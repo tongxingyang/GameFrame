@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace UIFrameWork
 {
 
-	public class WindowInfo
+	public struct WindowInfo
 	{
 		public WindowType WindowType { get; private set; }
 		public string PerfabPath { get; private set; }
@@ -15,7 +15,7 @@ namespace UIFrameWork
 		public ColliderMode ColliderMode { get; private set; }
 
 		public WindowInfo( WindowType windowType,ShowMode showMode, OpenAction openAction,
-			ColliderMode colliderMode)
+			ColliderMode colliderMode) : this()
 		{
 			PerfabPath = Tools.GetPrefabPathByType(windowType);
 			Script = Tools.GetUIScripeByType(windowType);
@@ -23,6 +23,7 @@ namespace UIFrameWork
 			ShowMode = showMode;
 			OpenAction = openAction;
 			ColliderMode = colliderMode;
+		    Name = windowType.ToString();
 		}
 	
 	}

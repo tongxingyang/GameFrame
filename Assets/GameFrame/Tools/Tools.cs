@@ -17,7 +17,11 @@ using UnityEngine;
 				case WindowType.LoginAndRegister:
 				    ret = typeof(LoginAndRegister);
 					break;
-			}
+                case WindowType.GameInfo:
+                ret = typeof(GameInfo);
+                break;
+
+        }
 			return ret;
 		}
 
@@ -30,7 +34,11 @@ using UnityEngine;
 					//_path = UI_PREFABPATH + "/Login";
 					_path = "LoginAndRegister";
 					break;
-			}
+			    case WindowType.GameInfo:
+			        //_path = UI_PREFABPATH + "/Login";
+			        _path = "GameInfo";
+			        break;
+        }
 			return _path;
 		}
 	}

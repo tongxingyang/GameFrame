@@ -33,9 +33,9 @@ using UnityEngine;
             }
         }
 
-        private WindowInfo _windowInfo = null;
+        private WindowInfo _windowInfo ;
         public WindowInfo windowInfo { set { _windowInfo = value; } get { return _windowInfo; } }
-        private WindowInfo prevousWindowInfo = null;
+        private WindowInfo prevousWindowInfo;
 
         public WindowInfo PrevousWindowInfo
         {
@@ -109,6 +109,7 @@ using UnityEngine;
     
         public void Initantiate()
         {
+            State = UIState.Init;
             OnInitantiate();
         }
     
@@ -118,6 +119,7 @@ using UnityEngine;
             {
                 return;
             }
+            State = UIState.Enter;
             this.CacheGameObject.SetActive(true);
             PlayEnterAnim();
             PlayEnterMusic();
@@ -131,6 +133,7 @@ using UnityEngine;
             {
                 return;
             }
+            State = UIState.Exit;
             OnExit(context);
             PlayExitAnim();
             PlayExitMusic();
@@ -144,6 +147,7 @@ using UnityEngine;
             {
                 return;
             }
+            State = UIState.Pause;
             this.CacheGameObject.SetActive(false);
             this._isActivied = false;
             OnPause(context);
@@ -155,6 +159,7 @@ using UnityEngine;
             {
                 return;
             }
+            State = UIState.Resume;
             this.CacheGameObject.SetActive(true);
             this._isActivied = true;
             OnResume(context);

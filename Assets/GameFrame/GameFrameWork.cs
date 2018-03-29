@@ -4,7 +4,6 @@ using UIFrameWork;
 //using LuaInterface;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using  UIFrameWork;
 using System.Collections;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
@@ -61,8 +60,8 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         //                        ";
         //lua.DoString(hello);
         
-        Debug.LogError("加载Lua虚拟机 初始化资源manager");
-        Debug.LogError("开始游戏");
+        Debug.Log("加载Lua虚拟机 初始化资源manager");
+        Debug.Log("开始游戏");
 
         //Singleton<ResourceManager>.GetInstance().AddTask("sfx/s_qz_yzb_01.bundle",
         //    (o) =>

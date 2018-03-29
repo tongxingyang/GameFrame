@@ -76,6 +76,7 @@ namespace UIFrameWork
     public enum WindowType
     {
         LoginAndRegister,
+        GameInfo,
         Mail,
         Rank,
     }

@@ -11,7 +11,7 @@ public class WindowManager:Singleton<WindowManager>
     private Dictionary<WindowInfo, WindowBase> cacheWindowDic = new Dictionary<WindowInfo, WindowBase>();
     private Stack<WindowStackData> windowStackDatas = new Stack<WindowStackData>();
     private GameObject mUICamera;
-    private WindowInfo _mainWindowInfo = null;
+    private WindowInfo _mainWindowInfo;
     private GameObject normalRoot = null;
     private GameObject mainRoot = null;
     private GameObject fixedRoot = null;
@@ -77,27 +77,27 @@ public class WindowManager:Singleton<WindowManager>
         mUICamera.transform.localScale = Vector3.one;
 
         mainRoot = new GameObject("main", typeof(RectTransform));
-        mainRoot.transform.parent = uiRoot.transform;
+        mainRoot.transform.SetParent(uiRoot.transform);
         mainRoot.transform.localPosition = Vector3.zero;
         mainRoot.transform.localScale = Vector3.one;
         (mainRoot.transform as RectTransform).sizeDelta = new Vector2(1280,720);
         fixedRoot = new GameObject("fixed", typeof(RectTransform));
-        fixedRoot.transform.parent = uiRoot.transform;
+        fixedRoot.transform.SetParent(uiRoot.transform);
         fixedRoot.transform.localPosition = Vector3.zero;
         fixedRoot.transform.localScale = Vector3.one;
         (fixedRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
         normalRoot = new GameObject("normal", typeof(RectTransform));
-        normalRoot.transform.parent = uiRoot.transform;
+        normalRoot.transform.SetParent(uiRoot.transform);
         normalRoot.transform.localPosition = Vector3.zero;
         normalRoot.transform.localScale = Vector3.one;
         (normalRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
         popupRoot = new GameObject("popup", typeof(RectTransform));
-        popupRoot.transform.parent = uiRoot.transform;
+        popupRoot.transform.SetParent(uiRoot.transform);
         popupRoot.transform.localPosition = Vector3.zero;
         popupRoot.transform.localScale = Vector3.one;
         (popupRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
         cacheRoot = new GameObject("cache", typeof(RectTransform));
-        cacheRoot.transform.parent = uiRoot.transform;
+        cacheRoot.transform.SetParent(uiRoot.transform);
         cacheRoot.transform.localPosition = Vector3.zero;
         cacheRoot.transform.localScale = Vector3.one;
         (cacheRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
@@ -155,7 +155,7 @@ public class WindowManager:Singleton<WindowManager>
                 list = new List<WindowBase>();
                 foreach (var windowBase in showWindowDic)//windowinfo windowbase
                 {
-                    if (windowBase.Key == windowInfo)
+                    if (windowBase.Key.WindowType == windowInfo.WindowType)// todo
                     {
                         continue;
                     }
@@ -171,7 +171,7 @@ public class WindowManager:Singleton<WindowManager>
                 list = new List<WindowBase>();
                 foreach (var basewindow in showWindowDic)
                 {
-                    if (basewindow.Key == windowInfo)
+                    if (basewindow.Key.WindowType == windowInfo.WindowType)
                     {
                         continue;
                     }
@@ -271,8 +271,10 @@ public class WindowManager:Singleton<WindowManager>
         rectTran.transform.localPosition = Vector3.zero;
         rectTran.offsetMax = Vector2.zero;
         rectTran.offsetMin = Vector2.zero;
+        rectTran.localScale = Vector3.one;
         MakeWindowCollider(windowInfo, go);
         windowBase.Initantiate();
+        windowBase.windowInfo = windowInfo;
         return windowBase;
     }
 
@@ -301,6 +303,7 @@ public class WindowManager:Singleton<WindowManager>
         {
             windowBase = cacheWindowDic[windowInfo];
             cacheWindowDic.Remove(windowInfo);
+            windowBase.windowInfo = windowInfo;
             showWindowDic.Add(windowInfo, windowBase);
             var root = GetModeRoot(windowInfo.ShowMode);
             var rectTran = windowBase.GetComponent<RectTransform>();
@@ -393,7 +396,7 @@ public class WindowManager:Singleton<WindowManager>
             if (windowStackDatas.Count > 0)
             {
                 WindowStackData windowStackData = windowStackDatas.Peek();
-                if (windowStackData.WindowInfo != windowInfo)
+                if (windowStackData.WindowInfo.WindowType != windowInfo.WindowType)//todo
                 {
                     Debug.LogError("关闭出错");
                     return;
