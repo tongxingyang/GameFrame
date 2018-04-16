@@ -79,5 +79,6 @@ namespace UIFrameWork
         GameInfo,
         Mail,
         Rank,
+        MainUI,
     }
 }

@@ -29,7 +29,7 @@ public class BootUp : MonoBehaviour
         Singleton<TimeManager>.GetInstance().AddTimer(2000, 10, TimeManager.enTimeType.NoTimeScale, (i, j) =>
         {
             Debug.LogError("aaaaaaaaa " + i + "   " + j[0]);
-        }, 10);
+        });
     }
     void TestEventManager1(GameFrame.Event @event)
     {

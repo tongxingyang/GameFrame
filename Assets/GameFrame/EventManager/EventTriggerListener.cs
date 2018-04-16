@@ -133,7 +133,7 @@ namespace UIFrameWork
         {
             if (onClick != null)
             {
-                onClick.CallEventHandle(this.gameObject,eventData);
+                onClick.CallEventHandle(this.gameObject, eventData);
             }
         }
 

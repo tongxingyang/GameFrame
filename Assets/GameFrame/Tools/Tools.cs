@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using ProtoBuf;
 using UIFrameWork;
 using UnityEngine;
 
@@ -18,8 +20,11 @@ using UnityEngine;
 				    ret = typeof(LoginAndRegister);
 					break;
                 case WindowType.GameInfo:
-                ret = typeof(GameInfo);
-                break;
+                    ret = typeof(GameInfo);
+                    break;
+			    case WindowType.MainUI:
+			        ret = typeof(MainUI);
+			        break;
 
         }
 			return ret;
@@ -38,8 +43,12 @@ using UnityEngine;
 			        //_path = UI_PREFABPATH + "/Login";
 			        _path = "GameInfo";
 			        break;
+			    case WindowType.MainUI:
+			        //_path = UI_PREFABPATH + "/Login";
+			        _path = "MainUI";
+			        break;
         }
 			return _path;
 		}
-	}
+}
 

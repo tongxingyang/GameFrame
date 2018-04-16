@@ -9,6 +9,7 @@ public class WindowManager:Singleton<WindowManager>
 {
     private Dictionary<WindowInfo, WindowBase> showWindowDic = new Dictionary<WindowInfo, WindowBase>();
     private Dictionary<WindowInfo, WindowBase> cacheWindowDic = new Dictionary<WindowInfo, WindowBase>();
+
     private Stack<WindowStackData> windowStackDatas = new Stack<WindowStackData>();
     private GameObject mUICamera;
     private WindowInfo _mainWindowInfo;
@@ -22,6 +23,29 @@ public class WindowManager:Singleton<WindowManager>
         get { return _mainWindowInfo; }
     }
 
+    public WindowBase GetwWindowBase(WindowType windowType,bool isfromcacle = false)
+    {
+        WindowBase ret = null;
+        foreach (KeyValuePair<WindowInfo, WindowBase> keyValuePair in showWindowDic)
+        {
+            if (windowType == keyValuePair.Key.WindowType)
+            {
+                ret = keyValuePair.Value;
+                break;
+            }
+        }
+        if (ret == null && isfromcacle == true)
+        {
+            foreach (KeyValuePair<WindowInfo, WindowBase> keyValuePair in cacheWindowDic)
+            {
+                if (windowType == keyValuePair.Key.WindowType)
+                {
+                    ret = keyValuePair.Value;
+                }
+            }
+        }
+        return ret;
+    }
     public void Clearup()
     {
         foreach (var wnd in showWindowDic)

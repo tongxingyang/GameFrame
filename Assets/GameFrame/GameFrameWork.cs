@@ -115,6 +115,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<TimeManager>.GetInstance();
         Singleton<EventManager>.GetInstance();
         Singleton<ResourceManager>.GetInstance();
+        Singleton<PhotonManager>.GetInstance();
     }
 
     void Update()
@@ -125,12 +126,12 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
             Singleton<UpdateManager>.GetInstance().Update();
         }
         Singleton<ResourceManager>.GetInstance().Update();
-        
+        Singleton<PhotonManager>.GetInstance().Update();
     }
 
     private void OnDestroy()
     {
-
+        Singleton<PhotonManager>.GetInstance().OnDestory();
     }
     private void OnApplicationPause(bool pauseStatus)
     {
@@ -144,6 +145,6 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     private void OnApplicationQuit()
     {
-
+        Singleton<PhotonManager>.GetInstance().OnDestory();
     }
 }

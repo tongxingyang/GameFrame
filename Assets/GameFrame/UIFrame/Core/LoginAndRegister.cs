@@ -1,4 +1,7 @@
-﻿using GameFrame;
+﻿using System;
+using Common;
+using Common.OperationCode;
+using GameFrame;
 using UIFrameWork;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,15 +48,105 @@ public class LoginAndRegister : WindowBase
         cancleButton = registerGameObject.transform.Find("ButtonCancel").GetComponent<Button>();
 
         loginGameObject.SetActive(true); registerGameObject.SetActive(false);
+        EventTriggerListener.Get(loginButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick, (a, b, c) =>
+        {
+            OnLogin();
+        });
+        EventTriggerListener.Get(registerButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick, (a, b, c) =>
+        {
+            OnLoginRegister();
+        });
+        EventTriggerListener.Get(regButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
+            (a, b, c) =>
+            {
+                OnRegister();
+
+            });
+        EventTriggerListener.Get(cancleButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
+            (a, b, c) =>
+            {
+                OnCancle();
+            });
     }
 
+    public void SetLoginButton(bool iscanuse)
+    {
+        loginButton.interactable = iscanuse;
+    }
+    public void SetRegisterButton(bool iscanuse)
+    {
+        registerButton.interactable = iscanuse;
+    }
     private void OnLogin()
     {
-        
+        if (usernameField.text == string.Empty)
+        {
+            Debug.Log("请输入用户名");return;
+        }
+        if (passworldField.text == string.Empty)
+        {
+            Debug.Log("请输入密码");return;
+        }
+       
+        GameData.AccountData.AccountName = usernameField.text;
+        GameData.AccountData.Passworld = passworldField.text;
+        GameData.AccountData.RegisterTime = DateTime.Today;
+        GameData.AccountData.ServerID = 0;
+        //禁用掉按钮的点击事件
+        SetLoginButton(false);
+        //向服务器发送数据模型验证账户是否存在
+        Singleton<PhotonManager>.Instance.SendReguest((byte)OperationCode.Account, (byte)AccountOpCode.Login, CommonTool.Serialize<AccountModel>(GameData.AccountData));
     }
 
-protected override void OnEnter(WindowContext context)
+    private void OnLoginRegister()
     {
-        base.OnEnter(context);
+        if (registerusernameField.text == string.Empty)
+        {
+            Debug.Log("用户名不能为空"); return;
+        }
+        if (registerpassworld1Field.text == string.Empty)
+        {
+            Debug.Log("密码不弄为空"); return;
+        }
+        if (registerpassworld2Field.text == string.Empty)
+        {
+            Debug.Log("请再次输入密码"); return;
+        }
+        if (registerpassworld1Field.text != registerpassworld2Field.text)
+        {
+            Debug.Log("两次输入的密码不相同"); return;
+        }
+        SetRegisterButton(false);
+        GameData.AccountData.AccountName = registerusernameField.text;
+        GameData.AccountData.Passworld = registerpassworld1Field.text;
+        GameData.AccountData.RegisterTime = DateTime.Today;
+        GameData.AccountData.ServerID = 0;
+        //禁用掉按钮的点击事件
+        SetLoginButton(false);
+        //向服务器发送数据模型验证账户是否存在
+        Singleton<PhotonManager>.Instance.SendReguest((byte)OperationCode.Account, (byte)AccountOpCode.Register, CommonTool.Serialize<AccountModel>(GameData.AccountData));
+
+    }
+
+    private void OnRegister()
+    {
+        registerGameObject.gameObject.SetActive(true);
+        registerusernameField.text = String.Empty;
+        registerpassworld1Field.text = string.Empty;
+        registerpassworld2Field.text = string.Empty;
+        loginGameObject.SetActive(false);
+        usernameField.text = string.Empty;
+        passworldField.text = string.Empty;
+    }
+
+    private void OnCancle()
+    {
+        registerGameObject.gameObject.SetActive(false);
+        registerusernameField.text = String.Empty;
+        registerpassworld1Field.text = string.Empty;
+        registerpassworld2Field.text = string.Empty;
+        loginGameObject.SetActive(true);
+        usernameField.text = string.Empty;
+        passworldField.text = string.Empty;
     }
 }
