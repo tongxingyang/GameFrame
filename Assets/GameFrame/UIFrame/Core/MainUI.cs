@@ -13,7 +13,9 @@ public class MainUI : WindowBase
     private Transform HeadTransform;
     private InputField CreatePlayerName;
     private Button CreatePlayerInfoButton;
-    
+
+
+
     // ping 
     private Ping ping;
 
@@ -81,6 +83,7 @@ public class MainUI : WindowBase
         MialButton = HeadTransform.Find("MailButton").GetComponent<Button>();
         PingText = HeadTransform.Find("Ping/Text").GetComponent<Text>();
         FriendButton = HeadTransform.Find("Friend").GetComponent<Button>();
+        
         #endregion
         //ping 
         ip = Singleton<PhotonManager>.Instance.GetServerIP();
@@ -168,5 +171,14 @@ public class MainUI : WindowBase
         EXPSlider.value = GameData.PlayerInfoModel.EXP / (float)100;
         EXPText.text = GameData.PlayerInfoModel.EXP.ToString();
         CoinNumText.text = GameData.PlayerInfoModel.CoinNum.ToString();
+        //绑定点击事件
+        EventTriggerListener.Get(FriendButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
+            (a, b, c) =>
+            {
+                //发送获取好友列表的请求 在返回之后在打开UI
+                Singleton<PhotonManager>.GetInstance().SendReguest((byte)OperationCode.PlayerInfo,(byte)PlayerInfoOpCode.GetFriend,GameData.PlayerInfoModel.ID);
+               // WindowManager.GetInstance().OpenWindow(new WindowInfo(WindowType.FriendUI, ShowMode.Normal,
+               //     OpenAction.DoNothing, ColliderMode.Node));
+            });
     }
 }

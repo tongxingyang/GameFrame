@@ -80,5 +80,6 @@ namespace UIFrameWork
         Mail,
         Rank,
         MainUI,
+        FriendUI,
     }
 }

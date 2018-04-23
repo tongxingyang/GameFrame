@@ -1,4 +1,5 @@
-﻿using Common;
+﻿using System.Collections.Generic;
+using Common;
 using Common.OperationCode;
 using ExitGames.Client.Photon;
 using GameFrame;
@@ -18,9 +19,33 @@ public  class PlayerInfoReceiver:ReceiverInterface
             case (byte)PlayerInfoOpCode.Create:
                 Create(response);
                 break;
+            case (byte)PlayerInfoOpCode.GetFriend:
+                GetFriends(response);
+                break;
         }
     }
 
+    private void GetFriends(OperationResponse response)
+    {
+        //error
+        if (response.ReturnCode == 0)
+        {
+            Debug.Log(response.DebugMessage);
+        }else if (response.ReturnCode == 1)
+        {
+            //ok
+            //打开面板
+            List<FriendModel> list = CommonTool.Deserialize<List<FriendModel>>((byte[])response.Parameters[1]);
+            List<FriendModel> addlist = CommonTool.Deserialize<List<FriendModel>>((byte[])response.Parameters[2]);
+            GameData.FriendList = list;
+            GameData.AddFriendList = addlist;
+
+            WindowManager.GetInstance().OpenWindow(new WindowInfo(WindowType.FriendUI, ShowMode.Normal,
+                OpenAction.DoNothing, ColliderMode.Node),new FriendsContent(list,addlist));
+            //刷新ui显示
+            
+        }
+    }
     private void GetInfo(OperationResponse response)
     {
         if (response.ReturnCode == 0)

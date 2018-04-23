@@ -25,7 +25,9 @@ using UnityEngine;
 			    case WindowType.MainUI:
 			        ret = typeof(MainUI);
 			        break;
-
+                case WindowType.FriendUI:
+                    ret = typeof(FriendUI);
+                    break;
         }
 			return ret;
 		}
@@ -46,6 +48,10 @@ using UnityEngine;
 			    case WindowType.MainUI:
 			        //_path = UI_PREFABPATH + "/Login";
 			        _path = "MainUI";
+			        break;
+			    case WindowType.FriendUI:
+			        //_path = UI_PREFABPATH + "/Login";
+			        _path = "FriendUI";
 			        break;
         }
 			return _path;
