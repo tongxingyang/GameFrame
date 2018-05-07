@@ -164,19 +164,19 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         #elif UNITY_IPHONE
         try
         {
+                string version = UnityEngine.iOS.Device.systemVersion.Substring(0, 1);
+                int ver = Convert.ToInt32(version);
+                if (ver > 7 || ver < 2)
+                {
+                    FullScreenMovieControlMode mode =
+                        cancancel ? FullScreenMovieControlMode.CancelOnInput : FullScreenMovieControlMode.Hidden;
+                    Handheld.PlayFullScreenMovie(filename, Color.black, mode, FullScreenMovieScalingMode.AspectFit);
+                }
         }
         catch (Exception e)
         {
-            string version = UnityEngine.iOS.Device.systemVersion.Substring(0, 1);
-            int ver = Convert.ToInt32(version);
-            if (ver > 7 || ver < 2)
-            {
-                FullScreenMovieControlMode mode =
-                    cancancel ? FullScreenMovieControlMode.CancelOnInput : FullScreenMovieControlMode.Hidden;
-                Handheld.PlayFullScreenMovie(filename, Color.black, mode, FullScreenMovieScalingMode.AspectFit);
-            }
+
         }
-        #else
         #endif 
     }
     void InitBaseSys()
