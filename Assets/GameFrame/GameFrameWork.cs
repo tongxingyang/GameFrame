@@ -94,7 +94,8 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void Awake()
     {
-        InitRenderFeature()//初始化渲染设置 高端机型匹配
+        //初始化渲染设置 高端机型匹配
+        InitRenderFeature();  
         Util.SetResolution(Resolution);
         Application.backgroundLoadingPriority = UnityEngine.ThreadPriority.High;
         Application.runInBackground = true;

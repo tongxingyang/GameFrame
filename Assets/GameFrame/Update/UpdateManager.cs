@@ -1243,7 +1243,7 @@ namespace GameFrame
                       int channelId = 9;
 #elif UNITY_IPHONE
                       int channelId = 9; 
-#elif UNITY_EDITOR_WIN
+#elif UNITY_EDITOR
                       int channelId = 9;  
 #endif
                     using (var www = new WWW(Singleton<ServerConfig>.GetInstance().UpdateAppUrl))
