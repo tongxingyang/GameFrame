@@ -1,41 +1,44 @@
 ﻿using System;
-using System.Collections.Generic;
+using UnityEngine;
 
 namespace UIFrameWork
-{
-
-	public struct WindowInfo
+{	
+	/// <summary>
+	/// window窗口信息类
+	/// </summary>
+	[Serializable]
+	public class WindowInfo
 	{
-		public WindowType WindowType { get; private set; }
-		public string PerfabPath { get; private set; }
-		public string Name { get; private set; }
-		public Type Script { get; private set; }
-		public ShowMode ShowMode { get; private set; }
-		public OpenAction OpenAction { get; private set; }
-		public ColliderMode ColliderMode { get; private set; }
-
-		public WindowInfo( WindowType windowType,ShowMode showMode, OpenAction openAction,
-			ColliderMode colliderMode) : this()
+		[SerializeField] public enWindowType Type;
+		[SerializeField] public string PerfabPath;
+		[SerializeField] public string Name;
+		[SerializeField] public Type Script;
+		[SerializeField] public enWindowColliderMode ColliderMode;
+		[SerializeField] public bool IsSinglen;
+		[SerializeField] public enWindowPriority Priority;
+		[SerializeField] public int Group;
+		[SerializeField] public bool FullScreenBG;
+		[SerializeField] public bool DisableInput;
+		[SerializeField] public bool HideUnderForms;
+		[SerializeField] public bool AlwaysKeepVisible;
+		public WindowInfo( enWindowType windowType,enWindowColliderMode windowcolliderMode,bool issinglen,enWindowPriority priority,int group,bool isfullbg,bool isdisableinput
+			,bool hideunderinput,bool alwayskeepxisible,bool disable) 
 		{
 			PerfabPath = Tools.GetPrefabPathByType(windowType);
 			Script = Tools.GetUIScripeByType(windowType);
-			WindowType = windowType;
-			ShowMode = showMode;
-			OpenAction = openAction;
-			ColliderMode = colliderMode;
-		    Name = windowType.ToString();
+			Type = windowType;
+			ColliderMode = windowcolliderMode;
+			Name = windowType.ToString();
+			IsSinglen = issinglen;
+			Priority = priority;
+			Group = group;
+			FullScreenBG = isfullbg;
+			DisableInput = isdisableinput;
+			HideUnderForms = hideunderinput;
+			AlwaysKeepVisible = alwayskeepxisible;
 		}
 	
 	}
-
-	public class WindowStackData
-	{
-		public WindowInfo WindowInfo;
-		public WindowBase WindowBase;
-		public List<WindowBase> HistoryWindowBases = null;
-		public WindowBase RecordeWindowBase = null;
-	}
-
 }
 
 

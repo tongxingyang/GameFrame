@@ -5,50 +5,25 @@ using UnityEngine;
 namespace UIFrameWork
 {
     /// <summary>
-    /// 打开面板的类型
+    /// 面板优先级枚举
     /// </summary>
-    public enum ShowMode
-    {
-        /// <summary>
-        /// Normal 正常类型 比如背包 排行榜 装备 只有这种类型可以追溯
-        /// </summary>
-        Normal,
-        /// <summary>
-        /// 主场景 不能被关闭
-        /// </summary>
-        Main,
-        /// <summary>
-        /// 固定位置界面 比如 人物头像信息
-        /// </summary>
-        Fixed,
-        /// <summary>
-        /// 弹出界面 信息对话框
-        /// </summary>
-        PopUp,
-
+    public enum enWindowPriority {
+        Priority0,
+        Priority1,
+        Priority2,
+        Priority3,
+        Priority4,
+        Priority5,
+        Priority6,
+        Priority7,
+        Priority8,
+        Priority9
     }
-    /// <summary>
-    /// 界面打开时的行为
-    /// </summary>
-    public enum OpenAction
-    {
-        /// <summary>
-        /// 不处理
-        /// </summary>
-        DoNothing,
-        /// <summary>
-        /// 隐藏Normal类型与Main类型
-        /// </summary>
-        HideNormalAndMain,
-        /// <summary>
-        /// 隐藏所有
-        /// </summary>
-        HideAll,
-    }
+    
     /// <summary>
     /// 打开时是否屏蔽ui事件
     /// </summary>
-    public enum ColliderMode
+    public enum enWindowColliderMode
     {
         /// <summary>
         /// 不处理
@@ -64,16 +39,15 @@ namespace UIFrameWork
         Dark,
     }
     
-    public enum UIState
+    public enum enWindowState
     {
         None,
         Init,
-        Enter,
-        Exit,
-        Pause,
-        Resume
+        Appear,
+        Hide,
+        Close,
     }
-    public enum WindowType
+    public enum enWindowType
     {
         LoginAndRegister,
         GameInfo,
@@ -81,5 +55,21 @@ namespace UIFrameWork
         Rank,
         MainUI,
         FriendUI,
+    }
+    public enum enWindowHideFlag
+    {
+        HideByCustom = 1,
+        HideByOtherForm
+    }
+    public enum enWindowEventType
+    {
+        Open,
+        Close
+    }
+
+    public enum enLayer2Int
+    {
+        UIRawLayer = 5,
+        UIParticleLayer = 6,
     }
 }
