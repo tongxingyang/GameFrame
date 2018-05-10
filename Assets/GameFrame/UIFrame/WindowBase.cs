@@ -122,7 +122,6 @@ namespace UIFrameWork
         #region 调用Mono接口会相应调用虚方法
         void Awake()
         {
-
             OnWindowAwake();
         }
     
@@ -162,7 +161,7 @@ namespace UIFrameWork
         /// <summary>
         /// 初始化  获取组件相关处理
         /// </summary>
-        public void Init(Camera UICamera,WindowContext context)
+        public void Init(Camera UICamera, int sequence, WindowContext context)
         {
             if (this.m_isInitialized)
             {
@@ -179,18 +178,24 @@ namespace UIFrameWork
             this.m_isActivied = false;
             windowState= enWindowState.Init;
             this.m_defaultPriority = this.WindowInfo.Priority;
+            this.m_sequence = sequence;
             this.InitUIComponent(gameObject);
             this.InitComponent();
-            OnInit(UICamera,context);
+            OnInit(UICamera, sequence,context);
             this.m_isInitialized = true;
             
         }
         /// <summary>
         /// 初始化
         /// </summary>
-        public void Appear(int sequence, bool exist, int openOrder,WindowContext context)
+        public void Appear(enWindowHideFlag hideFlag , bool dispatchVisibleChangedEvent , bool exist, int openOrder,WindowContext context)
         {            
             if (IsActivied() == true)
+            {
+                return;
+            }
+            this.m_hideFlags &= (int)(~(int)hideFlag);
+            if (this.m_hideFlags != 0 || !this.m_isHided)
             {
                 return;
             }
@@ -199,17 +204,32 @@ namespace UIFrameWork
             this.m_isClosed = false;
             this.m_isActivied = true;
             windowState= enWindowState.Appear;
-            this.m_sequence = sequence;
             this.SetDisplayOrder(openOrder);
+            PlayAppearAnim();
+            PlayAppearMusic();
             if (!exist)
             {
                 //派发窗口打开事件
                 this.DispatchWindowEvent(enWindowEventType.Open);
             }
+            if (this.m_canvas != null)
+            {
+                this.m_canvas.enabled = true;
+                this.m_canvas.sortingOrder = this.m_sortingOrder;
+            }
+            this.TryEnableInput(true);
+            for (int i = 0; i < this.m_relatedScens.Count; i++)
+            {
+                this.m_relatedScens[i].SetActive(true);
+                this.SetSceneCameraEnable(i, true);
+            }
             AppearComponent();
-            PlayAppearAnim();
-            PlayAppearMusic();
-            OnAppear(sequence,exist,openOrder,context);
+            this.DispatchRevertVisibleWindowEvent();
+            if (dispatchVisibleChangedEvent)
+            {
+                this.DispatchVisibleChangedEvent();
+            }
+            OnAppear(hideFlag, dispatchVisibleChangedEvent,exist, openOrder,context);
         }
         /// <summary>
         /// 初始化
@@ -224,6 +244,11 @@ namespace UIFrameWork
             {
                 return;
             }
+            this.m_hideFlags |= (int)hideFlag;
+            if (this.m_hideFlags == 0 || this.m_isHided)
+            {
+                return;
+            }
             this.gameObject.SetActive(false);
             this.m_isHided = true;
             this.m_isClosed = false;
@@ -232,11 +257,6 @@ namespace UIFrameWork
             HideComponent();
             PlayHideAnim();
             PlayHideMusic();
-            this.m_hideFlags |= (int)hideFlag;
-            if (this.m_hideFlags == 0 || this.m_isHided)
-            {
-                return;
-            }
             if (this.m_canvas != null)
             {
                 this.m_canvas.enabled = false;
@@ -244,6 +264,7 @@ namespace UIFrameWork
             this.TryEnableInput(false);
             for (int i = 0; i < this.m_relatedScens.Count; i++)
             {
+                //this.m_relatedScens[i].GetComponent<WindowBase>().Hide(hideFlag,dispatchVisibleChangedEvent,context);
                 this.m_relatedScens[i].SetActive(false);
                 this.SetSceneCameraEnable(i, false);
             }
@@ -278,8 +299,8 @@ namespace UIFrameWork
             OnClose(context);
         }
 
-        protected virtual void OnInit(Camera UICameraint,WindowContext context){}
-        protected virtual void OnAppear(int sequence, bool exist, int openOrder,WindowContext context){}
+        protected virtual void OnInit(Camera UICameraint, int sequence, WindowContext context){}
+        protected virtual void OnAppear(enWindowHideFlag hideFlag, bool dispatchVisibleChangedEvent, bool exist, int openOrder,WindowContext context){}
         protected virtual void OnHide(enWindowHideFlag hideFlag , bool dispatchVisibleChangedEvent ,WindowContext context){}
         protected virtual void OnClose(WindowContext context){}
 

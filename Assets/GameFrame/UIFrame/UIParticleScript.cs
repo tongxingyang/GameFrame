@@ -36,7 +36,6 @@ namespace UIFrameWork
             this.m_belongedWindowBase = windowBase;
             if (this.m_belongedWindowBase != null)
             {
-                this.SetSortingOrder(this.m_belongedWindowBase.GetSortingOrder()+index);
                 if (this.m_belongedWindowBase.IsHided())
                 {
                     Hide();
