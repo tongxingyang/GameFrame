@@ -1,467 +1,527 @@
 ﻿using System.Collections.Generic;
 using GameFrame;
 using UIFrameWork;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class WindowManager:Singleton<WindowManager>
+namespace UIFrameWork
 {
-    private Dictionary<WindowInfo, WindowBase> showWindowDic = new Dictionary<WindowInfo, WindowBase>();
-    private Dictionary<WindowInfo, WindowBase> cacheWindowDic = new Dictionary<WindowInfo, WindowBase>();
-
-    private Stack<WindowStackData> windowStackDatas = new Stack<WindowStackData>();
-    private GameObject mUICamera;
-    private WindowInfo _mainWindowInfo;
-    private GameObject normalRoot = null;
-    private GameObject mainRoot = null;
-    private GameObject fixedRoot = null;
-    private GameObject popupRoot = null;
-    private GameObject cacheRoot = null;
-    public WindowInfo MainWindowInfo
+    /// <summary>
+    /// Window 管理类
+    /// </summary>
+    public class WindowManager : Singleton<WindowManager>
     {
-        get { return _mainWindowInfo; }
-    }
+        private List<WindowBase> m_windows;
+        private List<WindowBase> m_pooledWindows;
+        private int m_windowSequence;
+        private List<int> m_exitWindowSequences;
+        private GameObject m_root;
+        public OnWindowSorted OnWindowSorted;
+        private EventSystem m_eventSystem;
+        private Camera m_UICamera;
+        private bool m_needSort;
+        private bool m_needUpdateHide;
 
-    public WindowBase GetwWindowBase(WindowType windowType,bool isfromcacle = false)
-    {
-        WindowBase ret = null;
-        foreach (KeyValuePair<WindowInfo, WindowBase> keyValuePair in showWindowDic)
+        public Camera UICamera
         {
-            if (windowType == keyValuePair.Key.WindowType)
+            get { return m_UICamera; }
+        }
+
+        public override void Init()
+        {
+            base.Init();
+            m_windows = new List<WindowBase>();
+            m_pooledWindows = new List<WindowBase>();
+            m_windowSequence = 0;
+            m_exitWindowSequences = new List<int>();
+            CreateUIRoot();
+            CreateEventSystem();
+            CreateCamera();
+            //监听相关时间消息处理
+            Singleton<EventManager>.GetInstance().AddEventListener(enEventID.UI_OnFormPriorityChanged, new EventManager.OnEventHandler(this.OnFormPriorityChanged));
+            Singleton<EventManager>.GetInstance().AddEventListener(enEventID.UI_OnFormVisibleChanged, new EventManager.OnEventHandler(this.OnFormVisibleChanged));
+        }
+        //事件接受函数
+        private void OnFormPriorityChanged(GameFrame.Event @event)
+        {
+            this.m_needSort = true;
+        }
+
+        private void OnFormVisibleChanged(GameFrame.Event @event)
+        {
+            this.m_needUpdateHide = true;
+        }
+        private void CreateUIRoot()
+        {
+            this.m_root = new GameObject("UIRoot");
+            GameObject obj = GameObject.Find("BootUp");
+            if (obj != null)
             {
-                ret = keyValuePair.Value;
-                break;
+                this.m_root.transform.SetParent(obj.transform);
+                this.m_root.transform.localPosition = Vector3.zero;
             }
         }
-        if (ret == null && isfromcacle == true)
+
+        private void CreateEventSystem()
         {
-            foreach (KeyValuePair<WindowInfo, WindowBase> keyValuePair in cacheWindowDic)
+            if (this.m_eventSystem == null)
             {
-                if (windowType == keyValuePair.Key.WindowType)
+                GameObject obj = new GameObject("EventSystem");
+                this.m_eventSystem = obj.AddComponent<EventSystem>();
+                obj.AddComponent<StandaloneInputModule>();
+            }
+            this.m_eventSystem.gameObject.transform.SetParent(m_root.transform);
+        }
+
+        private void CreateCamera()
+        {
+            GameObject obj = new GameObject("UICamera");
+            obj.transform.SetParent(this.m_root.transform,true);
+            obj.transform.localPosition = Vector3.zero;
+            obj.transform.localScale = Vector3.one;
+            obj.transform.localRotation = Quaternion.identity;
+            Camera camera = obj.AddComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 50;
+            camera.clearFlags = CameraClearFlags.Depth;
+            camera.depth = 10;
+            camera.cullingMask = 32;// todo
+            this.m_UICamera = camera;
+        }
+        
+        public void Update()
+        {
+            for (int i = 0; i < this.m_windows.Count; i++)
+            {
+                this.m_windows[i].CustomUpdate();
+                if (this.m_windows[i].IsClosed())
                 {
-                    ret = keyValuePair.Value;
+                    this.RecycleWindow(i);
+                    this.m_needSort = true;
+                }
+            }
+            if (this.m_needSort)
+            {
+                this.ProcessWindowList(true, true);
+            }else if (this.m_needUpdateHide)
+            {
+                this.ProcessWindowList(false, true);
+            }
+            this.m_needSort = false;
+            this.m_needUpdateHide = false;
+        }
+        private void ProcessWindowList(bool sort, bool handleInputAndHide)
+        {
+            if (sort)
+            {
+                this.m_windows.Sort();//m_sortingOrder从小到大 
+                for (int i = 0; i < this.m_windows.Count; i++)
+                {
+                    int openorder = this.GetWindowOpenOrder(this.m_windows[i].GetSequence());
+                    this.m_windows[i].SetDisplayOrder(openorder);
+                }
+            }
+            if (handleInputAndHide)
+            {
+                this.UpdateWindowHided();
+                //this.UpdateWindowRaycaster();
+            }
+            if (this.OnWindowSorted != null)
+            {
+                this.OnWindowSorted(this.m_windows);
+            }
+        }
+
+        private void UpdateWindowHided()
+        {
+            bool flag = false;
+            for (int i = this.m_windows.Count - 1; i >= 0; i--)
+            {
+                if (flag)
+                {
+                    this.m_windows[i].Hide(false,null);
+                }
+                else
+                {
+                    int openorder = this.GetWindowOpenOrder(this.m_windows[i].GetSequence());
+                    this.m_windows[i].Appear(false,openorder,null);
+                }
+                if (!flag && !this.m_windows[i].IsHided() && this.m_windows[i].m_hideUnderUIs)
+                {
+                    flag = true;
                 }
             }
         }
-        return ret;
-    }
-    public void Clearup()
-    {
-        foreach (var wnd in showWindowDic)
+
+        private void UpdateWindowRaycaster()
         {
-            if (wnd.Value != null)
+            for (int i = this.m_windows.Count - 1; i >= 0; i--)
             {
-                GameObject.Destroy(wnd.Value.gameObject);
+                GraphicRaycaster graphicRaycaster = this.m_windows[i].GetGraphicRaycaster();
+                if (this.m_windows[i].m_enableInput && !this.m_windows[i].IsHided())
+                {
+                    if (graphicRaycaster != null)
+                    {
+                        graphicRaycaster.enabled = true;
+                    }
+                }
+                else
+                {
+                    if (graphicRaycaster != null)
+                    {
+                        graphicRaycaster.enabled = false;
+                    }
+                }
             }
         }
-        foreach (var wnd in cacheWindowDic)
+        public string GetWindowName(string path)
         {
-            if (wnd.Value != null)
+            string[] arr = path.Split('/');
+            return arr[arr.Length - 1];
+        }
+        public void LateUpdate()
+        {
+            for (int i = 0; i < m_windows.Count; i++)
             {
-                GameObject.Destroy(wnd.Value.gameObject);
+                m_windows[i].CustomLateUpdate();
             }
         }
-        showWindowDic.Clear();
-        cacheWindowDic.Clear();
-        windowStackDatas.Clear();
-        Resources.UnloadUnusedAssets();
-    }
-    public void InitWindowManager()
-    {
-        SetupCanvas();
-    }
 
-    public void SetupCanvas()
-    {
-
-        GameObject uiRoot = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        uiRoot.transform.position = Vector3.zero;
-        uiRoot.transform.localScale = Vector3.one;
-
-        var canvas = uiRoot.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-
-        var scaler = uiRoot.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1280, 720);
-        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-        scaler.matchWidthOrHeight = 0;
-
-        var raycaster = uiRoot.GetComponent<GraphicRaycaster>();
-        raycaster.ignoreReversedGraphics = true;
-        raycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
-
-        GameObject evebtRoot = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-        evebtRoot.transform.localPosition = Vector3.zero;
-        evebtRoot.transform.localScale = Vector3.one;
-
-        mUICamera = new GameObject("Camera", typeof(Camera));
-        mUICamera.transform.localPosition = Vector3.zero;
-        mUICamera.transform.localScale = Vector3.one;
-
-        mainRoot = new GameObject("main", typeof(RectTransform));
-        mainRoot.transform.SetParent(uiRoot.transform);
-        mainRoot.transform.localPosition = Vector3.zero;
-        mainRoot.transform.localScale = Vector3.one;
-        (mainRoot.transform as RectTransform).sizeDelta = new Vector2(1280,720);
-        fixedRoot = new GameObject("fixed", typeof(RectTransform));
-        fixedRoot.transform.SetParent(uiRoot.transform);
-        fixedRoot.transform.localPosition = Vector3.zero;
-        fixedRoot.transform.localScale = Vector3.one;
-        (fixedRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
-        normalRoot = new GameObject("normal", typeof(RectTransform));
-        normalRoot.transform.SetParent(uiRoot.transform);
-        normalRoot.transform.localPosition = Vector3.zero;
-        normalRoot.transform.localScale = Vector3.one;
-        (normalRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
-        popupRoot = new GameObject("popup", typeof(RectTransform));
-        popupRoot.transform.SetParent(uiRoot.transform);
-        popupRoot.transform.localPosition = Vector3.zero;
-        popupRoot.transform.localScale = Vector3.one;
-        (popupRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
-        cacheRoot = new GameObject("cache", typeof(RectTransform));
-        cacheRoot.transform.SetParent(uiRoot.transform);
-        cacheRoot.transform.localPosition = Vector3.zero;
-        cacheRoot.transform.localScale = Vector3.one;
-        (cacheRoot.transform as RectTransform).sizeDelta = new Vector2(1280, 720);
-    }
-
-    public void RemoveCamera()
-    {
-        GameObject.Destroy(mUICamera);
-        mUICamera = null;
-    }
-
-    public void AddCamera()
-    {
-        if (mUICamera == null)
+        public void CloseWindow(WindowBase windowBase)
         {
-            mUICamera = new GameObject("Camera", typeof(Camera));
-            mUICamera.transform.localPosition = Vector3.zero;
-            mUICamera.transform.localScale = Vector3.one;
-        }
-    }
-
-    public GameObject GetModeRoot(ShowMode mode)
-    {
-        switch (mode)
-        {
-            case ShowMode.Fixed:
-                return fixedRoot;
-                break;
-            case ShowMode.Main:
-                return mainRoot;
-                break;
-            case ShowMode.Normal:
-                return normalRoot;
-                break;
-            case ShowMode.PopUp:
-                return popupRoot;
-                break;
-        }
-        return null;
-    }
-
-    public GameObject GetCacheRoot()
-    {
-        return cacheRoot;
-    }
-
-    private List<WindowBase> GetAffectWindowList(WindowInfo windowInfo)
-    {
-        List<WindowBase> list = null;
-        switch (windowInfo.OpenAction)
-        {
-            case OpenAction.DoNothing:
-                break;
-            case OpenAction.HideAll:
-                list = new List<WindowBase>();
-                foreach (var windowBase in showWindowDic)//windowinfo windowbase
+            for (int i = 0; i < m_windows.Count; i++)
+            {
+                if (this.m_windows[i] == windowBase)
                 {
-                    if (windowBase.Key.WindowType == windowInfo.WindowType)// todo
-                    {
-                        continue;
-                    }
-                    WindowBase tmpwindow = windowBase.Value;
-                    if (tmpwindow.IsActivied == false)
-                    {
-                        continue;
-                    }
-                    list.Add(tmpwindow);
+                    this.m_windows[i].Close(null);
                 }
-                break;
-            case OpenAction.HideNormalAndMain:
-                list = new List<WindowBase>();
-                foreach (var basewindow in showWindowDic)
+            }
+        }
+        public void CloseWindow(string path)
+        {
+            for (int i = 0; i < m_windows.Count; i++)
+            {
+                if (this.m_windows[i].WindowInfo.PerfabPath == path)
                 {
-                    if (basewindow.Key.WindowType == windowInfo.WindowType)
-                    {
-                        continue;
-                    }
-                    if (basewindow.Key.ShowMode != ShowMode.Normal)
-                    {
-                        continue;
-                    }
-                    if (basewindow.Key.ShowMode != ShowMode.Normal)
-                    {
-                        continue;
-                    }
-                    WindowBase tmpwindow = basewindow.Value;
-                    if (tmpwindow.IsActivied == false)
-                    {
-                        continue;
-                    }
-                    list.Add(tmpwindow);
+                    this.m_windows[i].Close(null);
                 }
-                break;
-            default:
-                break;
+            }
         }
-        return list;
-    }
-
-    private void SetTopWindow(GameObject window)
-    {
-        var count = window.transform.parent.childCount;
-        window.transform.SetSiblingIndex(count - 1);
-    }
-
-    public void MakeWindowCollider(WindowInfo windowInfo, GameObject obj)
-    {
-        GameObject go = null;
-        Image image = null;
-        Button button = null;
-        WindowBase windowBase = null;
-        switch (windowInfo.ColliderMode)
+        public void CloseWindow(int sque)
         {
-            case ColliderMode.Node:
-                break;
-            case ColliderMode.Dark:
-                go = new GameObject("DarkCollider", typeof(RectTransform), typeof(Image), typeof(Button));
-                image = go.GetComponent<Image>();
-                image.color = new Color(0, 0, 0, 100 / 255f);
-                image.raycastTarget = true;
-                button = go.GetComponent<Button>();
-                button.transition = Selectable.Transition.SpriteSwap;
-                button.targetGraphic = image;
-                windowBase = obj.GetComponent<WindowBase>();
-                button.onClick.AddListener(windowBase.ColliderCallBack);
-                break;
-            case ColliderMode.Transparent:
-                go = new GameObject("ransparencyCollider", typeof(RectTransform), typeof(Image), typeof(Button));
-                image = go.GetComponent<Image>();
-                image.color = new Color(0, 0, 0, 0);
-                image.raycastTarget = true;
-                button = go.GetComponent<Button>();
-                button.transition = Selectable.Transition.SpriteSwap;
-                button.targetGraphic = image;
-                windowBase = obj.GetComponent<WindowBase>();
-                button.onClick.AddListener(windowBase.ColliderCallBack);
-                break;
+            for (int i = 0; i < m_windows.Count; i++)
+            {
+                if (this.m_windows[i].GetSequence() == sque)
+                {
+                    this.m_windows[i].Close(null);
+                }
+            }
         }
-        if (go != null)
+
+        public void CloseAllWindow(bool closeImmediated = true,bool clearPool = true)
         {
-            var rectTran = go.GetComponent<RectTransform>();
-            rectTran.transform.SetParent(obj.transform);
-            rectTran.transform.SetSiblingIndex(0);
-            rectTran.localPosition = Vector3.zero;
-            rectTran.anchorMin = new Vector2(0.5f, 0.5f);
-            rectTran.anchorMax = new Vector2(0.5f, 0.5f);
-            rectTran.pivot = new Vector2(0.5f, 0.5f);
-            rectTran.sizeDelta = new Vector2(4000, 4000);
+            for (int i = 0; i < this.m_windows.Count; i++)
+            {
+                this.m_windows[i].Close(null);
+            }
+            if (closeImmediated)
+            {
+                int k = 0;
+                while (k<this.m_windows.Count)
+                {
+                    if (m_windows[k].IsClosed())
+                    {
+                        RecycleWindow(k);
+                    }
+                    else
+                    {
+                        k++;
+                    }
+                }
+
+            }
+            if (clearPool)
+            {
+                ClearPool();
+            }
         }
-    }
 
-    public WindowBase CreateWindowInstance(WindowInfo windowInfo)
-    {
-
-        var prefab = Singleton<ResourceManager>.Instance.LoadResource<GameObject>(windowInfo.PerfabPath);
-        var go = GameObject.Instantiate(prefab);
-        if (go == null)
+        public bool HasWindow()
         {
-            Debug.LogError("实例化失败" + windowInfo.PerfabPath);
+            return this.m_windows.Count > 0;
+        }
+
+        public WindowBase GetWindow(string path)
+        {
+            for (int i = 0; i < this.m_windows.Count; i++)
+            {
+                if (this.m_windows[i].WindowInfo.PerfabPath == path)
+                {
+                    return this.m_windows[i];
+                }
+            }
             return null;
         }
-        go.name = windowInfo.PerfabPath.Substring(windowInfo.PerfabPath.LastIndexOf('/') + 1);
-        WindowBase windowBase = go.GetComponent<WindowBase>();
-        if (windowBase == null)
-        {
-            windowBase = go.AddComponent(windowInfo.Script) as WindowBase;
-        }
-        var modeRoot = GetModeRoot(windowInfo.ShowMode);
-        var rectTran = go.GetComponent<RectTransform>();
-        rectTran.SetParent(modeRoot.transform);
-        rectTran.transform.localPosition = Vector3.zero;
-        rectTran.offsetMax = Vector2.zero;
-        rectTran.offsetMin = Vector2.zero;
-        rectTran.localScale = Vector3.one;
-        MakeWindowCollider(windowInfo, go);
-        windowBase.Initantiate();
-        windowBase.windowInfo = windowInfo;
-        return windowBase;
-    }
 
-    public void PushToCache(WindowBase windowBase, bool isexit, WindowContext windowContext = null)
-    {
-        showWindowDic.Remove(windowBase.windowInfo);
-        cacheWindowDic.Add(windowBase.windowInfo, windowBase);
-        var root = GetCacheRoot();
-        var rectTran = windowBase.GetComponent<RectTransform>();
-        rectTran.SetParent(root.transform);
-        rectTran.localPosition = Vector3.zero;
-        if (isexit)
+        public WindowBase GetWindow(int sque)
         {
-            windowBase.Exit(windowContext);
-        }
-        else
-        {
-            windowBase.Pause(windowContext);
-        }
-    }
-
-    public WindowBase PullFromCache(WindowInfo windowInfo, bool isenter, WindowContext windowContext = null)
-    {
-        WindowBase windowBase = null;
-        if (cacheWindowDic.ContainsKey(windowInfo))
-        {
-            windowBase = cacheWindowDic[windowInfo];
-            cacheWindowDic.Remove(windowInfo);
-            windowBase.windowInfo = windowInfo;
-            showWindowDic.Add(windowInfo, windowBase);
-            var root = GetModeRoot(windowInfo.ShowMode);
-            var rectTran = windowBase.GetComponent<RectTransform>();
-            rectTran.SetParent(root.transform);
-            rectTran.transform.localPosition = Vector3.zero;
-        }
-        else
-        {
-            windowBase = CreateWindowInstance(windowInfo);
-            showWindowDic.Add(windowInfo, windowBase);
-        }
-        if (isenter)
-        {
-            windowBase.Enter(windowContext);
-        }
-        else
-        {
-            windowBase.Resume(windowContext);
-        }
-        SetTopWindow(windowBase.CacheGameObject);
-        return windowBase;
-    }
-
-    public void BackToMain()
-    {
-        List<WindowBase> select = new List<WindowBase>();
-        foreach (var windowBase in showWindowDic)
-        {
-            if (windowBase.Key.ShowMode != ShowMode.Normal)
+            for (int i = 0; i < m_windows.Count; i++)
             {
-                continue;
-            }
-            select.Add(windowBase.Value);
-        }
-        for (int i = 0; i < select.Count; i++)
-        {
-            WindowBase temp = select[i];
-            PushToCache(temp, true, null);
-        }
-        windowStackDatas.Clear();
-        OpenWindow(_mainWindowInfo, null);
-    }
-
-    public WindowBase GetWindow(WindowInfo info)
-    {
-        WindowBase basewindow = null;
-        showWindowDic.TryGetValue(info, out basewindow);
-        return basewindow;
-    }
-
-    public WindowBase OpenWindow(WindowInfo windowInfo, WindowContext context = null)
-    {
-        WindowBase sscript = null;
-        if (showWindowDic.ContainsKey(windowInfo))
-        {
-            Debug.LogError("窗口已经被打开了");
-            return showWindowDic[windowInfo];
-        }
-        sscript = PullFromCache(windowInfo, true, context);
-        if (windowInfo.ShowMode == ShowMode.Normal)
-        {
-            List<WindowBase> history = GetAffectWindowList(windowInfo);
-            if (history == null)
-            {
-                history = new List<WindowBase>();
-            }
-            for (int i = 0; i < history.Count; i++)
-            {
-                PushToCache(history[i], false);
-            }
-            WindowStackData windowStackData = new WindowStackData();
-            windowStackData.HistoryWindowBases = history;
-            windowStackData.WindowInfo = windowInfo;
-            windowStackData.WindowBase = sscript;
-            windowStackDatas.Push(windowStackData);
-        }
-        return sscript;
-    }
-
-    public void CloseWindow(WindowBase windowBase)
-    {
-        WindowInfo windowInfo = windowBase.windowInfo;
-        if (showWindowDic.ContainsKey(windowInfo) == false)
-        {
-            Debug.LogError("要关闭的窗口当前没有显示");
-            return;
-        }
-        if (windowInfo.ShowMode == ShowMode.Normal)
-        {
-            if (windowStackDatas.Count > 0)
-            {
-                WindowStackData windowStackData = windowStackDatas.Peek();
-                if (windowStackData.WindowInfo.WindowType != windowInfo.WindowType)//todo
+                if (m_windows[i].GetSequence() == sque)
                 {
-                    Debug.LogError("关闭出错");
-                    return;
+                    return m_windows[i];
                 }
-                PushToCache(windowBase, true, null);
-                switch (windowInfo.OpenAction)
+            }
+            return null;
+        }
+
+        public void CloseGroupWindow(int group)
+        {
+            if(group == 0) return;
+            for (int i = 0; i < m_windows.Count; i++)
+            {
+                if (this.m_windows[i].WindowInfo.Group == group)
                 {
-                    case OpenAction.DoNothing:
-                        break;
-                    case OpenAction.HideAll:
-                        for (int i = 0; i < windowStackData.HistoryWindowBases.Count; i++)
-                        {
-                            PullFromCache(windowStackData.HistoryWindowBases[i].windowInfo, false, null);
-                        }
-                        break;
-                    case OpenAction.HideNormalAndMain:
-                        for (int i = 0; i < windowStackData.HistoryWindowBases.Count; i++)
-                        {
-                            PullFromCache(windowStackData.HistoryWindowBases[i].windowInfo, false, null);
-                        }
-                        break;
-                    default:
-                        break;
+                    this.m_windows[i].Close(null);
                 }
-                windowStackDatas.Pop();
+            }
+        }
+
+        public WindowBase GetTopWindow()
+        {
+            WindowBase windowBase = null;
+            for (int i = 0; i < this.m_windows.Count; i++)
+            {
+                if (!(this.m_windows[i] == null))
+                {
+                    if (windowBase == null)
+                    {
+                        windowBase = this.m_windows[i];
+                    }
+                    else if (this.m_windows[i].GetSortingOrder() > windowBase.GetSortingOrder())
+                    {
+                        windowBase = this.m_windows[i];
+                    }
+                }
+            }
+            return windowBase;
+        }
+        public void DisableInput()
+        {
+            if (this.m_eventSystem != null)
+            {
+                this.m_eventSystem.gameObject.SetActive(false);
+            }
+        }
+
+        private WindowBase GetUnClosedWindow(string path)
+        {
+            for (int i = 0; i < this.m_windows.Count; i++)
+            {
+                if (this.m_windows[i].WindowInfo.PerfabPath.Equals(path) && !this.m_windows[i].IsClosed())
+                {
+                    return this.m_windows[i];
+                }
+            }
+            return null;
+        }
+        public void EnableInput()
+        {
+            if (this.m_eventSystem != null)
+            {
+                this.m_eventSystem.gameObject.SetActive(true);
+            }
+        }
+        public void ClearPool()
+        {
+            for (int i = 0; i < m_pooledWindows.Count; i++)
+            {
+                Object.DestroyImmediate(m_pooledWindows[i].gameObject);
+            }
+            this.m_pooledWindows.Clear();
+        }
+        public void AddToExitSquenceList(int squence)
+        {
+            if (this.m_exitWindowSequences != null)
+            {
+                this.m_exitWindowSequences.Add(squence);
+            }
+        }
+
+        public void RemoveFromExitSquenceList(int squence)
+        {
+            if (this.m_exitWindowSequences != null)
+            {
+                this.m_exitWindowSequences.Remove(squence);
+            }
+        }
+
+        public int GetWindowOpenOrder(int squence)
+        {
+            int num = this.m_exitWindowSequences.IndexOf(squence);
+            if (num >= 0)
+            {
+                return (num + 1);
             }
             else
             {
-                Debug.LogError("关闭出错");
-                return;
+                return 0;
             }
         }
-        else if (windowInfo.ShowMode == ShowMode.PopUp)
+
+        private void RecycleWindow(WindowBase windowBase)
         {
-            PushToCache(windowBase, true, null);
+            if (windowBase == null)
+            {
+                return;
+            }
+            if (windowBase.m_isUsePool)
+            {
+                windowBase.Hide(true, null);
+                this.m_pooledWindows.Add(windowBase);
+            }
+            else
+            {
+                if (windowBase.m_canvasScaler != null)
+                {
+                    windowBase.m_canvasScaler.enabled = false;
+                }
+                Object.DestroyImmediate(windowBase.CacheGameObject);
+            } 
+        }
+
+        private void RecycleWindow(int index)
+        {
+            this.RemoveFromExitSquenceList(this.m_windows[index].GetSequence());
+            this.RecycleWindow(this.m_windows[index]);
+            this.m_windows.RemoveAt(index);
+        }
+
+        private GameObject CreateWindow(string path,bool usePool)
+        {
+            GameObject obj = null;
+            if (usePool)
+            {
+                for (int i = 0; i < m_pooledWindows.Count; i++)
+                {
+                    if (string.Equals(path, this.m_pooledWindows[i].WindowInfo.PerfabPath))
+                    {
+                        obj = this.m_pooledWindows[i].gameObject;
+                        this.m_pooledWindows.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+            if (obj == null)
+            {
+                GameObject res = Resources.Load<GameObject>(path);
+                if (res == null)
+                {
+                    return null;
+                }
+                obj = GameObject.Instantiate(res);
+            }
+            if (obj != null)
+            {
+                WindowBase windowBase = obj.GetComponent<WindowBase>();
+                if (windowBase != null)
+                {
+                    windowBase.m_isUsePool = usePool;
+                }
+            }
+            return obj;
+        }
+
+        public WindowBase OpenWindow(string path,bool isusePool,bool useCameraRender = true)
+        {
+            WindowBase windowBase = GetUnClosedWindow(path);
+            if (windowBase != null && windowBase.WindowInfo.IsSinglen)
+            {
+                this.RemoveFromExitSquenceList(windowBase.GetSequence());
+                this.AddToExitSquenceList(this.m_windowSequence);
+                int openorder = this.GetWindowOpenOrder(this.m_windowSequence);
+                windowBase.Appear(true, openorder, null);
+                this.m_windowSequence++;
+                this.m_needSort = true;
+                return windowBase;
+            }
+            GameObject obj = CreateWindow(path, isusePool);
+            if (obj == null)
+            {
+                return null;
+            }
+            string name = GetWindowName(path);
+            obj.name = name;
+            if (obj.transform.parent != this.m_root.transform)
+            {
+                obj.transform.SetParent(m_root.transform);
+            }
+            windowBase = obj.GetComponent<WindowBase>();
+            if (windowBase != null)
+            {
+                if (!windowBase.IsInitialized())
+                {
+                    AddCollider(windowBase);//添加遮罩
+                    windowBase.Init(useCameraRender?m_UICamera:null,m_windowSequence,null);
+                } 
+                this.AddToExitSquenceList(this.m_windowSequence);
+                int openorder = GetWindowOpenOrder(this.m_windowSequence);
+                windowBase.Appear(true, openorder, null);
+                if (windowBase.WindowInfo.Group > 0)
+                {
+                    this.CloseGroupWindow(windowBase.WindowInfo.Group);
+                }
+                this.m_windows.Add(windowBase);
+            }
+            this.m_windowSequence++;
+            this.m_needSort = true;
+            return windowBase;
+        }
+
+        public void AddCollider(WindowBase windowBase)
+        {
+                Image image = null;
+                Button button = null;
+                GameObject go = null;
+                switch (windowBase.WindowInfo.ColliderMode)
+                {
+                    case enWindowColliderMode.Node:
+                        break;
+                    case enWindowColliderMode.Dark:
+                        go = new GameObject("DarkCollider", typeof(RectTransform), typeof(Image), typeof(Button));
+                        image = go.GetComponent<Image>();
+                        image.color = new Color(0, 0, 0, 100 / 255f);
+                        image.raycastTarget = true;
+                        button = go.GetComponent<Button>();
+                        button.transition = Selectable.Transition.SpriteSwap;
+                        button.targetGraphic = image;
+                        button.onClick.AddListener(windowBase.ColliderCallBack);
+                        break;
+                    case enWindowColliderMode.Transparent:
+                        go = new GameObject("ransparencyCollider", typeof(RectTransform), typeof(Image), typeof(Button));
+                        image = go.GetComponent<Image>();
+                        image.color = new Color(0, 0, 0, 0);
+                        image.raycastTarget = true;
+                        button = go.GetComponent<Button>();
+                        button.transition = Selectable.Transition.SpriteSwap;
+                        button.targetGraphic = image;
+                        button.onClick.AddListener(windowBase.ColliderCallBack);
+                        break;
+                }
+                if (go != null)
+                {
+                    var rectTran = go.GetComponent<RectTransform>();
+                    rectTran.transform.SetParent(windowBase.CacheTransform);
+                    rectTran.transform.SetSiblingIndex(0);
+                    rectTran.localPosition = Vector3.zero;
+                    rectTran.anchorMin = new Vector2(0.5f, 0.5f);
+                    rectTran.anchorMax = new Vector2(0.5f, 0.5f);
+                    rectTran.pivot = new Vector2(0.5f, 0.5f);
+                    rectTran.sizeDelta = new Vector2(2000, 2000);
+                }
         }
     }
 
-    public void CloseWindow(WindowInfo windowInfo)
-    {
-        WindowBase windowBase = GetWindow(windowInfo);
-        CloseWindow(windowBase);
-    }
 }

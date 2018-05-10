@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using GameFrame;
 using UIFrameWork;
 using UnityEngine;
 using UnityEngine.UI;
+using Event = UnityEngine.Event;
 
 namespace UIFrameWork
 {
@@ -73,8 +75,8 @@ namespace UIFrameWork
         /// </summary>
         public bool m_enableInput;
         private List<UIComponent> m_components;
-        private List<GameObject> m_relatedScens;
-        private List<List<Camera>> m_relatedCamera;
+//        private List<GameObject> m_relatedScens;
+//        private List<List<Camera>> m_relatedCamera;
         private enWindowState windowState = enWindowState.None;
         public WindowStateChangeEvent WindowStateChange;
 
@@ -132,22 +134,22 @@ namespace UIFrameWork
         /// <summary>
         /// 由manager统一调用update
         /// </summary>
-        void CustomUpdate()
+        public void CustomUpdate()
         {
             OnWindowCustomUpdate();
         }
         /// <summary>
         /// 由manager统一调用lateupdate
         /// </summary>
-        void CustomLateUpdate()
+        public void CustomLateUpdate()
         {
             OnWindowLateCustomUpdate();
         }
         void OnDestroy()
         {
             this.m_components = null;
-            this.m_relatedScens = null;
-            this.m_relatedCamera = null;
+//            this.m_relatedScens = null;
+//            this.m_relatedCamera = null;
             OnWindowDestory();
         }
         protected virtual void OnWindowAwake(){}
@@ -159,7 +161,7 @@ namespace UIFrameWork
         
         #region 自定义界面周期函数
         /// <summary>
-        /// 初始化  获取组件相关处理
+        /// 
         /// </summary>
         public void Init(Camera UICamera, int sequence, WindowContext context)
         {
@@ -171,8 +173,6 @@ namespace UIFrameWork
             this.SetCanvasMode(UICamera);
             this.gameObject.SetActive(true);
             this.m_components = new List<UIComponent>();
-            this.m_relatedScens = new List<GameObject>();
-            this.m_relatedCamera = new List<List<Camera>>();
             this.m_isClosed = true;
             this.m_isHided = true;
             this.m_isActivied = false;
@@ -186,16 +186,15 @@ namespace UIFrameWork
             
         }
         /// <summary>
-        /// 初始化
+        /// 
         /// </summary>
-        public void Appear(enWindowHideFlag hideFlag , bool dispatchVisibleChangedEvent , bool exist, int openOrder,WindowContext context)
-        {            
-            if (IsActivied() == true)
+        public void Appear( bool dispatchVisibleChangedEvent , int openOrder,WindowContext context)
+        {
+            if (this.m_isInitialized == false)
             {
-                return;
+                Debug.LogError("没有初始化 ");return;
             }
-            this.m_hideFlags &= (int)(~(int)hideFlag);
-            if (this.m_hideFlags != 0 || !this.m_isHided)
+            if (IsActivied() == true)
             {
                 return;
             }
@@ -207,45 +206,24 @@ namespace UIFrameWork
             this.SetDisplayOrder(openOrder);
             PlayAppearAnim();
             PlayAppearMusic();
-            if (!exist)
-            {
-                //派发窗口打开事件
-                this.DispatchWindowEvent(enWindowEventType.Open);
-            }
-            if (this.m_canvas != null)
-            {
-                this.m_canvas.enabled = true;
-                this.m_canvas.sortingOrder = this.m_sortingOrder;
-            }
             this.TryEnableInput(true);
-            for (int i = 0; i < this.m_relatedScens.Count; i++)
-            {
-                this.m_relatedScens[i].SetActive(true);
-                this.SetSceneCameraEnable(i, true);
-            }
             AppearComponent();
-            this.DispatchRevertVisibleWindowEvent();
             if (dispatchVisibleChangedEvent)
             {
                 this.DispatchVisibleChangedEvent();
             }
-            OnAppear(hideFlag, dispatchVisibleChangedEvent,exist, openOrder,context);
+            OnAppear(dispatchVisibleChangedEvent, openOrder,context);
         }
         /// <summary>
-        /// 初始化
+        /// 
         /// </summary>
-        public void Hide(enWindowHideFlag hideFlag , bool dispatchVisibleChangedEvent ,WindowContext context)
+        public void Hide( bool dispatchVisibleChangedEvent ,WindowContext context)
         {
             if (this.WindowInfo.AlwaysKeepVisible)
             {
                 return;
             }
             if (IsHided() == true)
-            {
-                return;
-            }
-            this.m_hideFlags |= (int)hideFlag;
-            if (this.m_hideFlags == 0 || this.m_isHided)
             {
                 return;
             }
@@ -262,32 +240,17 @@ namespace UIFrameWork
                 this.m_canvas.enabled = false;
             }
             this.TryEnableInput(false);
-            for (int i = 0; i < this.m_relatedScens.Count; i++)
-            {
-                //this.m_relatedScens[i].GetComponent<WindowBase>().Hide(hideFlag,dispatchVisibleChangedEvent,context);
-                this.m_relatedScens[i].SetActive(false);
-                this.SetSceneCameraEnable(i, false);
-            }
             if (dispatchVisibleChangedEvent)
             {
-                //派发事件
                 this.DispatchVisibleChangedEvent();
             }
-            OnHide(hideFlag,dispatchVisibleChangedEvent,context);
+            OnHide(dispatchVisibleChangedEvent,context);
         }
         /// <summary>
-        /// 初始化
+        /// 
         /// </summary>
         public void Close(WindowContext context)
         {
-            if (this.WindowInfo.AlwaysKeepVisible)
-            {
-                return;
-            }
-            if (IsClosed() == true)
-            {
-                return;
-            }
             this.gameObject.SetActive(false);
             this.m_isHided = true;
             this.m_isClosed = true;
@@ -300,8 +263,8 @@ namespace UIFrameWork
         }
 
         protected virtual void OnInit(Camera UICameraint, int sequence, WindowContext context){}
-        protected virtual void OnAppear(enWindowHideFlag hideFlag, bool dispatchVisibleChangedEvent, bool exist, int openOrder,WindowContext context){}
-        protected virtual void OnHide(enWindowHideFlag hideFlag , bool dispatchVisibleChangedEvent ,WindowContext context){}
+        protected virtual void OnAppear(bool dispatchVisibleChangedEvent, int openOrder,WindowContext context){}
+        protected virtual void OnHide( bool dispatchVisibleChangedEvent ,WindowContext context){}
         protected virtual void OnClose(WindowContext context){}
 
         #endregion
@@ -619,15 +582,6 @@ namespace UIFrameWork
             }
         }
         /// <summary>
-        /// 设置隐藏下面的窗口属性
-        /// </summary>
-        /// <param name="isHideUnderForm"></param>
-        public void SetHideUnderForm(bool isHideUnderForm)
-        {
-            this.m_hideUnderUIs = isHideUnderForm;
-            //Singleton<CUIManager>.instance.ResetAllFormHideOrShowState(); todo
-        }
-        /// <summary>
         /// 获取当前屏幕适配的缩放值
         /// </summary>
         /// <returns></returns>
@@ -681,94 +635,23 @@ namespace UIFrameWork
                 this.m_graphicRaycaster.enabled = true;
             }
         }
-        /// <summary>
-        /// 添加关联场景
-        /// </summary>
-        public void AddRelatedScene(GameObject scene,string sceneName)
-        {
-            scene.name = sceneName;
-            this.m_relatedScens.Add(scene);
-            this.m_relatedCamera.Add(new List<Camera>());
-            this.AddRelatedSceneCamera(this.m_relatedCamera.Count - 1, scene);
-        }
-        /// <summary>
-        /// 添加关联的摄像机
-        /// </summary>
-        /// <param name="index"></param>
-        /// <param name="go"></param>
-        public void AddRelatedSceneCamera(int index, GameObject go)
-        {
-            if (index < 0 || index >= this.m_relatedCamera.Count || go == null)
-            {
-                return;
-            }
-            Camera component = go.GetComponent<Camera>();
-            if (component != null)
-            {
-                this.m_relatedCamera[index].Add(component);
-            }
-            for (int i = 0; i < go.transform.childCount; i++)
-            {
-                this.AddRelatedSceneCamera(index, go.transform.GetChild(i).gameObject);
-            }
-        } 
-        /// <summary>
-        /// 关联界面会否已经存在
-        /// </summary>
-        /// <param name="sceneName"></param>
-        /// <returns></returns>
-        public bool IsRelatedSceneExist(string sceneName)
-        {
-            for (int i = 0; i < this.m_relatedScens.Count; i++)
-            {
-                if (string.Equals(sceneName, this.m_relatedScens[i].name))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-        /// <summary>
-        /// /设置当前界面关联camera的可见
-        /// </summary>
-        /// <param name="index"></param>
-        /// <param name="bEnable"></param>
-        public void SetSceneCameraEnable(int index, bool bEnable)
-        {
-            if (index < 0 || index >= this.m_relatedCamera.Count || this.m_relatedCamera[index] == null)
-            {
-                return;
-            }
-            for (int i = 0; i < this.m_relatedCamera[index].Count; i++)
-            {
-                if (this.m_relatedCamera[index][i] != null)
-                {
-                    this.m_relatedCamera[index][i].enabled = bEnable;
-                }
-            }
-        }
       
         #region 派发函数 跟事件派发整合
 
-        private void DispatchWindowEvent(enWindowEventType windowEventType)
-        {
-            //todo
-        }
-
         private void DispatchChangeWindowPriorityEvent()
         {
-            //todo
+            GameFrame.Event uIEvent = Singleton<EventManager>.GetInstance().GetEvent();
+            uIEvent.EnEventId = enEventID.UI_OnFormPriorityChanged;
+            Singleton<EventManager>.GetInstance().DispathEvent(uIEvent);
         }
 
         private void DispatchVisibleChangedEvent()
         {
-            //todo
+            GameFrame.Event uIEvent = Singleton<EventManager>.GetInstance().GetEvent();
+            uIEvent.EnEventId = enEventID.UI_OnFormVisibleChanged;
+            Singleton<EventManager>.GetInstance().DispathEvent(uIEvent);
         }
 
-        private void DispatchRevertVisibleWindowEvent()
-        {
-            //todo
-        }
 
         #endregion
         

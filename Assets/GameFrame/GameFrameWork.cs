@@ -185,6 +185,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<LauncherString>.GetInstance();
         Singleton<TimeManager>.GetInstance();
         Singleton<EventManager>.GetInstance();
+        Singleton<WindowManager>.GetInstance();
         Singleton<ResourceManager>.GetInstance();
         Singleton<PhotonManager>.GetInstance();
     }
@@ -196,8 +197,14 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         {
             Singleton<UpdateManager>.GetInstance().Update();
         }
+        Singleton<WindowManager>.GetInstance().Update();
         Singleton<ResourceManager>.GetInstance().Update();
         Singleton<PhotonManager>.GetInstance().Update();
+    }
+
+    void LateUpdate()
+    {
+        Singleton<WindowManager>.GetInstance().LateUpdate();
     }
 
     private void OnDestroy()
