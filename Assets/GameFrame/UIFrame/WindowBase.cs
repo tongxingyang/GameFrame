@@ -60,12 +60,6 @@ namespace UIFrameWork
         /// 窗口的打开序列 根据此回去相对openorder
         /// </summary>
         private int m_sequence;
-
-        /// <summary>
-        /// 窗口隐藏标志
-        /// </summary>
-        private int m_hideFlags;
-
         /// <summary>
         /// 打开时是否隐藏下面的界面
         /// </summary>
@@ -75,8 +69,6 @@ namespace UIFrameWork
         /// </summary>
         public bool m_enableInput;
         private List<UIComponent> m_components;
-//        private List<GameObject> m_relatedScens;
-//        private List<List<Camera>> m_relatedCamera;
         private enWindowState windowState = enWindowState.None;
         public WindowStateChangeEvent WindowStateChange;
 
@@ -148,8 +140,6 @@ namespace UIFrameWork
         void OnDestroy()
         {
             this.m_components = null;
-//            this.m_relatedScens = null;
-//            this.m_relatedCamera = null;
             OnWindowDestory();
         }
         protected virtual void OnWindowAwake(){}
@@ -173,9 +163,9 @@ namespace UIFrameWork
             this.SetCanvasMode(UICamera);
             this.gameObject.SetActive(true);
             this.m_components = new List<UIComponent>();
-            this.m_isClosed = true;
-            this.m_isHided = true;
-            this.m_isActivied = false;
+            this.m_isClosed = false;
+            this.m_isHided = false;
+            this.m_isActivied = true;
             windowState= enWindowState.Init;
             this.m_defaultPriority = this.WindowInfo.Priority;
             this.m_sequence = sequence;
@@ -194,17 +184,17 @@ namespace UIFrameWork
             {
                 Debug.LogError("没有初始化 ");return;
             }
-            if (IsActivied() == true)
-            {
-                return;
-            }
+//            if (IsActivied() == true)
+//            {
+//                return;
+//            }
             this.gameObject.SetActive(true);
             this.m_isHided = false;
             this.m_isClosed = false;
             this.m_isActivied = true;
             windowState= enWindowState.Appear;
             this.SetDisplayOrder(openOrder);
-            PlayAppearAnim();
+//            PlayAppearAnim();
             PlayAppearMusic();
             this.TryEnableInput(true);
             AppearComponent();
@@ -217,9 +207,9 @@ namespace UIFrameWork
         /// <summary>
         /// 
         /// </summary>
-        public void Hide( bool dispatchVisibleChangedEvent ,WindowContext context)
+        public void Hide( bool dispatchVisibleChangedEvent, bool force,WindowContext context)
         {
-            if (this.WindowInfo.AlwaysKeepVisible)
+            if (this.WindowInfo.AlwaysKeepVisible && force==false)
             {
                 return;
             }
@@ -233,7 +223,7 @@ namespace UIFrameWork
             this.m_isActivied = false;
             windowState= enWindowState.Hide;
             HideComponent();
-            PlayHideAnim();
+//            PlayHideAnim();
             PlayHideMusic();
             if (this.m_canvas != null)
             {
@@ -249,17 +239,22 @@ namespace UIFrameWork
         /// <summary>
         /// 
         /// </summary>
-        public void Close(WindowContext context)
+        public void Close(bool force ,WindowContext context)
         {
+            if (this.WindowInfo.AlwaysKeepVisible && force==false)
+            {
+                return;
+            }
             this.gameObject.SetActive(false);
             this.m_isHided = true;
             this.m_isClosed = true;
             this.m_isActivied = false;
             windowState= enWindowState.Close;
             CloseComponent();
-            PlayCloseAnim();
+//            PlayCloseAnim();
             PlayCloseMusic();
             OnClose(context);
+            DestroyImmediate(CacheGameObject);
         }
 
         protected virtual void OnInit(Camera UICameraint, int sequence, WindowContext context){}

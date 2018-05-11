@@ -141,7 +141,7 @@ namespace UIFrameWork
             {
                 if (flag)
                 {
-                    this.m_windows[i].Hide(false,null);
+                    this.m_windows[i].Hide(false,false,null);
                 }
                 else
                 {
@@ -189,49 +189,77 @@ namespace UIFrameWork
             }
         }
 
-        public void CloseWindow(WindowBase windowBase)
+        public void CloseWindow(bool isforce,WindowBase windowBase)
         {
             for (int i = 0; i < m_windows.Count; i++)
             {
                 if (this.m_windows[i] == windowBase)
                 {
-                    this.m_windows[i].Close(null);
+                    if (this.m_windows[i].m_isUsePool)
+                    {
+                        this.m_windows[i].Hide(true,isforce,null);
+                    }
+                    else
+                    {
+                        this.m_windows[i].Close(isforce,null);
+                    }
                 }
             }
         }
-        public void CloseWindow(string path)
+        public void CloseWindow(bool isforce,string path)
         {
             for (int i = 0; i < m_windows.Count; i++)
             {
                 if (this.m_windows[i].WindowInfo.PerfabPath == path)
                 {
-                    this.m_windows[i].Close(null);
+                    if (this.m_windows[i].m_isUsePool)
+                    {
+                        this.m_windows[i].Hide(true,isforce,null);
+                    }
+                    else
+                    {
+                        this.m_windows[i].Close(isforce,null);
+                    }
                 }
             }
         }
-        public void CloseWindow(int sque)
+        public void CloseWindow(bool isforce,int sque)
         {
             for (int i = 0; i < m_windows.Count; i++)
             {
                 if (this.m_windows[i].GetSequence() == sque)
                 {
-                    this.m_windows[i].Close(null);
+                    if (this.m_windows[i].m_isUsePool)
+                    {
+                        this.m_windows[i].Hide(true,isforce,null);
+                    }
+                    else
+                    {
+                        this.m_windows[i].Close(isforce,null);
+                    }
                 }
             }
         }
 
-        public void CloseAllWindow(bool closeImmediated = true,bool clearPool = true)
+        public void CloseAllWindow(bool closeImmediated = true,bool clearPool = true,bool isforce = false)
         {
             for (int i = 0; i < this.m_windows.Count; i++)
             {
-                this.m_windows[i].Close(null);
+                if (this.m_windows[i].m_isUsePool)
+                {
+                    this.m_windows[i].Hide(true,isforce,null);
+                }
+                else
+                {
+                    this.m_windows[i].Close(isforce,null);
+                }
             }
             if (closeImmediated)
             {
                 int k = 0;
                 while (k<this.m_windows.Count)
                 {
-                    if (m_windows[k].IsClosed())
+                    if (m_windows[k].IsHided())
                     {
                         RecycleWindow(k);
                     }
@@ -277,14 +305,21 @@ namespace UIFrameWork
             return null;
         }
 
-        public void CloseGroupWindow(int group)
+        public void CloseGroupWindow(int group,bool isforce)
         {
             if(group == 0) return;
             for (int i = 0; i < m_windows.Count; i++)
             {
                 if (this.m_windows[i].WindowInfo.Group == group)
                 {
-                    this.m_windows[i].Close(null);
+                    if (this.m_windows[i].m_isUsePool)
+                    {
+                        this.m_windows[i].Hide(true,isforce,null);
+                    }
+                    else
+                    {
+                        this.m_windows[i].Close(isforce,null);
+                    }
                 }
             }
         }
@@ -320,7 +355,7 @@ namespace UIFrameWork
         {
             for (int i = 0; i < this.m_windows.Count; i++)
             {
-                if (this.m_windows[i].WindowInfo.PerfabPath.Equals(path) && !this.m_windows[i].IsClosed())
+                if (this.m_windows[i].WindowInfo.PerfabPath.Equals(path) && !this.m_windows[i].IsHided())
                 {
                     return this.m_windows[i];
                 }
@@ -371,7 +406,7 @@ namespace UIFrameWork
             }
         }
 
-        private void RecycleWindow(WindowBase windowBase)
+        private void RecycleWindow(WindowBase windowBase,bool isforce= false)
         {
             if (windowBase == null)
             {
@@ -379,7 +414,7 @@ namespace UIFrameWork
             }
             if (windowBase.m_isUsePool)
             {
-                windowBase.Hide(true, null);
+                windowBase.Hide(true,isforce, null);
                 this.m_pooledWindows.Add(windowBase);
             }
             else
@@ -471,7 +506,7 @@ namespace UIFrameWork
                 windowBase.Appear(true, openorder, null);
                 if (windowBase.WindowInfo.Group > 0)
                 {
-                    this.CloseGroupWindow(windowBase.WindowInfo.Group);
+                    this.CloseGroupWindow(windowBase.WindowInfo.Group,false);
                 }
                 this.m_windows.Add(windowBase);
             }
