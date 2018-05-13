@@ -12,7 +12,6 @@ namespace UIFrameWork
 		[SerializeField] public enWindowType Type;
 		[SerializeField] public string PerfabPath;
 		[SerializeField] public string Name;
-		[SerializeField] public Type Script;
 		[SerializeField] public enWindowColliderMode ColliderMode;
 		[SerializeField] public bool IsSinglen;
 		[SerializeField] public enWindowPriority Priority;
@@ -25,7 +24,6 @@ namespace UIFrameWork
 			,bool hideunderinput,bool alwayskeepxisible,bool disable) 
 		{
 			PerfabPath = Tools.GetPrefabPathByType(windowType);
-			Script = Tools.GetUIScripeByType(windowType);
 			Type = windowType;
 			ColliderMode = windowcolliderMode;
 			Name = windowType.ToString();

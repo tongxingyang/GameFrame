@@ -22,9 +22,8 @@ public class MainUI : WindowBase
     private string ip;
 
     bool isNetWorkLose = false;
-    protected override void OnWindowUpdate(float t)
+    protected override void OnWindowCustomUpdate()
     {
-        base.OnWindowUpdate(t);
         if (Application.internetReachability == NetworkReachability.NotReachable)
         {
             isNetWorkLose = true;
@@ -63,9 +62,8 @@ public class MainUI : WindowBase
     #endregion
 
     private bool isFirst = true;
-    protected override void OnInitantiate()
+    protected override void OnInit(Camera UICamera)
     {
-        base.OnInitantiate();
         FirstGameObject = CacheTransform.Find("BG/First").gameObject;
         CreatePlayerName = CacheTransform.Find("BG/First/Board/PlayerName").GetComponent<InputField>();
         CreatePlayerInfoButton = CacheTransform.Find("BG/First/Board/Button").GetComponent<Button>();
@@ -109,9 +107,8 @@ public class MainUI : WindowBase
             PingText.color = new Color(1, 0, 0);
         }
     }
-    protected override void OnEnter(WindowContext context)
+    protected override void OnAppear(int sequence, int openOrder, WindowContext context)
     {
-        base.OnEnter(context);
         if (isFirst)
         {
             isFirst = false;

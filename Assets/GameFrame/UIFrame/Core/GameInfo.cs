@@ -15,9 +15,8 @@ public class GameInfo : WindowBase
     private Button oneButton = null;
     private Button twoButton = null;
     private RectTransform oneRectTransform;
-    protected override void OnInitantiate()
+    protected override void OnInit(Camera UICamera)
     {
-        base.OnInitantiate();
         //加载组建
         showInfoText = this.CacheTransform.Find("BG/TextContent").GetComponent<Text>();
         titleText = this.CacheTransform.Find("BG/TextTitle").GetComponent<Text>();
@@ -42,18 +41,16 @@ public class GameInfo : WindowBase
         oneRectTransform = oneButton.GetComponent<RectTransform>();
     }
 
-    protected override void OnEnter(WindowContext context)
+    protected override void OnAppear(int sequence, int openOrder, WindowContext context)
     {
-        base.OnEnter(context);
         GameInfoContent gameInfoContent = context as GameInfoContent;
         currentGameInfoContent = gameInfoContent;
         // InitShow(gameInfoContent);
     }
 
 
-    protected override void OnResume(WindowContext context)
+    protected override void OnHide(WindowContext context)
     {
-        base.OnResume(context);
         //InitShow(currentGameInfoContent);
     }
 

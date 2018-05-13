@@ -26,7 +26,7 @@ public class AccountReceiver : ReceiverInterface
         WindowBase windowBase = null;
         var retCode = response.ReturnCode;
         var message = response.DebugMessage;
-        windowBase = Singleton<WindowManager>.Instance.GetwWindowBase(WindowType.LoginAndRegister);
+        windowBase = Singleton<WindowManager>.Instance.GetWindow("LoginAndRegister");
         if (windowBase != null)
         {
             (windowBase as LoginAndRegister).SetLoginButton(true);
@@ -62,7 +62,7 @@ public class AccountReceiver : ReceiverInterface
         WindowBase windowBase = null;
         var retCode = response.ReturnCode;
         var message = response.DebugMessage;
-        windowBase = Singleton<WindowManager>.Instance.GetwWindowBase(WindowType.LoginAndRegister);
+        windowBase = Singleton<WindowManager>.Instance.GetWindow("LoginAndRegister");
         if (windowBase != null)
         { 
             (windowBase as LoginAndRegister).SetRegisterButton(true);

@@ -40,8 +40,7 @@ public  class PlayerInfoReceiver:ReceiverInterface
             GameData.FriendList = list;
             GameData.AddFriendList = addlist;
 
-            WindowManager.GetInstance().OpenWindow(new WindowInfo(WindowType.FriendUI, ShowMode.Normal,
-                OpenAction.DoNothing, ColliderMode.Node),new FriendsContent(list,addlist));
+            WindowManager.GetInstance().OpenWindow("FriendUI",true,true, new FriendsContent(list,addlist));
             //刷新ui显示
             
         }
@@ -62,10 +61,8 @@ public  class PlayerInfoReceiver:ReceiverInterface
             Debug.Log("需要创建角色信息");
         }
         //打开MianUI逻辑
-        Singleton<WindowManager>.Instance.OpenWindow(new WindowInfo(WindowType.MainUI, ShowMode.Main,
-            OpenAction.DoNothing, ColliderMode.Node));
-        Singleton<WindowManager>.Instance.CloseWindow(new WindowInfo(WindowType.LoginAndRegister, ShowMode.Normal,
-            OpenAction.DoNothing, ColliderMode.Node));
+        Singleton<WindowManager>.Instance.OpenWindow("MainUI",true);
+        Singleton<WindowManager>.Instance.CloseWindow(false, "LoginAndRegister");
     }
 
     private void Create(OperationResponse response)
@@ -73,7 +70,7 @@ public  class PlayerInfoReceiver:ReceiverInterface
         //0 成功 1 角色名重复
         short retCode = response.ReturnCode;
         WindowBase windowBase = null;
-        windowBase = Singleton<WindowManager>.Instance.GetwWindowBase(WindowType.MainUI);
+        windowBase = Singleton<WindowManager>.Instance.GetWindow("MainUI");
 
         switch (retCode)
         {

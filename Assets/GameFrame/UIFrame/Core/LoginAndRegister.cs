@@ -30,9 +30,8 @@ public class LoginAndRegister : WindowBase
 
     #endregion
 
-    protected override void OnInitantiate()
+    protected override void OnInit(Camera UICamera)
     {
-        base.OnInitantiate();
         //初始化
         loginGameObject = this.CacheTransform.Find("LoginBG").gameObject;
         registerGameObject = this.CacheTransform.Find("RegisterBG").gameObject;

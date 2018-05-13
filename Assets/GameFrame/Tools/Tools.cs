@@ -11,45 +11,26 @@ using UnityEngine;
 	{
 
 		public const string UI_PREFABPATH = "UIPrefab/";
-		public static Type GetUIScripeByType(WindowType type)
-		{
-			Type ret = null;
-			switch (type)
-			{
-				case WindowType.LoginAndRegister:
-				    ret = typeof(LoginAndRegister);
-					break;
-                case WindowType.GameInfo:
-                    ret = typeof(GameInfo);
-                    break;
-			    case WindowType.MainUI:
-			        ret = typeof(MainUI);
-			        break;
-                case WindowType.FriendUI:
-                    ret = typeof(FriendUI);
-                    break;
-        }
-			return ret;
-		}
+		
 
-		public static string GetPrefabPathByType(WindowType type)
+		public static string GetPrefabPathByType(enWindowType type)
 		{
 			string _path = String.Empty;
 			switch (type)
 			{
-				case WindowType.LoginAndRegister:
+				case enWindowType.LoginAndRegister:
 					//_path = UI_PREFABPATH + "/Login";
 					_path = "LoginAndRegister";
 					break;
-			    case WindowType.GameInfo:
+			    case enWindowType.GameInfo:
 			        //_path = UI_PREFABPATH + "/Login";
 			        _path = "GameInfo";
 			        break;
-			    case WindowType.MainUI:
+			    case enWindowType.MainUI:
 			        //_path = UI_PREFABPATH + "/Login";
 			        _path = "MainUI";
 			        break;
-			    case WindowType.FriendUI:
+			    case enWindowType.FriendUI:
 			        //_path = UI_PREFABPATH + "/Login";
 			        _path = "FriendUI";
 			        break;

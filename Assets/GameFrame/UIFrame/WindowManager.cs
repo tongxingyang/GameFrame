@@ -21,8 +21,6 @@ namespace UIFrameWork
         public OnWindowSorted OnWindowSorted;
         private EventSystem m_eventSystem;
         private Camera m_UICamera;
-        private bool m_needSort;
-        private bool m_needUpdateHide;
 
         public Camera UICamera
         {
@@ -39,20 +37,8 @@ namespace UIFrameWork
             CreateUIRoot();
             CreateEventSystem();
             CreateCamera();
-            //监听相关时间消息处理
-            Singleton<EventManager>.GetInstance().AddEventListener(enEventID.UI_OnFormPriorityChanged, new EventManager.OnEventHandler(this.OnFormPriorityChanged));
-            Singleton<EventManager>.GetInstance().AddEventListener(enEventID.UI_OnFormVisibleChanged, new EventManager.OnEventHandler(this.OnFormVisibleChanged));
         }
-        //事件接受函数
-        private void OnFormPriorityChanged(GameFrame.Event @event)
-        {
-            this.m_needSort = true;
-        }
-
-        private void OnFormVisibleChanged(GameFrame.Event @event)
-        {
-            this.m_needUpdateHide = true;
-        }
+      
         private void CreateUIRoot()
         {
             this.m_root = new GameObject("UIRoot");
@@ -90,90 +76,25 @@ namespace UIFrameWork
             camera.cullingMask = 32;// todo
             this.m_UICamera = camera;
         }
-        
-        public void Update()
+
+        public void UpdateSortingOrder()
         {
-            for (int i = 0; i < this.m_windows.Count; i++)
+            this.m_windows.Sort();//m_sortingOrder从小到大 
+            foreach (WindowBase t in this.m_windows)
             {
-                this.m_windows[i].CustomUpdate();
-                if (this.m_windows[i].IsClosed())
-                {
-                    this.RecycleWindow(i);
-                    this.m_needSort = true;
-                }
-            }
-            if (this.m_needSort)
-            {
-                this.ProcessWindowList(true, true);
-            }else if (this.m_needUpdateHide)
-            {
-                this.ProcessWindowList(false, true);
-            }
-            this.m_needSort = false;
-            this.m_needUpdateHide = false;
-        }
-        private void ProcessWindowList(bool sort, bool handleInputAndHide)
-        {
-            if (sort)
-            {
-                this.m_windows.Sort();//m_sortingOrder从小到大 
-                for (int i = 0; i < this.m_windows.Count; i++)
-                {
-                    int openorder = this.GetWindowOpenOrder(this.m_windows[i].GetSequence());
-                    this.m_windows[i].SetDisplayOrder(openorder);
-                }
-            }
-            if (handleInputAndHide)
-            {
-                this.UpdateWindowHided();
-                //this.UpdateWindowRaycaster();
+                int openorder = this.GetWindowOpenOrder(t.GetSequence());
+                t.SetDisplayOrder(openorder);
             }
             if (this.OnWindowSorted != null)
             {
                 this.OnWindowSorted(this.m_windows);
             }
         }
-
-        private void UpdateWindowHided()
+        public void Update()
         {
-            bool flag = false;
-            for (int i = this.m_windows.Count - 1; i >= 0; i--)
+            foreach (WindowBase t in this.m_windows)
             {
-                if (flag)
-                {
-                    this.m_windows[i].Hide(false,false,null);
-                }
-                else
-                {
-                    int openorder = this.GetWindowOpenOrder(this.m_windows[i].GetSequence());
-                    this.m_windows[i].Appear(false,openorder,null);
-                }
-                if (!flag && !this.m_windows[i].IsHided() && this.m_windows[i].m_hideUnderUIs)
-                {
-                    flag = true;
-                }
-            }
-        }
-
-        private void UpdateWindowRaycaster()
-        {
-            for (int i = this.m_windows.Count - 1; i >= 0; i--)
-            {
-                GraphicRaycaster graphicRaycaster = this.m_windows[i].GetGraphicRaycaster();
-                if (this.m_windows[i].m_enableInput && !this.m_windows[i].IsHided())
-                {
-                    if (graphicRaycaster != null)
-                    {
-                        graphicRaycaster.enabled = true;
-                    }
-                }
-                else
-                {
-                    if (graphicRaycaster != null)
-                    {
-                        graphicRaycaster.enabled = false;
-                    }
-                }
+                t.CustomUpdate();
             }
         }
         public string GetWindowName(string path)
@@ -183,13 +104,13 @@ namespace UIFrameWork
         }
         public void LateUpdate()
         {
-            for (int i = 0; i < m_windows.Count; i++)
+            foreach (WindowBase t in this.m_windows)
             {
-                m_windows[i].CustomLateUpdate();
+                t.CustomLateUpdate();
             }
         }
 
-        public void CloseWindow(bool isforce,WindowBase windowBase)
+        public void CloseWindow(bool isforce,WindowBase windowBase,WindowContext windowContext = null)
         {
             for (int i = 0; i < m_windows.Count; i++)
             {
@@ -197,16 +118,16 @@ namespace UIFrameWork
                 {
                     if (this.m_windows[i].m_isUsePool)
                     {
-                        this.m_windows[i].Hide(true,isforce,null);
+                        this.m_windows[i].Hide(isforce, windowContext);
                     }
                     else
                     {
-                        this.m_windows[i].Close(isforce,null);
+                        this.m_windows[i].Close(isforce, windowContext);
                     }
                 }
             }
         }
-        public void CloseWindow(bool isforce,string path)
+        public void CloseWindow(bool isforce,string path, WindowContext windowContext = null)
         {
             for (int i = 0; i < m_windows.Count; i++)
             {
@@ -214,16 +135,16 @@ namespace UIFrameWork
                 {
                     if (this.m_windows[i].m_isUsePool)
                     {
-                        this.m_windows[i].Hide(true,isforce,null);
+                        this.m_windows[i].Hide(isforce, windowContext);
                     }
                     else
                     {
-                        this.m_windows[i].Close(isforce,null);
+                        this.m_windows[i].Close(isforce, windowContext);
                     }
                 }
             }
         }
-        public void CloseWindow(bool isforce,int sque)
+        public void CloseWindow(bool isforce,int sque, WindowContext windowContext = null)
         {
             for (int i = 0; i < m_windows.Count; i++)
             {
@@ -231,11 +152,11 @@ namespace UIFrameWork
                 {
                     if (this.m_windows[i].m_isUsePool)
                     {
-                        this.m_windows[i].Hide(true,isforce,null);
+                        this.m_windows[i].Hide(isforce, windowContext);
                     }
                     else
                     {
-                        this.m_windows[i].Close(isforce,null);
+                        this.m_windows[i].Close(isforce, windowContext);
                     }
                 }
             }
@@ -243,32 +164,17 @@ namespace UIFrameWork
 
         public void CloseAllWindow(bool closeImmediated = true,bool clearPool = true,bool isforce = false)
         {
-            for (int i = 0; i < this.m_windows.Count; i++)
+            int k = 0;
+            while (k<this.m_windows.Count)
             {
-                if (this.m_windows[i].m_isUsePool)
+                if (this.m_windows[k].m_isUsePool)
                 {
-                    this.m_windows[i].Hide(true,isforce,null);
+                    this.m_windows[k].Hide(isforce, null);
                 }
                 else
                 {
-                    this.m_windows[i].Close(isforce,null);
+                    this.m_windows[k].Close(isforce, null);
                 }
-            }
-            if (closeImmediated)
-            {
-                int k = 0;
-                while (k<this.m_windows.Count)
-                {
-                    if (m_windows[k].IsHided())
-                    {
-                        RecycleWindow(k);
-                    }
-                    else
-                    {
-                        k++;
-                    }
-                }
-
             }
             if (clearPool)
             {
@@ -314,7 +220,7 @@ namespace UIFrameWork
                 {
                     if (this.m_windows[i].m_isUsePool)
                     {
-                        this.m_windows[i].Hide(true,isforce,null);
+                        this.m_windows[i].Hide(isforce,null);
                     }
                     else
                     {
@@ -406,32 +312,14 @@ namespace UIFrameWork
             }
         }
 
-        private void RecycleWindow(WindowBase windowBase,bool isforce= false)
+        public void RecycleWindow(WindowBase windowBase)
         {
-            if (windowBase == null)
-            {
-                return;
-            }
+            this.RemoveFromExitSquenceList(windowBase.GetSequence());
             if (windowBase.m_isUsePool)
             {
-                windowBase.Hide(true,isforce, null);
                 this.m_pooledWindows.Add(windowBase);
             }
-            else
-            {
-                if (windowBase.m_canvasScaler != null)
-                {
-                    windowBase.m_canvasScaler.enabled = false;
-                }
-                Object.DestroyImmediate(windowBase.CacheGameObject);
-            } 
-        }
-
-        private void RecycleWindow(int index)
-        {
-            this.RemoveFromExitSquenceList(this.m_windows[index].GetSequence());
-            this.RecycleWindow(this.m_windows[index]);
-            this.m_windows.RemoveAt(index);
+            this.m_windows.Remove(windowBase);
         }
 
         private GameObject CreateWindow(string path,bool usePool)
@@ -456,7 +344,7 @@ namespace UIFrameWork
                 {
                     return null;
                 }
-                obj = GameObject.Instantiate(res);
+                obj = Object.Instantiate(res);
             }
             if (obj != null)
             {
@@ -469,7 +357,7 @@ namespace UIFrameWork
             return obj;
         }
 
-        public WindowBase OpenWindow(string path,bool isusePool,bool useCameraRender = true)
+        public WindowBase OpenWindow(string path,bool isusePool,bool useCameraRender = true,WindowContext appear = null)
         {
             WindowBase windowBase = GetUnClosedWindow(path);
             if (windowBase != null && windowBase.WindowInfo.IsSinglen)
@@ -477,9 +365,8 @@ namespace UIFrameWork
                 this.RemoveFromExitSquenceList(windowBase.GetSequence());
                 this.AddToExitSquenceList(this.m_windowSequence);
                 int openorder = this.GetWindowOpenOrder(this.m_windowSequence);
-                windowBase.Appear(true, openorder, null);
+                windowBase.Appear(this.m_windowSequence, openorder, appear);
                 this.m_windowSequence++;
-                this.m_needSort = true;
                 return windowBase;
             }
             GameObject obj = CreateWindow(path, isusePool);
@@ -499,11 +386,11 @@ namespace UIFrameWork
                 if (!windowBase.IsInitialized())
                 {
                     AddCollider(windowBase);//添加遮罩
-                    windowBase.Init(useCameraRender?m_UICamera:null,m_windowSequence,null);
+                    windowBase.Init(useCameraRender?m_UICamera:null);
                 } 
                 this.AddToExitSquenceList(this.m_windowSequence);
                 int openorder = GetWindowOpenOrder(this.m_windowSequence);
-                windowBase.Appear(true, openorder, null);
+                windowBase.Appear(this.m_windowSequence, openorder, appear);
                 if (windowBase.WindowInfo.Group > 0)
                 {
                     this.CloseGroupWindow(windowBase.WindowInfo.Group,false);
@@ -511,7 +398,6 @@ namespace UIFrameWork
                 this.m_windows.Add(windowBase);
             }
             this.m_windowSequence++;
-            this.m_needSort = true;
             return windowBase;
         }
 

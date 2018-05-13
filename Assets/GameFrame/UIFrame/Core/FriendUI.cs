@@ -17,9 +17,8 @@ public class FriendUI : WindowBase
     private List<FriendItem> FriendItemList = new List<FriendItem>();
     private List<NewFriendItem> AddFriendItemList = new List<NewFriendItem>();
 
-    protected override void OnInitantiate()
+    protected override void OnInit(Camera camera)
     {
-        base.OnInitantiate();
         CloseButton = this.CacheTransform.Find("BG/CloseButton").GetComponent<Button>();
         FriendItemObj = this.CacheTransform.Find("BG/FriendList/Viewport/Content/Frienditem").gameObject;
         FriendAddItemObj = this.CacheTransform.Find("BG/NewFriendList/Viewport/Content/NewFrienditem").gameObject;
@@ -29,15 +28,13 @@ public class FriendUI : WindowBase
         EventTriggerListener.Get(CloseButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
             (a, b, c) =>
             {
-                WindowManager.GetInstance().CloseWindow(new WindowInfo(WindowType.FriendUI, ShowMode.Normal,
-                    OpenAction.DoNothing, ColliderMode.Node));
+                WindowManager.GetInstance().CloseWindow(false, "FriendUI");
             });
     }
 
-    protected override void OnEnter(WindowContext context)
+    protected override void OnAppear(int sequence, int openOrder, WindowContext context)
     {
         //感觉content传过来的数据没用 用全局就行 打开之前全局赋值更新过了 // 以后有更改就更新本地数据
-        base.OnEnter(context);
         friendsContent = context as FriendsContent;
         //好友
         if (GameData.FriendList != null)

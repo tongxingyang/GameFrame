@@ -61,17 +61,12 @@ namespace UIFrameWork
         /// </summary>
         private int m_sequence;
         /// <summary>
-        /// 打开时是否隐藏下面的界面
-        /// </summary>
-        public bool m_hideUnderUIs;
-        /// <summary>
         /// 窗口是否可以接受事件
         /// </summary>
         public bool m_enableInput;
         private List<UIComponent> m_components;
         private enWindowState windowState = enWindowState.None;
         public WindowStateChangeEvent WindowStateChange;
-
         private Transform _CacheTransform;
         public Transform CacheTransform
         {
@@ -153,7 +148,7 @@ namespace UIFrameWork
         /// <summary>
         /// 
         /// </summary>
-        public void Init(Camera UICamera, int sequence, WindowContext context)
+        public void Init(Camera UICamera)
         {
             if (this.m_isInitialized)
             {
@@ -161,53 +156,43 @@ namespace UIFrameWork
             }
             this.InitializeCanvas();
             this.SetCanvasMode(UICamera);
-            this.gameObject.SetActive(true);
             this.m_components = new List<UIComponent>();
             this.m_isClosed = false;
             this.m_isHided = false;
             this.m_isActivied = true;
             windowState= enWindowState.Init;
             this.m_defaultPriority = this.WindowInfo.Priority;
-            this.m_sequence = sequence;
             this.InitUIComponent(gameObject);
             this.InitComponent();
-            OnInit(UICamera, sequence,context);
+            OnInit(UICamera);
             this.m_isInitialized = true;
             
         }
         /// <summary>
         /// 
         /// </summary>
-        public void Appear( bool dispatchVisibleChangedEvent , int openOrder,WindowContext context)
+        public void Appear( int sequence, int openOrder,WindowContext context)
         {
             if (this.m_isInitialized == false)
             {
                 Debug.LogError("没有初始化 ");return;
             }
-//            if (IsActivied() == true)
-//            {
-//                return;
-//            }
+            this.m_sequence = sequence;
             this.gameObject.SetActive(true);
             this.m_isHided = false;
             this.m_isClosed = false;
             this.m_isActivied = true;
             windowState= enWindowState.Appear;
             this.SetDisplayOrder(openOrder);
-//            PlayAppearAnim();
             PlayAppearMusic();
             this.TryEnableInput(true);
             AppearComponent();
-            if (dispatchVisibleChangedEvent)
-            {
-                this.DispatchVisibleChangedEvent();
-            }
-            OnAppear(dispatchVisibleChangedEvent, openOrder,context);
+            OnAppear(sequence, openOrder,context);
         }
         /// <summary>
         /// 
         /// </summary>
-        public void Hide( bool dispatchVisibleChangedEvent, bool force,WindowContext context)
+        public void Hide( bool force,WindowContext context)
         {
             if (this.WindowInfo.AlwaysKeepVisible && force==false)
             {
@@ -217,24 +202,20 @@ namespace UIFrameWork
             {
                 return;
             }
-            this.gameObject.SetActive(false);
             this.m_isHided = true;
             this.m_isClosed = false;
             this.m_isActivied = false;
             windowState= enWindowState.Hide;
             HideComponent();
-//            PlayHideAnim();
             PlayHideMusic();
             if (this.m_canvas != null)
             {
                 this.m_canvas.enabled = false;
             }
             this.TryEnableInput(false);
-            if (dispatchVisibleChangedEvent)
-            {
-                this.DispatchVisibleChangedEvent();
-            }
-            OnHide(dispatchVisibleChangedEvent,context);
+            Singleton<WindowManager>.GetInstance().RecycleWindow(this);
+            this.gameObject.SetActive(false);
+            OnHide(context);
         }
         /// <summary>
         /// 
@@ -251,24 +232,21 @@ namespace UIFrameWork
             this.m_isActivied = false;
             windowState= enWindowState.Close;
             CloseComponent();
-//            PlayCloseAnim();
             PlayCloseMusic();
             OnClose(context);
+            Singleton<WindowManager>.GetInstance().RecycleWindow(this);
             DestroyImmediate(CacheGameObject);
         }
 
-        protected virtual void OnInit(Camera UICameraint, int sequence, WindowContext context){}
-        protected virtual void OnAppear(bool dispatchVisibleChangedEvent, int openOrder,WindowContext context){}
-        protected virtual void OnHide( bool dispatchVisibleChangedEvent ,WindowContext context){}
+        protected virtual void OnInit(Camera UICamera){}
+        protected virtual void OnAppear(int sequence, int openOrder,WindowContext context){}
+        protected virtual void OnHide(WindowContext context){}
         protected virtual void OnClose(WindowContext context){}
 
         #endregion
     
         #region 定义界面功能接口
     
-        public virtual void PlayAppearAnim(){}
-        public virtual void PlayHideAnim(){}
-        public virtual void PlayCloseAnim(){}
         public virtual void PlayAppearMusic(){}
         public virtual void PlayHideMusic(){}
         public virtual void PlayCloseMusic(){}
@@ -602,7 +580,7 @@ namespace UIFrameWork
             }
             this.WindowInfo.Priority = priority;
             this.SetDisplayOrder(this.m_openOrder);
-            this.DispatchChangeWindowPriorityEvent();
+            Singleton<WindowManager>.GetInstance().UpdateSortingOrder();
         }
         /// <summary>
         /// 默认优先级
@@ -630,26 +608,6 @@ namespace UIFrameWork
                 this.m_graphicRaycaster.enabled = true;
             }
         }
-      
-        #region 派发函数 跟事件派发整合
-
-        private void DispatchChangeWindowPriorityEvent()
-        {
-            GameFrame.Event uIEvent = Singleton<EventManager>.GetInstance().GetEvent();
-            uIEvent.EnEventId = enEventID.UI_OnFormPriorityChanged;
-            Singleton<EventManager>.GetInstance().DispathEvent(uIEvent);
-        }
-
-        private void DispatchVisibleChangedEvent()
-        {
-            GameFrame.Event uIEvent = Singleton<EventManager>.GetInstance().GetEvent();
-            uIEvent.EnEventId = enEventID.UI_OnFormVisibleChanged;
-            Singleton<EventManager>.GetInstance().DispathEvent(uIEvent);
-        }
-
-
-        #endregion
-        
         
     }
 }
