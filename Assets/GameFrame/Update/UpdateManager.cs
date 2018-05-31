@@ -14,13 +14,13 @@ namespace GameFrame
     
     public enum enClientState
     {
-        State_Init,
-        State_InitSDK,
-        State_UnZipData,
-        State_UpdateApp,
-        State_UpdateResource,
-        State_GetServerList,
-        State_Start,
+        State_Init,//初始化
+        State_InitSDK,//初始化sdk
+        State_UnZipData,//解压资源
+        State_UpdateApp,//updateapp
+        State_UpdateResource,//updateres
+        State_GetServerList,//获取服务器列表
+        State_Start,//done
     }
 
     public enum CompareResult
@@ -36,6 +36,7 @@ namespace GameFrame
 
     public class UpdateManager : Singleton<UpdateManager>
     {
+        //下载数量限制
         private static int DOWNLOAD_COUNT = 50;
         /// <summary>
         /// 获取组件
@@ -61,7 +62,8 @@ namespace GameFrame
         private Action<bool> UpdateCallback;
         private bool m_isBeginUpdate = false;
         private bool m_isCheckSDK = false;
-        private float m_UpdateLastTime;
+        private bool m_isInitSDK = false;
+        private bool m_isInitSDKDone = false;
         
         private enClientState State = enClientState.State_Init;
         public  Dictionary<string,FileInfo> oldmd5Table = new Dictionary<string, FileInfo>();
@@ -70,6 +72,7 @@ namespace GameFrame
         public Dictionary <string,FileInfo> ResourcesHasUpdate = new Dictionary<string, FileInfo>();
         public List<string> m_redownloadList = new List<string>();
         public List<string> m_downloadList = new List<string>();
+        
         public  readonly ConcurrentQueue<UpdateAction> m_actions = new ConcurrentQueue<UpdateAction>();
         public  ConcurrentQueue<DownloadTask> m_taskQueue = new ConcurrentQueue<DownloadTask>();
         
@@ -89,14 +92,16 @@ namespace GameFrame
                 }
             }
         }
-        private string initalVersion;// 打包进去的
-        private string currentVersion;
-        private string onlineVersion;
+        private string initalVersion;// 安装包的版本
+        private string currentVersion;//沙河目录的版本
+        private string onlineVersion;//服务器上的版本
+        
         private int initalResVersion;
         private int currentResVersion;
         private int onlineResVersion;
-        private bool isLoadOldTableAndVersion = false;
-        private bool isCopyDone = false;
+        
+        private bool isLoadOldTableAndVersion = false;//是否加载old Version完成
+        private bool isCopyDone = false; // 是否拷贝完成
         private bool isUpdateAppDone = false;
         private int filecount = 0;
         private int currentcopycount = 0;
@@ -117,7 +122,7 @@ namespace GameFrame
         private int m_updateState = 0;
         private bool m_loadOver = true;
         private int m_urlIndex = 2;
-        private int m_ovverThreadNum = 0;
+        private int m_overThreadNum = 0;
         private string SrcUrl = string.Empty;
         public override void Init()
         {
@@ -132,7 +137,7 @@ namespace GameFrame
             isLoadOldTableAndVersion = false;
             string filepath = Platform.InitalPath + Platform.AppVerFileName;
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
-            filepath = "file:///" + filepath;
+            filepath = "file:///" + filepath;//ios平台 
 #endif
             using (WWW w = new WWW(filepath))
             {
@@ -152,7 +157,7 @@ namespace GameFrame
                 yield return w;
                 if (w.error != null)
                 {
-                    Debug.LogError(w.error);
+                    UnityEngine.Debug.LogError(w.error);
                     yield break;
                 }
                 initalResVersion = int.Parse(w.text);
@@ -234,11 +239,10 @@ namespace GameFrame
             CancelButton = UpdateGameObject.transform.Find("Alert/Cancel").GetComponent<Button>();
 
             ProgressSliber = UpdateGameObject.transform.Find("Slider").GetComponent<Slider>();
-            m_UpdateLastTime = Time.time;
             m_isBeginUpdate = true;
             
             //测试模式
-            ClearDataOath();
+            ClearData();
         }
 
         public void Update()
@@ -256,10 +260,14 @@ namespace GameFrame
                         }
                         break;
                     case enClientState.State_InitSDK:
-                        StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_InitSDK");
-                        ProgressSliber.value = 0.0f;
-                        ProgressText.text = string.Format("{0}%", 0);
-                        if (Singleton<Interface>.GetInstance().IsCaheckSDKFinish())
+                        if (!m_isInitSDK)
+                        {
+                            m_isInitSDK = true;
+                            m_isInitSDKDone = false;
+                            SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(InitSDK());
+                        }
+                       
+                        if (m_isInitSDK && this.m_isInitSDKDone)
                         {
                             this.State = enClientState.State_UnZipData;
                             CheckVersion();
@@ -353,7 +361,7 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError(e.Message);
+                    UnityEngine.Debug.LogError(e.Message);
                     return null;
                 }
             }
@@ -369,7 +377,7 @@ namespace GameFrame
             string filepath = Platform.Path + "hasupdate.txt";//沙河目录
             bool needUnzip = false;
             
-            //判断删除 todo 判断有问题
+            //没考虑用户手动删除的问题
             
             if (FileManager.IsFileExist(filepath))
             {
@@ -379,15 +387,13 @@ namespace GameFrame
                     var result = CompareVersion(initalVersion, currentVersion);
                     if (result == CompareResult.Greater)
                     {
-                        ClearDataOath();
+                        //安装包的版本大于沙河目录的版本
                         needUnzip = true;
-                        
                     }
                     
                 }else if (currentVersion == null && initalVersion != null)
                 {
                     needUnzip = true;
-                    ClearDataOath();
                 }
             }
             else
@@ -396,6 +402,7 @@ namespace GameFrame
             }
             if (needUnzip)
             {
+                ClearData();
                 SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(Preprocess());
             }
             else
@@ -404,7 +411,10 @@ namespace GameFrame
             }
         }
 
-        public void ClearDataOath()
+        /// <summary>
+        /// 刪除沙河目录的数据
+        /// </summary>
+        public void ClearData()
         {
             foreach (var directory in Directory.GetDirectories(Platform.Path))
             {
@@ -602,7 +612,7 @@ namespace GameFrame
                         fileInfo.md5 = " ";
                         fileInfo.size = 0;
                     }
-                    if (oldmd5Table.ContainsKey(fileInfo.fullname))
+                    if (oldmd5Table.ContainsKey(fileInfo.fullname))// 根据已经更新的文件去更新oldtable的数据
                     {
                         oldmd5Table[fileInfo.fullname] = fileInfo;
                     }
@@ -613,7 +623,7 @@ namespace GameFrame
                     ResourcesHasUpdate.Add(fileInfo.fullname,fileInfo);
                 }
             }
-            Debug.LogError("加载本地hasupdate文件成功");
+            UnityEngine.Debug.LogError("加载本地hasupdate文件成功");
         }
 
         private void LoadCurrentResVersion()
@@ -628,7 +638,7 @@ namespace GameFrame
             }
             else
             {
-                Debug.LogError("读取沙河目录的resVersion出错");
+                UnityEngine.Debug.LogError("读取沙河目录的resVersion出错");
             }
         }
         /// <summary>
@@ -713,7 +723,7 @@ namespace GameFrame
             {
                 isDoneloadDone = true;
             }
-            Debug.LogError("需要下载的数量 "+m_downloadList.Count +",    大小  "+TotalDownloadSize);
+            UnityEngine.Debug.LogError("需要下载的数量 "+m_downloadList.Count +",    大小  "+TotalDownloadSize);
         }
 
         private void ThreadProc()
@@ -732,7 +742,7 @@ namespace GameFrame
             }
             lock (m_obj)
             {
-                m_ovverThreadNum++;
+                m_overThreadNum++;
             }
         }
         /// <summary>
@@ -763,7 +773,7 @@ namespace GameFrame
             }
             catch (Exception e)
             {
-                Debug.LogError(e.Message);
+                UnityEngine.Debug.LogError(e.Message);
             }
         }
         /// <summary>
@@ -794,7 +804,7 @@ namespace GameFrame
             }
             catch (Exception e)
             {
-               Debug.LogError(e.Message);
+                UnityEngine.Debug.LogError(e.Message);
             }
         }
 
@@ -816,7 +826,7 @@ namespace GameFrame
             }
             catch (Exception e)
             {
-                Debug.LogError(e.Message);
+                UnityEngine.Debug.LogError(e.Message);
             }
         }
         /// <summary>
@@ -838,7 +848,7 @@ namespace GameFrame
             }
             catch (Exception e)
             {
-                Debug.LogError(e.Message);
+                UnityEngine.Debug.LogError(e.Message);
             }
         }
         /// <summary>
@@ -859,7 +869,7 @@ namespace GameFrame
             }
             catch (Exception e)
             {
-                Debug.LogError(e.Message);
+                UnityEngine.Debug.LogError(e.Message);
             }
         }
         /// <summary>
@@ -878,7 +888,7 @@ namespace GameFrame
             }
             catch (Exception e)
             {
-                Debug.LogError(e.Message);
+                UnityEngine.Debug.LogError(e.Message);
             }
         }
 
@@ -933,7 +943,7 @@ namespace GameFrame
             {
                 bVersion = false;
             }
-            Debug.LogError("是否需要更新资源= "+!bVersion+", 沙河目录的res版本 = "+currentResVersion+", 服务器上的res版本 = "+onlineResVersion);
+            UnityEngine.Debug.LogError("是否需要更新资源= "+!bVersion+", 沙河目录的res版本 = "+currentResVersion+", 服务器上的res版本 = "+onlineResVersion);
             RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
             if (!bCheck && bVersion)//沙河目录文件没有问题 并且 版本相同
             {
@@ -969,27 +979,27 @@ namespace GameFrame
                         EventTriggerListener.Get(CancelButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
                             (a, b, c) =>
                             {
-                                Debug.LogError("cancel");
+                                UnityEngine.Debug.LogError("cancel");
                                 Application.Quit();
                             });
                         EventTriggerListener.Get(SureButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
                             (a, b, c) =>
                             {
-                                Debug.LogError("sure");
+                                UnityEngine.Debug.LogError("sure");
                                 AlertObject.gameObject.SetActive(false);
-                                Debug.LogError("开始下载文件.......");
+                                UnityEngine.Debug.LogError("开始下载文件.......");
                                 SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                             });
                     }
                     else
                     {
-                          Debug.LogError("开始下载文件.......");
+                        UnityEngine.Debug.LogError("开始下载文件.......");
                           SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                     }
                 }
                 else
                 {
-                      Debug.LogError("开始下载文件.......");
+                    UnityEngine.Debug.LogError("开始下载文件.......");
                       SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(BeginDownloadResource());
                 }
             }
@@ -1000,7 +1010,6 @@ namespace GameFrame
                 currentResVersion = onlineResVersion;
                 RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
             }
-            
         }
 
         IEnumerator BeginDownloadResource()
@@ -1009,7 +1018,7 @@ namespace GameFrame
             System.Net.ServicePointManager.DefaultConnectionLimit = DOWNLOAD_COUNT;
             m_updateState = 2;
             m_urlIndex = 0;
-            Debug.LogError("开始下载时间 "  +Time.realtimeSinceStartup);
+            UnityEngine.Debug.LogError("开始下载时间 "  +Time.realtimeSinceStartup);
             while (m_urlIndex < Singleton<ServerConfig>.GetInstance().UpdateServer.Length)
             {
                 //正式版本
@@ -1039,14 +1048,14 @@ namespace GameFrame
                 }
                 if (m_taskQueue.Count > 0)
                 {
-                    m_ovverThreadNum = 0;
+                    m_overThreadNum = 0;
                     for (int i = 0; i < 5; i++)
                     {
                         Thread thread = new Thread(ThreadProc);
                         thread.Name = "download thread: " + i;
                         thread.Start();
                     }
-                    while (m_ovverThreadNum < 5 || m_actions.Count > 0)// ==5 
+                    while (m_overThreadNum < 5 || m_actions.Count > 0)// ==5 
                     {
                         yield return null; //还没下载完成
                     }
@@ -1060,7 +1069,7 @@ namespace GameFrame
                     //清空hasupdate的内容
                     ClearResourceHasUpdate();
                     isDoneloadDone = true;
-                    Debug.LogError("下载完成........");
+                    UnityEngine.Debug.LogError("下载完成........");
                     SaveResourceVersion();
                     currentResVersion = onlineResVersion;
                     RefVersion(currentVersion.ToString(),onlineResVersion.ToString());
@@ -1076,7 +1085,7 @@ namespace GameFrame
                 }
                 else
                 {
-                    Debug.LogError("下载结束时间  "+Time.realtimeSinceStartup);
+                    UnityEngine.Debug.LogError("下载结束时间  "+Time.realtimeSinceStartup);
                     if (newmd5Table.Count > 0)
                     {
                         SaveMD5Table(newmd5Table);
@@ -1084,7 +1093,7 @@ namespace GameFrame
                     //清空hasupdate的内容
                     ClearResourceHasUpdate();
                     isDoneloadDone = true;
-                    Debug.LogError("下载完成..........");
+                    UnityEngine.Debug.LogError("下载完成..........");
                     SaveResourceVersion();
                     currentResVersion = onlineResVersion;
                     RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
@@ -1095,7 +1104,7 @@ namespace GameFrame
             m_updateState = 4;
             foreach (string file in m_redownloadList)
             {
-                Debug.LogError("下载文件出错 "+file);
+                UnityEngine.Debug.LogError("下载文件出错 "+file);
             }
         }
         /// <summary>
@@ -1187,12 +1196,6 @@ namespace GameFrame
             while (itr.MoveNext())
             {
                 FileInfo fileInfo = itr.Current.Value;
-//                string fullname = FileManager.GetFileFullName(fileInfo.fullname);
-//                string directory = Path.GetDirectoryName(fullname);
-//                if (!FileManager.IsDirectoryExist(directory))
-//                {
-//                    FileManager.CreateDirectory(directory);
-//                }
                 //拷贝文件
                 yield return FileManager.StartCopyInitialFile(fileInfo.fullname);
                 currentcopycount++;
@@ -1207,10 +1210,18 @@ namespace GameFrame
             StatusText.text = LauncherString.GetInstance().GetString("Resource_CheckSDK");
             ProgressText.text = string.Format("{0}%", 0);
             Singleton<Interface>.GetInstance().Init();
-            yield return new WaitForSeconds(15);
+            yield return SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(Singleton<Interface>.GetInstance().CheckSDK());
             State = enClientState.State_InitSDK;
         }
 
+        IEnumerator InitSDK()
+        {
+            StatusText.text = LauncherString.GetInstance().GetString("Resource_InitSDK");
+            ProgressText.text = string.Format("{0}%", 0);
+            yield return SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(Singleton<Interface>.GetInstance().InitSDK());
+            this.m_isInitSDKDone = true;
+        }
+        
         IEnumerator UpdateApp()
         {
             m_updateState = 1;
@@ -1222,13 +1233,17 @@ namespace GameFrame
                 yield return SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(DownloadAppFile());
                 m_urlIndex--;
             }
+            if (m_loadOver == false)//服务器没有一个可以下载版本文件
+            {
+                yield break;
+            }
             //获取沙河目录版本
             GetCurrentVersion();
-            Debug.LogError("沙河目录版本 "+currentVersion +" 服务器上版本 "+onlineVersion);
+            UnityEngine.Debug.LogError("沙河目录版本 "+currentVersion +" 服务器上版本 "+onlineVersion);
             //下载服务器版本结束
             //获取沙河目录app版本  比较本地与服务器的高低
             var result = CompareVersion(onlineVersion, currentVersion);
-            Debug.LogError("比较结果   "+result.ToString());
+            UnityEngine.Debug.LogError("比较结果   "+result.ToString());
             switch (result)
             {
                   case CompareResult.Equal:
@@ -1254,7 +1269,7 @@ namespace GameFrame
                               yield break;
                           }
                           string line = www.text.Trim();
-                          string appurl = null;
+                          string appurl = null;//获取下载的链接
                           using (StringReader br = new StringReader(line))
                           {
                               string str;
@@ -1272,7 +1287,6 @@ namespace GameFrame
                                   }
                               }
                           }
-//                          Debug.LogError("下载安装包地址: "+appurl);
                           //下载安装包
                           AlertContextText.text = Singleton<LauncherString>.GetInstance()
                               .GetString("Resource_DownloadNewApp");
@@ -1280,13 +1294,11 @@ namespace GameFrame
                           EventTriggerListener.Get(CancelButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
                               (a, b, c) =>
                               {
-//                                  Debug.LogError("cancel"); 
                                   Application.Quit();
                               });
                           EventTriggerListener.Get(SureButton.gameObject).SetEventHandle(EnumTouchEventType.OnClick,
                               (a, b, c) =>
                               {
-//                                  Debug.LogError("sure"); 
                                   Application.OpenURL(appurl);
                                   Application.Quit();
                               });
@@ -1314,12 +1326,11 @@ namespace GameFrame
                 if (w.error != null)
                 {
                     m_loadOver = true;
+                    onlineVersion = w.text.Trim();//服务器上的app版本
+                    UnityEngine.Debug.LogError("服务器上的APP 版本"+onlineVersion);
                     yield return null;
                 }
-                onlineVersion = w.text.Trim();//服务器上的app版本
-                m_loadOver = true;
             }
-            Debug.LogError("服务器上的APP 版本"+onlineVersion);
         }
         #endregion
     }

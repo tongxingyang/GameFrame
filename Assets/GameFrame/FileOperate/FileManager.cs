@@ -95,7 +95,7 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError("Error GetFileLength");
+                    UnityEngine.Debug.LogError("Error GetFileLength");
                 }
             }
             else
@@ -116,7 +116,7 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError("Error ReadFile");
+                    UnityEngine.Debug.LogError("Error ReadFile");
                 }
             }
             return result;

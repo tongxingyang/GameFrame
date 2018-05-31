@@ -10,7 +10,7 @@ namespace GameFrame
 
 		public void OnDestory()
 		{
-			Debug.Log("destory :  "+bundleName);
+//			Debug.Log("destory :  "+bundleName);
 //			Singleton<ResourceManager>.GetInstance().DelRefCount(bundleName);
 		}
 	}

@@ -74,7 +74,7 @@ namespace GameFrame
         catch (Exception e)
         {
             result = false;
-            Debug.LogError(e.Message);
+            UnityEngine.Debug.LogError(e.Message);
             throw;
         }
         finally

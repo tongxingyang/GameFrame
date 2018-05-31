@@ -53,7 +53,7 @@ namespace GameFrame
         {
             @event.m_isused = true;
             OnEventHandler callback = m_eventMap[(int)@event.EnEventId];
-            Debug.LogError(" zzzzzzzz  " + callback);
+            UnityEngine.Debug.LogError(" zzzzzzzz  " + callback);
             if (callback != null)
             {
                 callback(@event);

@@ -241,7 +241,8 @@ public class ManagedResource : MonoBehaviour
         private void LoadPreLoadList(string path)
         {
             m_preLoadList.Clear();
-            string dataPath = PathResolver.GetPath(path);
+//            string dataPath = PathResolver.GetPath(path); // todo todo 
+            string dataPath = "";
             if (!FileManager.IsFileExist(dataPath))
             {
                 Debug.LogError("预加载的资源不存在  " + dataPath);
@@ -468,7 +469,8 @@ public class ManagedResource : MonoBehaviour
         /// <returns></returns>
         private IEnumerator LoadBundleFromWWW(ResourceLoadTask task)
         {
-            string path = PathResolver.GetBundlePath(task.Path);
+            string path = ""; // todo todo
+//            string path = PathResolver.GetBundlePath(task.Path);
             using (WWW www = new WWW(path))
             {
                 yield return www;

@@ -127,7 +127,7 @@ namespace GameFrame
             }
             catch (Exception e)
             {
-                Debug.LogError(e.Message);
+                UnityEngine.Debug.LogError(e.Message);
                 if (times > 0)
                 {
                     DownloadServerList(times - 1, platform);

@@ -5,26 +5,26 @@ namespace GameFrame
 {
     public class Interface:Singleton<Interface>
     {
-        private bool isFinish = false;
         public override void Init()
         {
             base.Init();
             InitPlugin();
         }
 
+        //初始化sdk
         public void InitPlugin()
         {
-            SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(ChangeFinish());
         }
 
-        IEnumerator ChangeFinish()
+        public IEnumerator CheckSDK()
         {
-            yield return new WaitForSeconds(25);
-            isFinish = true;
+            yield return new WaitForSeconds(5);
         }
-        public bool IsCaheckSDKFinish()
+        public IEnumerator InitSDK()
         {
-            return isFinish;
+            yield return new WaitForSeconds(5);
         }
+        
+       
     }
 }
