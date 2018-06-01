@@ -12,10 +12,10 @@ namespace GameFrame
 		public static long ChunkSize = 4096L;
 		public  static int TIMEOUT = 2 * 60 * 1000;
 
-		private List<string> m_downloadList = new List<string>();
 		private string m_url;
 		private string m_filename;
 		private string m_filepath;
+		public Action callback;
 
 		public DownloadTask(string url, string filename, string filepath)
 		{
@@ -60,40 +60,34 @@ namespace GameFrame
 				httpWebRequest = null;
 				httpWebResponse.Close();
 				httpWebResponse = null;
-				Singleton<UpdateManager>.GetInstance().m_actions.Enqueue(() =>
+				string md5 = String.Empty;
+				if (FileManager.IsFileExist(m_filepath))
 				{
-					string md5 = String.Empty;
-					if (FileManager.IsFileExist(m_filepath))
-					{
-						md5 = MD5Util.ComputeFileHash(m_filepath);
-					}
-					string md5_ = Singleton<UpdateManager>.GetInstance().newmd5Table[m_filename].md5;
+					md5 = MD5Util.ComputeFileHash(m_filepath);
+				}
+				string md5_ = Singleton<UpdateManager>.GetInstance().newmd5Table[m_filename].md5;
 
-					if (md5.Equals(md5_))
-					{
-						UnityEngine.Debug.LogError("文件下载成功 文件名 "+m_filename);
-						FileInfo fileInfo = Singleton<UpdateManager>.Instance.newmd5Table[m_filename];
-						Singleton<UpdateManager>.Instance.DownloadSize +=
-							Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size;
-						Singleton<UpdateManager>.Instance.AppendHasUpdateFile(m_filename,md5,Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size);
-						// todo 不用加载md5文件中 写不写进去都可以 不写进去写进 写进去也可以因为可以覆盖前面的
-//						Singleton<UpdateManager>.Instance.AppendMD5File(m_filename, fileInfo.md5, fileInfo.size);
-					}
-					else
-					{
-						UnityEngine.Debug.LogError("文件下载失败.......... 文件名 "+m_filename);
-						Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
-					}
-				});
-				
+				if (md5.Equals(md5_))
+				{
+					UnityEngine.Debug.LogError("文件下载成功 文件名 "+m_filename);
+					FileInfo fileInfo = Singleton<UpdateManager>.Instance.newmd5Table[m_filename];
+					Singleton<UpdateManager>.Instance.DownloadSize +=
+						Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size;
+					Singleton<UpdateManager>.Instance.AppendHasUpdateFile(m_filename,md5,Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size);
+				}
+				else
+				{
+					UnityEngine.Debug.LogError("文件下载失败.......... 文件名 "+m_filename);
+					Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
+				}
+				callback();
+
 			}
 			catch (Exception e)
 			{
 				UnityEngine.Debug.Log("download file error = " + m_filename + ", ex = " + e.Message);
-				Singleton<UpdateManager>.GetInstance().m_actions.Enqueue(() =>
-				{
-					Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
-				});
+				Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
+				callback();
 				UnityEngine.Debug.LogError(e.Message);
 			}
 		}

@@ -93,6 +93,12 @@ namespace GameFrame
 
         private IEnumerator DownloadServerList(int times,RuntimePlatform platform)
         {
+            // test 
+            yield return new WaitForSeconds(10);
+            androidDone = true;
+            iosDone = true;
+            yield break;
+            
             string url = "";
             if (platform == RuntimePlatform.Android)
             {

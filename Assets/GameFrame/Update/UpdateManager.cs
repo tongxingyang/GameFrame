@@ -55,6 +55,7 @@ namespace GameFrame
 
         private GameObject UpdateGameObject;
         private GameObject AlertObject;
+        private int CurrentDownCount = 0;
 
         private GameObject CanvasObj;
 
@@ -73,7 +74,6 @@ namespace GameFrame
         public List<string> m_redownloadList = new List<string>();
         public List<string> m_downloadList = new List<string>();
         
-        public  readonly ConcurrentQueue<UpdateAction> m_actions = new ConcurrentQueue<UpdateAction>();
         public  ConcurrentQueue<DownloadTask> m_taskQueue = new ConcurrentQueue<DownloadTask>();
         
         public  readonly object m_obj = new object();//线程安全锁 对象
@@ -316,7 +316,6 @@ namespace GameFrame
                         }
                         else
                         {
-                            update();//调用文件下载成功回调
                             RefLauncherInfo();
                         }
                         break;
@@ -336,6 +335,7 @@ namespace GameFrame
                     case  enClientState.State_Start:
                         //开始游戏
                         UpdateCallback(true);
+                        m_isBeginUpdate = false;
                         break;
                 }
             }
@@ -531,7 +531,7 @@ namespace GameFrame
 
                 }else if (UpdateState == 3)
                 {
-                    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_StartGame");
+                    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_GetServerList");
                     ProgressSliber.value = 1;
                     ProgressText.text = string.Format("{0}%", 100);
                     
@@ -587,7 +587,7 @@ namespace GameFrame
 
         private void LoadHasUpdateSet()
         {
-            string filename = Platform.Path + Platform.HasUpdateFileName;
+            string filename = Platform.Path + Platform.HasUpdateFileName;//hasupdate
             using (StreamReader sr = File.OpenText(filename))
             {
                 string line;
@@ -715,7 +715,7 @@ namespace GameFrame
                     {
                         continue;
                     }
-                }
+                }// 新添加的文件直接加入下载队列中
                 m_downloadList.Add(keyValuePair.Key);
                 TotalDownloadSize += newmd5Table[keyValuePair.Key].size;
             }
@@ -891,22 +891,6 @@ namespace GameFrame
                 UnityEngine.Debug.LogError(e.Message);
             }
         }
-
-        public void update()
-        {
-            while (true)
-            {
-                UpdateAction action;
-                if (m_actions.TryDequeue(out action))
-                {
-                    action();
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
         
         #region 协成
         /// <summary>
@@ -917,7 +901,7 @@ namespace GameFrame
         {
             m_updateState = 1;
             isDoneloadDone = false; 
-            //读取沙河md5
+            //读取沙河md5 确保解压之后的文件
             LoadCurrentMd5Table();
             //读取hasUpdate文本
             LoadHasUpdateSet();
@@ -1026,12 +1010,13 @@ namespace GameFrame
                 //本地测试版本
                 SrcUrl = "http://192.168.6.24:8000/Documents/qyz/trunk/dist/Data/";
                 //
+                CurrentDownCount = 0;
                 m_taskQueue.Clear();
                 m_redownloadList.Clear();
+                
                 foreach (string s in m_downloadList)
                 {
                     //正式版本
-                    
 //                    string url = SrcUrl + s;
 //                    string suffix = "?version=" + newmd5Table[s].md5;
 //                    url += suffix;
@@ -1039,11 +1024,8 @@ namespace GameFrame
                     //本地测试版本
                     string url = SrcUrl + s;
                     string filepath = Platform.Path + s;
-//                    Debug.LogError("下载文件路径 ： "+s);
-//                    Debug.LogError("下载文件保存路径 ： "+filepath);
-//                    Debug.LogError("下载文件路径URL ： "+url);
-                    // task 下载任务
                     DownloadTask task = new DownloadTask(url,s,filepath);
+                    task.callback = DownCallBack;
                     m_taskQueue.Enqueue(task);
                 }
                 if (m_taskQueue.Count > 0)
@@ -1055,7 +1037,7 @@ namespace GameFrame
                         thread.Name = "download thread: " + i;
                         thread.Start();
                     }
-                    while (m_overThreadNum < 5 || m_actions.Count > 0)// ==5 
+                    while (CurrentDownCount!=m_downloadList.Count)
                     {
                         yield return null; //还没下载完成
                     }
@@ -1097,15 +1079,21 @@ namespace GameFrame
                     SaveResourceVersion();
                     currentResVersion = onlineResVersion;
                     RefVersion(currentResVersion.ToString(),onlineResVersion.ToString());
-                    yield break;
+                    break;
                 }
                 m_urlIndex++;
             }
+            
             m_updateState = 4;
             foreach (string file in m_redownloadList)
             {
                 UnityEngine.Debug.LogError("下载文件出错 "+file);
             }
+        }
+
+        public void DownCallBack()
+        {
+            CurrentDownCount++;
         }
         /// <summary>
         /// 下载服务器md5
@@ -1154,7 +1142,6 @@ namespace GameFrame
                         }
                     }
                     m_loadOver = true;
-//                    Debug.LogError("下载md5 文件成功  数量为  "+newmd5Table.Count);
                 }
             }
         }
