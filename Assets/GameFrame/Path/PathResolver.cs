@@ -91,6 +91,63 @@ namespace GameFrame
             }
             return path;
         }
+        public static void RecursiveFile(List<string> paths, List<string> fileList, List<string> exts = null)
+        {
+            RecursiveFile(paths.ToArray(), fileList, exts);
+        }
+
+        public static void RecursiveFile(string[] paths, List<string> fileList, List<string> exts = null)
+        {
+            for (int i = 0; i < paths.Length; i ++)
+            {
+                RecursiveFile(paths[i], fileList, exts);
+            }
+        }
+        public static void RecursiveFile(string path, List<string> fileList, List<string> exts = null)
+        {
+
+
+            string[] names = Directory.GetFiles(path);
+            string[] dirs = Directory.GetDirectories(path);
+            bool isCheckExt = exts != null && exts.Count > 0;
+            foreach (string filename in names) 
+            {
+                if (isCheckExt)
+                {
+                    string ext = Path.GetExtension(filename).ToLower();
+                    if (!exts.Contains(ext))
+                        continue;
+                }
+
+
+                string fn = Path.GetFileName(filename);
+                if(fn.Equals(".DS_Store")) continue;
+
+                string file = filename.Replace('\\', '/');
+                fileList.Add(file);
+            }
+
+#if UNITY_EDITOR
+            int count = dirs.Length;
+            int index = 0;
+#endif
+
+
+            foreach (string dir in dirs) 
+            {
+
+#if UNITY_EDITOR
+                UnityEditor.EditorUtility.DisplayProgressBar("遍历目录", path, 1f *(index ++) / count);
+#endif
+
+                RecursiveFile(dir, fileList, exts);
+            }
+
+
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.ClearProgressBar();
+#endif
+        }
     }
 }
 

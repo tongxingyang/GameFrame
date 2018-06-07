@@ -29,7 +29,7 @@ namespace GameFrame
 		public void AddRefCount()
 		{
 			refCount++;
-		}
+		} 
 
 		public int GetRefCount()
 		{

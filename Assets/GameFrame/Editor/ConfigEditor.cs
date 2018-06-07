@@ -1,48 +1,34 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using UnityEditor;
-using UnityEngine;
+
 namespace GameFrame.Editor
 {
-//    [InitializeOnLoad]
-    public static  class LuaEditor
+    public class ConfigEditor
     {
-        [MenuItem("LuaTools/Encode LuaFile with UTF-8",false)]
-        public static void EncodeLuaFile()
-        {
-            string path = BuildSetting.Lua;
-            string[] files = Directory.GetFiles(path, "*.lua", SearchOption.AllDirectories);
-            foreach (string f in files)
-            {
-                string file = f.Replace('\\', '/');
-                string content = File.ReadAllText(file);
-                using (var sw = new StreamWriter(file,false,Encoding.UTF8))
-                {
-                    sw.Write(content);
-                }
-            }
-        }
-
         public static bool IsEncryptBatch = true;
-        public static string SrcLuaPath = BuildSetting.Lua;
-        public static  string DesLuaPath = BuildSetting.LuaBytes;
+        public static string SrcConfigCSVPath = BuildSetting.ConfigCSV;
+        public static string DesConfigCSVBytesPath = BuildSetting.ConfigCSVBytes;
+        public static  string SrcConfigXMLPath = BuildSetting.ConfigXML;
+        public static  string DesConfigXMLBytesPath = BuildSetting.ConfigXMLBytes;
         private const int KeyCount = 256;
         private static int[] sbox;
         private const string KeyString = "GameFrame";
         
 
-        [MenuItem("LuaTools/Encrypt(RC4) LuaFile",false)]
-        public static void EncryptLuaFile()
+        [MenuItem("ConfigTools/Encrypt(RC4) ConfigFile",false)]
+        public static void EncryptConfigFile()
         {
-            EncryptOperate(SrcLuaPath,DesLuaPath);
+            EncryptOperate(SrcConfigCSVPath,DesConfigCSVBytesPath);
+            EncryptOperate(SrcConfigXMLPath,DesConfigXMLBytesPath);
             AssetDatabase.Refresh();
         }
 
-        [MenuItem("LuaTools/Decrypt(RC4) LuaFile",false)]
-        public static void DecryptLuaFile()
+        [MenuItem("ConfigTools/Decrypt(RC4) ConfigFile",false)]
+        public static void DecryptConfigFile(string src ,string dec)
         {
-            DecryptOperate(SrcLuaPath,DesLuaPath);
+            DecryptOperate(SrcConfigCSVPath,DesConfigCSVBytesPath);
+            DecryptOperate(SrcConfigXMLPath,DesConfigXMLBytesPath);
             AssetDatabase.Refresh();
         }
 
