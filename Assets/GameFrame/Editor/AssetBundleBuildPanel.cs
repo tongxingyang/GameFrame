@@ -63,25 +63,28 @@ namespace GameFrame.Editor
         public static void SetAssetBundleName(AssetBundlePanelConfig config)
         {
             List<string> list = new List<string>();
+            List<string> resourcesPath = new List<string>();
             for (int i = 0; i < config.Filters.Count ; i++)
             {
-                list.Clear();
-                PathResolver.RecursiveFile(config.Filters[i].path,list,exts);
-                if (list.Count==0)
-                {
-                    continue;
-                }
-                Dictionary<string, AssetNode> nodeDict = AssetNodeUtil.GenerateAllNode(list, filterDirList, filterExts,
-                    imageExts, config.IsSpriteTag == 1, BuildSetting.AssetBundleExt);
-                AssetNodeUtil.GenerateNodeDependencies(nodeDict);
-                List<AssetNode> roots = AssetNodeUtil.FindRoots(nodeDict);
-                AssetNodeUtil.RemoveParentShare(roots);
-                AssetNodeUtil.MergeParentCountOnce(roots);
-                Dictionary<string, AssetNode> assetDict = AssetNodeUtil.GenerateAssetBundleNodes(roots);
-                AssetNodeUtil.SetAssetBundleNames(assetDict,config.Filters[i].path,BuildSetting.AssetBundleExt);
+                resourcesPath.Add(config.Filters[i].path);
             }
-            AssetDatabase.RemoveUnusedAssetBundleNames();
+            PathResolver.RecursiveFile(resourcesPath,list,exts);
+            if (list.Count==0)
+            {
+                return;
+            }
+            Dictionary<string, AssetNode> nodeDict = AssetNodeUtil.GenerateAllNode(list, filterDirList, filterExts,
+                imageExts, config.IsSpriteTag == 1, BuildSetting.AssetBundleExt);
+            AssetNodeUtil.GenerateNodeDependencies(nodeDict);
+            List<AssetNode> roots = AssetNodeUtil.FindRoots(nodeDict);
+            AssetNodeUtil.RemoveParentShare(roots);
+            AssetNodeUtil.MergeParentCountOnce(roots);
+            Dictionary<string, AssetNode> assetDict = AssetNodeUtil.GenerateAssetBundleNodes(roots);
+            
+//            AssetNodeUtil.SetAssetBundleNames(assetDict,resourceRoot,BuildSetting.AssetBundleExt);
+//            AssetDatabase.RemoveUnusedAssetBundleNames();
         }
+        
         [MenuItem("AssetBundle/Clear AssetBundle Name")]
         public static void ClearAssetBundleNames()
         {

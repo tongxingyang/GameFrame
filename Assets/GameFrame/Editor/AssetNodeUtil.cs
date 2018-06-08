@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using GameFrame.AssetManager;
 using UnityEditor;
 
 namespace GameFrame.Editor
@@ -234,6 +235,22 @@ namespace GameFrame.Editor
             }
             EditorUtility.ClearProgressBar();
         }
-
+        /// <summary>
+        /// 设置资源导出类型
+        /// </summary>
+        public static void SetAssetExportType( Dictionary<string, AssetNode> assetDict)
+        {
+            foreach (KeyValuePair<string,AssetNode> keyValuePair in assetDict)
+            {
+                if (keyValuePair.Value.isRoot)
+                {
+                     keyValuePair.Value.exportType = AssetBundleExportType.Root;
+                }
+                else if(keyValuePair.Value.childCount==0)
+                {
+                    keyValuePair.Value.exportType = AssetBundleExportType.Asset;
+                }
+            }
+        }
     }
 }

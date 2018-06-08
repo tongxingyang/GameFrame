@@ -125,10 +125,10 @@ namespace GameFrame.Editor
         {
             for(int i = childs.Count - 1;  i >= 0; i --)
             {
-                AssetNode cnode = childs[i];
+                AssetNode cnode = childs[i]; 
                 cnode.MergeParentCountOnce();
 
-                if (cnode.parentCount == 1)
+                if (cnode.parentCount == 1) 
                 {
                     // 子节点 变为 包含资源
                     assets.Add(cnode);
