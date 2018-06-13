@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -29,6 +30,10 @@ namespace GameFrame.Editor
         public string ConfigBundleName = "Config.assetbundle";
         public string LuaScriptBundleName = "LuaScript.assetbundle";
         public int IsSpriteTag = 1;
+        public int Windows = 1;
+        public int Mac = 1;
+        public int Android = 1;
+        public int IOS = 1;
     }
 
     [System.Serializable]
@@ -47,10 +52,10 @@ namespace GameFrame.Editor
         private Vector2 scrollPos = Vector2.zero;
         private static AssetBundleBuildPanel panel;
         
-        static string[] filterDirList = new string[]{};
-        static List<string> filterExts = new List<string>{".cs", ".js"};
+        static string[] filterDirList = new string[]{};//过滤的文件夹
+        static List<string> filterExts = new List<string>{".cs", ".js"};//过滤的后缀
         static List<string> imageExts = new List<string>{".png", ".jpg", ".jpeg", ".bmp", "gif", ".tga", ".tiff", ".psd"};
-        public static List<string> exts = new List<string>(new string[]{ ".prefab", ".png", ".jpg", ".jpeg", ".bmp", "gif", ".tga", ".tiff", ".psd", ".mat", ".mp3", ".ogg",".wav" , ".shader", ".ttf"});
+        public static List<string> exts = new List<string>(new string[]{ ".prefab", ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga", ".tiff", ".psd", ".mat", ".mp3", ".ogg",".wav" , ".shader", ".ttf"});
         
         [MenuItem("AssetBundle/AssetBundlePanel")]
         static void Open()
@@ -58,17 +63,33 @@ namespace GameFrame.Editor
             panel = GetWindow<AssetBundleBuildPanel>(true,"AssetBundlePanel");
             panel.minSize = new Vector2(800,600);
             panel.Show();
-        }
-        [MenuItem("AssetBundle/Set AssetBundle Name")]
-        public static void SetAssetBundleName(AssetBundlePanelConfig config)
+        } 
+        [MenuItem("AssetBundle/SetAssetBundleName")]
+        public static void SetAssetBundleName()
         {
+            AssetBundlePanelConfig config =  LoadAssetAtPath<AssetBundlePanelConfig>(savePath);
+            if (config == null)
+            {
+                return;
+            }
             List<string> list = new List<string>();
-            List<string> resourcesPath = new List<string>();
             for (int i = 0; i < config.Filters.Count ; i++)
             {
-                resourcesPath.Add(config.Filters[i].path);
+                if (config.Filters[i].vaild)
+                {
+                    List<string> exts = new List<string>();
+                    string[] strs = config.Filters[i].filter.Split('|');
+                    string resourcesPath = config.Filters[i].path;
+                    for (int j = 0; j < strs.Length; j++)
+                    {
+                        exts.Add(strs[j]);
+                    }
+                    PathResolver.RecursiveFile(resourcesPath,list,exts);
+                }
+             
             }
-            PathResolver.RecursiveFile(resourcesPath,list,exts);
+            
+            // 分析资源的依赖关系
             if (list.Count==0)
             {
                 return;
@@ -77,12 +98,13 @@ namespace GameFrame.Editor
                 imageExts, config.IsSpriteTag == 1, BuildSetting.AssetBundleExt);
             AssetNodeUtil.GenerateNodeDependencies(nodeDict);
             List<AssetNode> roots = AssetNodeUtil.FindRoots(nodeDict);
+            
             AssetNodeUtil.RemoveParentShare(roots);
+            
             AssetNodeUtil.MergeParentCountOnce(roots);
             Dictionary<string, AssetNode> assetDict = AssetNodeUtil.GenerateAssetBundleNodes(roots);
-            
-//            AssetNodeUtil.SetAssetBundleNames(assetDict,resourceRoot,BuildSetting.AssetBundleExt);
-//            AssetDatabase.RemoveUnusedAssetBundleNames();
+            AssetNodeUtil.SetAssetBundleNames(assetDict,BuildSetting.AssetBundleExt);
+            AssetDatabase.RemoveUnusedAssetBundleNames();
         }
         
         [MenuItem("AssetBundle/Clear AssetBundle Name")]
@@ -104,7 +126,7 @@ namespace GameFrame.Editor
                 }
             }
         }
-        
+
         [MenuItem("AssetBundle/BuildAssetBundles")]
         static void BuildAssetBundles()
         {
@@ -113,8 +135,52 @@ namespace GameFrame.Editor
             {
                 return;
             }
-            SetAssetBundleName(config);
-            var outPath = BuildSetting.AssetBundleExportPath+BuildSetting.AssetBundle;
+            SetAssetBundleName();
+            var outPath = string.Empty;
+            BuildTarget target = BuildTarget.Android;
+            if (config.Windows==1)
+            {
+                outPath = BuildSetting.AssetBundleExportPath+"windows/";
+                target = BuildTarget.StandaloneWindows64;
+                BuildAssets(config,outPath,target);
+                SaveAllDepInfo(outPath);
+                MakeMD5(outPath);
+            }
+            if (config.Mac == 1)
+            {
+                outPath = BuildSetting.AssetBundleExportPath+"mac/";
+                target = BuildTarget.StandaloneOSXIntel64;
+                BuildAssets(config,outPath,target);
+                SaveAllDepInfo(outPath);
+                MakeMD5(outPath);
+            }
+            if (config.Android == 1)
+            {
+                outPath = BuildSetting.AssetBundleExportPath+"android/";
+                target = BuildTarget.Android;
+                BuildAssets(config,outPath,target);
+                SaveAllDepInfo(outPath);
+                MakeMD5(outPath);
+            }
+            if (config.IOS == 1)
+            {
+                outPath = BuildSetting.AssetBundleExportPath+"ios/";
+                target = BuildTarget.iOS;
+                BuildAssets(config,outPath,target);
+                SaveAllDepInfo(outPath);
+                MakeMD5(outPath);
+            }
+            
+        }
+
+        public static void BuildAssets(AssetBundlePanelConfig config,string Path, BuildTarget target)
+        {
+            string outPath = Path+BuildSetting.AssetBundle;
+            if (!Directory.Exists(outPath))
+            {
+                Directory.CreateDirectory(outPath);
+            }
+            BuildPipeline.BuildAssetBundles(outPath, BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.ChunkBasedCompression, target);
             //打包资源
             if (config.EncryptConfig == AssetBundlePanelConfig.EncryptConfigBundle.Encrypt)
             {
@@ -123,7 +189,6 @@ namespace GameFrame.Editor
                 if(!File.Exists(configfilename)) return;
                 byte[] bytes = File.ReadAllBytes(configfilename);
                 bytes = EncryptBytes(bytes, BuildSetting.ConfigBundleKey);
-                if(!File.Exists(configfilename)) return;
                 File.Delete(configfilename);
                 File.WriteAllBytes(configfilename,bytes);
             }
@@ -134,13 +199,54 @@ namespace GameFrame.Editor
                 if(!File.Exists(configfilename)) return;
                 byte[] bytes = File.ReadAllBytes(configfilename);
                 bytes = EncryptBytes(bytes, BuildSetting.LuaBundleKey);
-                if(!File.Exists(configfilename)) return;
                 File.Delete(configfilename);
                 File.WriteAllBytes(configfilename,bytes);
             }
+            //生成依赖关系配置文件
             AssetDatabase.Refresh();
         }
-
+        //保存資源之間的依賴配置文件
+        private static void SaveAllDepInfo(string Path)
+        {
+            string outPath = Path + BuildSetting.AssetBundle;
+            AssetBundle ab = AssetBundle.LoadFromFile(outPath + "/" + BuildSetting.AssetBundle);
+            AssetBundleManifest manifest = ab.LoadAsset("AssetBundleManifest")as AssetBundleManifest;
+            string[] assetbundles = manifest.GetAllAssetBundles();
+            Dictionary<string,List<string>> depinfos = new Dictionary<string, List<string>>();
+            foreach (string assetbundle in assetbundles)
+            {
+                string[] deps = manifest.GetDirectDependencies(assetbundle);
+                List<string> lists = new List<string>();
+                foreach (var dep in deps)
+                {
+                    lists.Add(dep);
+                }
+                depinfos[assetbundle] = lists;
+            }
+            //將信息保存在字典中 將字典中的信息保存在本地文本中
+            if (File.Exists(Path + "/" + BuildSetting.DepFileName))
+            {
+                File.Delete(Path+"/"+BuildSetting.DepFileName);
+            }
+            using (FileStream fs = new FileStream(Path+"/"+BuildSetting.DepFileName,FileMode.CreateNew))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    foreach (KeyValuePair<string,List<string>> keyValuePair in depinfos)
+                    {
+                        sw.WriteLine(keyValuePair.Key);
+                        sw.WriteLine(keyValuePair.Value.Count);
+                        foreach (string s in keyValuePair.Value)
+                        {
+                            sw.WriteLine(s);
+                        }
+                        sw.WriteLine("<---------------------------->");
+                    }
+                }
+            }
+            
+        }
+        
         [MenuItem("AssetBundle/Build Config Bundle")]
         public static void BuildConfig()
         {
@@ -166,8 +272,6 @@ namespace GameFrame.Editor
                     importer.assetBundleName = config.ConfigBundleName;
                 } 
             }
-            
-            /////
             
             if (!Directory.Exists(BuildSetting.ConfigXMLBytes))
             {
@@ -228,6 +332,53 @@ namespace GameFrame.Editor
                     importer.assetBundleName = config.LuaScriptBundleName;
                 } 
             }
+        }
+        [MenuItem("AssetBundle/生成本地md5文件")]
+        public static void MakeMD5File()
+        {
+            AssetBundlePanelConfig config =  LoadAssetAtPath<AssetBundlePanelConfig>(savePath);
+            if (config == null)
+            {
+                return;
+            }
+            var outPath = string.Empty;
+            if (config.Windows==1)
+            {
+                outPath = BuildSetting.AssetBundleExportPath+"windows/";
+                MakeMD5(outPath);
+            }
+            if (config.Mac == 1)
+            {
+                outPath = BuildSetting.AssetBundleExportPath+"mac/";
+                MakeMD5(outPath);
+            }
+            if (config.Android == 1)
+            {
+                outPath = BuildSetting.AssetBundleExportPath+"android/";
+                MakeMD5(outPath);
+            }
+            if (config.IOS == 1)
+            {
+                outPath = BuildSetting.AssetBundleExportPath+"ios/";
+                MakeMD5(outPath);
+            }
+        }
+
+        public static void MakeMD5(string outpath)
+        {
+            if(!Directory.Exists(outpath)) return;
+            if (File.Exists(outpath + BuildSetting.Resource_MD5))
+            {
+                File.Delete(outpath+BuildSetting.Resource_MD5);
+            }
+            using (FileStream fs = new FileStream(outpath+"/"+BuildSetting.Resource_MD5,FileMode.CreateNew))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    
+                }
+            }
+            
         }
         static void GetAssetsRecursively(string srcFolder, string searchPattern,  ref List<string> assets)
         {
@@ -323,6 +474,8 @@ namespace GameFrame.Editor
             }
         }
 
+
+        
         void Add()
         {
             string path = SelectFolder();
@@ -371,9 +524,12 @@ namespace GameFrame.Editor
             {
                 InitFilterList();
             }
+            GUILayout.BeginVertical();
+            {
+                
+         
             GUILayout.BeginHorizontal();
             {
-                GUILayout.Space(100);
                 if (GUILayout.Button("添加", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
                 {
                     Add();
@@ -387,6 +543,11 @@ namespace GameFrame.Editor
                 if (GUILayout.Button("构建", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
                 {
                     Build();
+                }
+                GUILayout.Space(100);
+                if (GUILayout.Button("生成md5文件", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
+                {
+                    MakeMD5File();
                 }
             }
             GUILayout.EndHorizontal();
@@ -410,7 +571,6 @@ namespace GameFrame.Editor
                     _config.ConfigBundleName = GUILayout.TextArea(_config.ConfigBundleName);
                 }
                 GUILayout.EndHorizontal();
-                
                 GUILayout.Space(20);
                 GUILayout.BeginHorizontal();
                 {
@@ -428,7 +588,6 @@ namespace GameFrame.Editor
                     _config.LuaScriptBundleName = GUILayout.TextArea(_config.LuaScriptBundleName);
                 }
                 GUILayout.EndHorizontal();
-                
                 GUILayout.Space(20);
                 GUILayout.BeginHorizontal();
                 {
@@ -436,18 +595,32 @@ namespace GameFrame.Editor
                     _config.IsSpriteTag = EditorGUILayout.Toggle("是否启用SpriteTag", _config.IsSpriteTag == 1) ? 1 : 0;
                 }
                 GUILayout.EndHorizontal();
+                GUILayout.Space(20);
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Space(20);
+                    _config.Windows = EditorGUILayout.Toggle("打包Window平台", _config.Windows == 1) ? 1 : 0;
+                    GUILayout.Space(20);
+                    _config.Mac = EditorGUILayout.Toggle("打包Mac平台", _config.Mac == 1) ? 1 : 0;
+                    GUILayout.Space(20);
+                    _config.Android = EditorGUILayout.Toggle("打包Android平台", _config.Android == 1) ? 1 : 0;
+                    GUILayout.Space(20);
+                    _config.IOS = EditorGUILayout.Toggle("打包IOS平台", _config.IOS == 1) ? 1 : 0;
+                }
+                GUILayout.EndHorizontal();
                 scrollPos = GUILayout.BeginScrollView(scrollPos);
                 {
                     _list.DoLayoutList();
                 }
                 GUILayout.EndScrollView();
-
             }
             GUILayout.EndVertical();
             if (GUI.changed)
             {
                 EditorUtility.SetDirty(_config);
             }
+            }
+            GUILayout.EndHorizontal();
         }
     }
 }

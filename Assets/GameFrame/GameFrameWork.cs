@@ -5,6 +5,7 @@ using UIFrameWork;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Text.RegularExpressions;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
@@ -17,7 +18,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 #endif
     
     #region render feature
-    private const int SupportFeaturePostProcess = 0;
+    private const int SupportFeaturePostProcess = 0; 
     private const int SupportFeatureDynamicShadow = 1;
     private const int SupportFeatureMaxTextureSize2048 = 2;
     private const int SupportFeatureRenderTexture = 3;

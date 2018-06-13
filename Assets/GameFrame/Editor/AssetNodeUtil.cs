@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Xml.Xsl;
 using GameFrame.AssetManager;
 using UnityEditor;
 
@@ -8,13 +9,23 @@ namespace GameFrame.Editor
     public class AssetNodeUtil
     {
         public static bool isLog = true;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="resList"></param>
+        /// <param name="filterDirList">过滤的目录</param>
+        /// <param name="filterExts">过滤的扩展名</param>
+        /// <param name="imageExts"></param>
+        /// <param name="isSpriteTag"></param>
+        /// <param name="assetbundleExt"></param>
+        /// <returns></returns>
         public static Dictionary<string, AssetNode> GenerateAllNode(List<string> resList, string[] filterDirList, List<string> filterExts, List<string> imageExts, bool isSpriteTag = false, string assetbundleExt = ".assetbundle")
         {
     
             Dictionary<string, AssetNode> nodeDict = new Dictionary<string, AssetNode>();
             Dictionary<string, AssetNode>   spriteTagPackageDict = new Dictionary<string, AssetNode>();
             List<AssetNode>                 spriteTagPackageList = new List<AssetNode>();
-    
+
             string[] dependencies = AssetDatabase.GetDependencies(resList.ToArray());
             int count = dependencies.Length;
     
@@ -42,7 +53,7 @@ namespace GameFrame.Editor
                         continue;
                     }
                 }
-                if(isSpriteTag && imageExts.IndexOf(ext) != -1)// tag && 扩展名在imageexts列表中
+                if(isSpriteTag && imageExts.IndexOf(ext) != -1)
                 {
                     TextureImporter importer = TextureImporter.GetAtPath(path) as TextureImporter;
                     if(importer.textureType == TextureImporterType.Sprite && !string.IsNullOrEmpty(importer.spritePackingTag))
@@ -223,7 +234,7 @@ namespace GameFrame.Editor
             return nodeDict;
         }
     
-        public static void SetAssetBundleNames(Dictionary<string, AssetNode> nodeDict, string resourceRoot, string ext)
+        public static void SetAssetBundleNames(Dictionary<string, AssetNode> nodeDict, string ext)
         {
             int count = nodeDict.Count;
             int i = 0;
@@ -231,7 +242,7 @@ namespace GameFrame.Editor
             { 
                 i++;
                 EditorUtility.DisplayProgressBar("设置AssetBundleNames",  i + "/" + count, 1f * i / count);
-                kvp.Value.SetAssetBundleName(resourceRoot, ext);
+                kvp.Value.SetAssetBundleName(ext);
             }
             EditorUtility.ClearProgressBar();
         }

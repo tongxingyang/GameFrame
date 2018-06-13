@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using GameFrame;
 using Object = UnityEngine.Object;
-using UnityEditor;
 
 public class ManagedResource : MonoBehaviour
 {
@@ -116,10 +115,10 @@ public class ManagedResource : MonoBehaviour
 
         private void LoadDependencyConfig(string path)
         {
-#if UNITY_EDITOR_OSX
+#if UNITY_STANDALONE_OSX
 				string filepath = Application.streamingAssetsPath+"/Data/"+path;
 #else
-            string filepath = PathResolver.GetPath(path);
+            	string filepath = PathResolver.GetPath(path);
 #endif
             if (!FileManager.IsFileExist(filepath))
             {

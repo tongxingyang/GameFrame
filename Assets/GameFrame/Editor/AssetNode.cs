@@ -9,10 +9,7 @@ namespace GameFrame.Editor
     {
         public string path;//路径
         public System.IO.FileInfo file;
-        public AssetType type = AssetType.Asset;
         public AssetBundleExportType exportType = AssetBundleExportType.Asset;
-        public string bundlesavepath;
-        public string bundlename;
         public List<AssetNode> parents = new List<AssetNode>();
         public List<AssetNode> childs = new List<AssetNode>();
         public List<AssetNode> assets = new List<AssetNode>();
@@ -127,8 +124,8 @@ namespace GameFrame.Editor
             {
                 AssetNode cnode = childs[i]; 
                 cnode.MergeParentCountOnce();
-
-                if (cnode.parentCount == 1) 
+                
+                if (cnode.parentCount == 1 && cnode.CanMergeParent()) //如果孩子节点有parent数量大于2的就不能merge 会造成引用重复资源
                 {
                     // 子节点 变为 包含资源
                     assets.Add(cnode);
@@ -140,6 +137,18 @@ namespace GameFrame.Editor
             }
         }
 
+        public bool CanMergeParent()
+        {
+            foreach (AssetNode assetNode in childs)
+            {
+                if (assetNode.parentCount >= 2)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
         public void GetRoots(Dictionary<string, AssetNode> dict)
         {
             if (isRoot)
@@ -158,18 +167,19 @@ namespace GameFrame.Editor
             }
         }
 
-        public string GetAssetBundleName(string resourceRoot, string ext)
+        public string GetAssetBundleName(string ext)
         {
             string assetBundleName;
-            assetBundleName =  path.Replace(resourceRoot + "/", "").ToLower();
-            assetBundleName = PathResolver.ChangeExtension(assetBundleName, ext);
+            string[] strs = path.Split('/');
+            assetBundleName = strs[strs.Length - 1];
+            assetBundleName = PathResolver.ChangeExtension(assetBundleName, ext).ToLower();
             return assetBundleName;
         }
         
-        public void SetAssetBundleName(string resourceRoot,string ext)
+        public void SetAssetBundleName(string ext)
         {
             AssetImporter importer = AssetImporter.GetAtPath(path);
-            importer.assetBundleName = GetAssetBundleName(resourceRoot, ext);
+            importer.assetBundleName = GetAssetBundleName( ext);
         }
 
         public void GenerateAssetBundleNodes(Dictionary<string,AssetNode>bundleDict)

@@ -1241,13 +1241,14 @@ namespace GameFrame
                       yield break;
                   case CompareResult.Greater:
                       m_updateState = 2;
-#if UNITY_ANDROID
-                      int channelId = 9;
-#elif UNITY_IPHONE
+//#if UNITY_ANDROID
+//                      int channelId = 9;
+//#elif UNITY_IPHONE
+//                      int channelId = 9; 
+//#elif UNITY_EDITOR
+//                      int channelId = 9;  
+//#endif
                       int channelId = 9; 
-#elif UNITY_EDITOR
-                      int channelId = 9;  
-#endif
                     using (var www = new WWW(Singleton<ServerConfig>.GetInstance().UpdateAppUrl))
                       {
                           yield return www;

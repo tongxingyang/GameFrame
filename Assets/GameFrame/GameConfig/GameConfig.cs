@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using UnityEditor;
 using UnityEngine;
 
 namespace GameFrame.GameConfig
@@ -65,7 +64,6 @@ namespace GameFrame.GameConfig
                     sw.Write(str);
                 }
             }
-            AssetDatabase.Refresh();
             UnityEngine.Debug.Log("保存设置成功");
         }
         

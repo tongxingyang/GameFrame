@@ -1,9 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.SymbolStore;
-using UnityEditor;
 using UnityEngine;
-
 namespace GameFrame
 {
         public class Platform
@@ -11,7 +9,7 @@ namespace GameFrame
                 public static string HasUpdateFileName = "hasupdate.txt";
                 public static string LuaScriptPath = "";
                 
-#if UNITY_EDITOR
+#if UNITY_EDITOR|| UNITY_EDITOR_OSX||UNITY_STANDALONE_OSX
                 public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
                 public static string PERSISTENT_DATA_PATH = Application.dataPath + "/PersistentAssets";
                 public static string SrcRoot = "/pc/";
@@ -141,21 +139,21 @@ namespace GameFrame
                         return -1;
                 }
 #if UNITY_EDITOR
-                public static BuildTarget GetBuildTarget(RuntimePlatform platform)
-                {
-                        switch (platform)
-                        {
-                                case RuntimePlatform.Android:
-                                        return UnityEditor.BuildTarget.Android;
-                                case RuntimePlatform.IPhonePlayer:
-                                        return UnityEditor.BuildTarget.iOS;
-                                case RuntimePlatform.OSXPlayer:
-                                        return UnityEditor.BuildTarget.StandaloneOSXIntel;
-                                case RuntimePlatform.WindowsPlayer:
-                                        return UnityEditor.BuildTarget.StandaloneWindows;
-                        }
-                        return UnityEditor.BuildTarget.StandaloneWindows;
-                }
+//                public static BuildTarget GetBuildTarget(RuntimePlatform platform)
+//                {
+//                        switch (platform)
+//                        {
+//                                case RuntimePlatform.Android:
+//                                        return UnityEditor.BuildTarget.Android;
+//                                case RuntimePlatform.IPhonePlayer:
+//                                        return UnityEditor.BuildTarget.iOS;
+//                                case RuntimePlatform.OSXPlayer:
+//                                        return UnityEditor.BuildTarget.StandaloneOSXIntel;
+//                                case RuntimePlatform.WindowsPlayer:
+//                                        return UnityEditor.BuildTarget.StandaloneWindows;
+//                        }
+//                        return UnityEditor.BuildTarget.StandaloneWindows;
+//                }
                 public static RuntimePlatform GetRuntimePlatform(UnityEditor.BuildTarget p)
                 {
                         switch(p)
