@@ -11,7 +11,7 @@ namespace GameFrame.Editor
         [MenuItem("LuaTools/Encode LuaFile with UTF-8",false)]
         public static void EncodeLuaFile()
         {
-            string path = BuildSetting.Lua;
+            string path = Platform.Lua;
             string[] files = Directory.GetFiles(path, "*.lua", SearchOption.AllDirectories);
             foreach (string f in files)
             {
@@ -25,8 +25,8 @@ namespace GameFrame.Editor
         }
 
         public static bool IsEncryptBatch = true;
-        public static string SrcLuaPath = BuildSetting.Lua;
-        public static  string DesLuaPath = BuildSetting.LuaBytes;
+        public static string SrcLuaPath = Platform.Lua;
+        public static  string DesLuaPath = Platform.LuaBytes;
         private const int KeyCount = 256;
         private static int[] sbox;
         private const string KeyString = "GameFrame";

@@ -7,37 +7,45 @@ namespace GameFrame
         public class Platform
         {
                 public static string HasUpdateFileName = "hasupdate.txt";
-                public static string LuaScriptPath = "";
                 
 #if UNITY_EDITOR|| UNITY_EDITOR_OSX||UNITY_STANDALONE_OSX
                 public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
                 public static string PERSISTENT_DATA_PATH = Application.dataPath + "/PersistentAssets";
-                public static string SrcRoot = "/pc/";
-                public static string ResVersionFileName = "pc_version.txt";
-                public static string AppVerFileName = "exe_version.txt";
-                public static string Md5FileName = "pc_resource_md5.txt";
-                public static string ServerAppVersionFileName = SrcRoot + "exe_version.txt";
+                public static string SrcRoot = "/mac/";
+
 #elif UNITY_IPHONE
                 public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
                 public static string PERSISTENT_DATA_PATH = Application.persistentDataPath;
                 public static string SrcRoot = "/android/";
-                public static string AppVerFileName = "app_version.txt";
-                public static string Md5FileName = "ios_resource_md5.txt";
-                public static string ResVersionFileName = "ios_version.txt";
-                public static string ServerAppVersionFileName = SrcRoot + "app_version.txt";
+
 #elif UNITY_ANDROID
                 public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
                 public static string PERSISTENT_DATA_PATH = Application.persistentDataPath;
                 public static string SrcRoot = "/ios/";
-                public static string AppVerFileName = "apk_version.txt";
-                public static string Md5FileName = "android_resource_md5.txt";
-                public static string ResVersionFileName = "android_version.txt";
-                public static string ServerAppVersionFileName = SrcRoot + "apk_version.txt";
+
 #endif
                 public static readonly string Root = "Data/";
                 public static readonly string Path = Platform.PERSISTENT_DATA_PATH + "/" + Root;
                 public static readonly string InitalPath = Platform.STREAMING_ASSETS_PATH + "/" + Root;
 
+                public static string Lua = "Assets/GameFrame/Lua";
+                public static string LuaBytes = "Assets/LuaBytes";
+                public static string ConfigCSV =  "Assets/GameFrame/Config/CSV";
+                public static string ConfigXML =  "Assets/GameFrame/Config/XML";
+                public static string ConfigCSVBytes =  "Assets/ConfigBytes/CSV";
+                public static string ConfigXMLBytes =  "Assets/ConfigBytes/XML";
+                public static string AssetBundle = "AssetBundles";
+                public static string LuaBundleKey = "LuaKey";
+                public static string ConfigBundleKey = "ConfigKey";
+                public static string AssetBundleExt = ".assetbundle";
+                public static string AssetBundleExportPath = "Assets/StreamingAssets/";
+                public static string DepFileName = "DepInfo.all";
+                
+                public static string ResVersionFileName = "Resversion.txt";
+                public static string AppVerFileName = "Appversion.txt";
+                public static string Md5FileName = "Resource_MD5.txt";
+                
+                
                 public static bool IsMobile
                 {
                         get
@@ -139,21 +147,7 @@ namespace GameFrame
                         return -1;
                 }
 #if UNITY_EDITOR
-//                public static BuildTarget GetBuildTarget(RuntimePlatform platform)
-//                {
-//                        switch (platform)
-//                        {
-//                                case RuntimePlatform.Android:
-//                                        return UnityEditor.BuildTarget.Android;
-//                                case RuntimePlatform.IPhonePlayer:
-//                                        return UnityEditor.BuildTarget.iOS;
-//                                case RuntimePlatform.OSXPlayer:
-//                                        return UnityEditor.BuildTarget.StandaloneOSXIntel;
-//                                case RuntimePlatform.WindowsPlayer:
-//                                        return UnityEditor.BuildTarget.StandaloneWindows;
-//                        }
-//                        return UnityEditor.BuildTarget.StandaloneWindows;
-//                }
+
                 public static RuntimePlatform GetRuntimePlatform(UnityEditor.BuildTarget p)
                 {
                         switch(p)

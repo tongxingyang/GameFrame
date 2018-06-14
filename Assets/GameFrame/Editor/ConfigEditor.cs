@@ -1,16 +1,17 @@
 ﻿using System;
 using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 namespace GameFrame.Editor
 {
     public class ConfigEditor
     {
         public static bool IsEncryptBatch = true;
-        public static string SrcConfigCSVPath = BuildSetting.ConfigCSV;
-        public static string DesConfigCSVBytesPath = BuildSetting.ConfigCSVBytes;
-        public static  string SrcConfigXMLPath = BuildSetting.ConfigXML;
-        public static  string DesConfigXMLBytesPath = BuildSetting.ConfigXMLBytes;
+        public static string SrcConfigCSVPath = Platform.ConfigCSV;
+        public static string DesConfigCSVBytesPath = Platform.ConfigCSVBytes;
+        public static  string SrcConfigXMLPath = Platform.ConfigXML;
+        public static  string DesConfigXMLBytesPath = Platform.ConfigXMLBytes;
         private const int KeyCount = 256;
         private static int[] sbox;
         private const string KeyString = "GameFrame";
@@ -23,6 +24,7 @@ namespace GameFrame.Editor
             EncryptOperate(SrcConfigXMLPath,DesConfigXMLBytesPath);
             AssetDatabase.Refresh();
         }
+        
 
         [MenuItem("ConfigTools/Decrypt(RC4) ConfigFile",false)]
         public static void DecryptConfigFile(string src ,string dec)
