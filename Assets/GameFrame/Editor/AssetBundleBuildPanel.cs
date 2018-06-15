@@ -27,13 +27,15 @@ namespace GameFrame.Editor
         public EncryptLuaScriptBundle EncryptLuaScript;
         public List<AssetBundleFilter> Filters = new List<AssetBundleFilter>();
         public string ConfigBundleName = "Config.assetbundle";
-        public string LuaScriptBundleName = "LuaScript.assetbundle";
+        public string LuaScriptBundleName = "LuaScript.assetbundle";//加密处理
+        public string BaseLuaBundleName = "BaseLua.assetbundle";//不加密
         public int IsSpriteTag = 1;
         public int Windows = 1;
         public int Mac = 1;
         public int Android = 1;
         public int IOS = 1;
         public Version Version;
+        public string BaseLuaPath = string.Empty;
     }
     [Serializable]
     public class Version
@@ -252,6 +254,7 @@ namespace GameFrame.Editor
                 bytes = EncryptBytes(bytes, Platform.LuaBundleKey);
                 File.Delete(configfilename);
                 File.WriteAllBytes(configfilename,bytes);
+                //baselua是不加密的
             }
             //生成依赖关系配置文件
             AssetDatabase.Refresh();
@@ -357,7 +360,7 @@ namespace GameFrame.Editor
             return pathReplace;
         }
         
-        [MenuItem("AssetBundle/Build LuaScript Bundle")]
+        [MenuItem("AssetBundle/Set LuaScript Bundle Name")]
         public static void BuildLuaScript()
         { 
             LuaEditor.EncodeLuaFile();//先加密lua脚本
@@ -384,6 +387,33 @@ namespace GameFrame.Editor
                 } 
             }
         }
+        
+        [MenuItem("AssetBundle/Set BaseLuaScript Bundle Name")]
+        public static void BuildBaseLuaScript()
+        { 
+            AssetBundlePanelConfig config =  LoadAssetAtPath<AssetBundlePanelConfig>(savePath);
+            if (config == null)
+            {
+                return;
+            }
+            if (!Directory.Exists(config.BaseLuaPath))
+            {
+                UnityEngine.Debug.Log("目录不存在"+config.BaseLuaPath);
+                return;
+            }
+            List<string> m_assetList = new List<string>();
+            GetAssetsRecursively(config.BaseLuaPath,"*.lua",ref m_assetList);
+            AssetImporter importer = null;//import
+            foreach (string s in m_assetList)//获取所有的加密后的脚本
+            {
+                importer = AssetImporter.GetAtPath(s);
+                if (importer.assetBundleName == null || importer.assetBundleName != config.LuaScriptBundleName)
+                {
+                    importer.assetBundleName = config.BaseLuaBundleName;
+                } 
+            }
+        }
+        
         [MenuItem("AssetBundle/Clear Mainifest Files")]
         public static void ClearMainifestHelpFile()
         {
@@ -732,6 +762,17 @@ namespace GameFrame.Editor
                 GUILayout.Space(20);
                 GUILayout.BeginHorizontal();
                 {
+                    if (GUILayout.Button("选择BaseLua Path", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
+                    {
+                        _config.BaseLuaPath = SelectFolder();
+                    }
+                    GUILayout.Space(80);
+                    EditorGUILayout.LabelField("BaseLua Path : "+_config.BaseLuaPath);
+                }
+                GUILayout.EndHorizontal();
+               
+                GUILayout.BeginHorizontal();
+                {
                     GUILayout.Space(50);
                     EditorGUILayout.LabelField("LuaScript打包是否加密");
                     GUILayout.Space(100);
@@ -744,6 +785,13 @@ namespace GameFrame.Editor
                     GUILayout.Space(50);
                     EditorGUILayout.LabelField("LuaScript BundleName");
                     _config.LuaScriptBundleName = GUILayout.TextArea(_config.LuaScriptBundleName);
+                }
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Space(50);
+                    EditorGUILayout.LabelField("BaseLuaScript BundleName");
+                    _config.BaseLuaBundleName = GUILayout.TextArea(_config.BaseLuaBundleName);
                 }
                 GUILayout.EndHorizontal();
                 GUILayout.Space(20);
