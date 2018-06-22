@@ -10,7 +10,6 @@ namespace GameFrame
                 
 #if UNITY_EDITOR|| UNITY_EDITOR_OSX||UNITY_STANDALONE_OSX
                 public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
-//                public static string PERSISTENT_DATA_PATH = Application.dataPath + "/PersistentAssets";
                 public static string PERSISTENT_DATA_PATH = Application.streamingAssetsPath;
 
 #elif UNITY_IPHONE
@@ -33,8 +32,8 @@ namespace GameFrame
 #else
                 public static string osDir = "";        
                 #endif
-                public static readonly string Path = Platform.PERSISTENT_DATA_PATH + "/" + osDir;
-                public static readonly string InitalPath = Platform.STREAMING_ASSETS_PATH + "/" + osDir;
+                public static readonly string Path = Platform.PERSISTENT_DATA_PATH + "/" + osDir+"/";
+                public static readonly string InitalPath = Platform.STREAMING_ASSETS_PATH + "/" + osDir+"/";
 
                 public static string AssetBundle = "assetbundles";
                 public static string LuaBundleKey = "LuaKey";
@@ -42,7 +41,6 @@ namespace GameFrame
                 public static string AssetBundleExt = ".assetbundle";
                 public static string AssetBundleExportPath = "Assets/StreamingAssets/";
                 public static string DepFileName = "depinfo.all";
-                
                 public static string ResVersionFileName = "resversion.txt";
                 public static string AppVerFileName = "appversion.txt";
                 public static string Md5FileName = "resource_md5.txt";

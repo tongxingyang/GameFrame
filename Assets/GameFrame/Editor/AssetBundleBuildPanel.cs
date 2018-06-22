@@ -553,6 +553,12 @@ namespace GameFrame.Editor
                 using (StreamWriter sw = new StreamWriter(fs))
                 {
                     string[] files = Directory.GetFiles(outpath, "*" + Platform.AssetBundleExt,SearchOption.AllDirectories);
+                    if(files.Length<=0) return;
+                    sw.WriteLine(Platform.DepFileName);
+                    sw.WriteLine(Platform.ResVersionFileName);
+                    sw.WriteLine(Platform.AppVerFileName);
+                    sw.WriteLine(Platform.Md5FileName);
+                    sw.WriteLine(Platform.PreloadList);
                     foreach (string file in files)
                     {
                         string name = file.Replace(outpath, string.Empty);

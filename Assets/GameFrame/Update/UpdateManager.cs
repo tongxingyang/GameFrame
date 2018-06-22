@@ -20,7 +20,7 @@ namespace GameFrame
         State_UpdateApp,//updateapp
         State_UpdateResource,//updateres
         State_GetServerList,//获取服务器列表
-        State_Start,//done
+        State_Start,//更新完成
     }
 
     public enum CompareResult
@@ -47,37 +47,26 @@ namespace GameFrame
         private Text LocalResVersionText;
         private Text OnlineResVersionText;
         private Text AppVersion;
-
         private Button SureButton;
         private Button CancelButton;
-
         private Slider ProgressSliber;
-
         private GameObject UpdateGameObject;
         private GameObject AlertObject;
         private int CurrentDownCount = 0;
-
         private GameObject CanvasObj;
-
-
         private Action<bool> UpdateCallback;
         private bool m_isBeginUpdate = false;
         private bool m_isCheckSDK = false;
         private bool m_isInitSDK = false;
         private bool m_isInitSDKDone = false;
-        
         private enClientState State = enClientState.State_Init;
         public  Dictionary<string,FileInfo> oldmd5Table = new Dictionary<string, FileInfo>();
         public  Dictionary<string,FileInfo> newmd5Table = new Dictionary<string, FileInfo>();
-        
         public Dictionary <string,FileInfo> ResourcesHasUpdate = new Dictionary<string, FileInfo>();
         public List<string> m_redownloadList = new List<string>();
         public List<string> m_downloadList = new List<string>();
-        
         public  ConcurrentQueue<DownloadTask> m_taskQueue = new ConcurrentQueue<DownloadTask>();
-        
         public  readonly object m_obj = new object();//线程安全锁 对象
-
         public float DownLoadProgress
         {
             get
@@ -137,7 +126,7 @@ namespace GameFrame
             isLoadOldTableAndVersion = false;
             string filepath = Platform.InitalPath + Platform.AppVerFileName;
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
-            filepath = "file:///" + filepath;//ios平台 
+            filepath = "file:///" + filepath;//ios平台
 #endif
             using (WWW w = new WWW(filepath))
             {
@@ -242,7 +231,7 @@ namespace GameFrame
             m_isBeginUpdate = true;
             
             //测试模式
-            ClearData();
+//            ClearData();
         }
 
         public void Update()
@@ -368,10 +357,6 @@ namespace GameFrame
             return null;
         }
 
-        public string GetOnlineVersion()
-        {
-            return String.Empty;
-        }
         private void CheckVersion()
         {
             string filepath = Platform.Path + "hasupdate.txt";//沙河目录
