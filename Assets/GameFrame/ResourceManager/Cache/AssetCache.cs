@@ -9,107 +9,98 @@ namespace GameFrame
 	/// </summary>
 	public class AssetCache : IAssetCache
 	{
-		protected string name;
-		public string Name { get { return name; } }
-		protected Object asset;
-		public Object Asset { get { return asset; } }
-		protected bool permanentMemory;
-		public bool PermanentMemory { get { return permanentMemory;} }
-		
-		protected float lastUseTime;
-		public float LastUseTime { get { return lastUseTime; } }
+		public string Name { get; private set; }
+		public Object Asset { get; private set; }
+		public bool Permanent { get;  set; }
+		public CachePriority Priority { get; private set; }
+		public float LastUseTime { get; private set; }
 
-		protected virtual float CacheDisposeTime
+		public bool IsDisposeable
 		{
-			get { return 300f; }
-		}
-		private int refCount = 0;
-		public int RefCount{get { return refCount; }}
-
-		public void AddRefCount()
-		{
-			refCount++;
-		} 
-
-		public int GetRefCount()
-		{
-			return refCount;
-		}
-		public void SubRefCount()
-		{
-			refCount--;
-			if (refCount < 0)
-			{
-				refCount = 0;
-			}
-			if (refCount == 0)
-			{
-				SetLastUseTime(Time.time);
-			}
-		}
-		public void SetName(string name)
-		{
-			this.name = name;
-		}
-
-		public void SetAsset(Object asset)
-		{
-			this.asset = asset;
-		}
-		
-		public void SetPermanentMemory(bool parm)
-		{
-			permanentMemory = parm;
-		}
-		
-		public void SetLastUseTime(float time)
-		{
-			lastUseTime = time;
-		}
-		public virtual bool IsDisposeable {
 			get
 			{
-				if (permanentMemory) return false;
-				if (refCount == 0)
-				{
-					return asset == null || Time.time - lastUseTime >= CacheDisposeTime;
-				}
-				return false;
-			}
-		}
-		public virtual void Dispose()
-		{
-			if (asset)
-			{
-				if (!permanentMemory)//不是常驻内存 才会处理
-				{
-//					if (asset is GameObject)
-//					{
-//						Object.DestroyImmediate(asset, true);//gameobject 
-//					}
-//					else
-					{
-						Resources.UnloadAsset(asset); // 普通资源类型
-					}
-					asset = null;
-				}
-				
+				if (Permanent) return false;
+				return Asset == null || (Time.time - LastUseTime) > CacheDisposeTime;
 			}
 		}
 
-		public virtual void ForcedDispose()
+		private float CacheDisposeTime { get; set; }
+
+		public void SetName(string name)
 		{
-			if (asset)
+			Name = name;
+		}
+
+		public void SetAsset(Object obj)
+		{
+			Asset = obj;
+		}
+
+		public void SetLastUseTime(float time)
+		{
+			LastUseTime = time;
+		}
+
+		public void SetCachePriority(CachePriority cachePriority)
+		{
+			Priority = cachePriority;
+			switch (Priority)
 			{
-//				if (asset is GameObject)
-//				{
-//					Object.DestroyImmediate(asset, true);
-//				}
-//				else
+				case CachePriority.MiddleTime:
+					CacheDisposeTime = 150f;
+					Permanent = false;
+					break;
+				case CachePriority.ShortTime:
+					CacheDisposeTime = 60f;
+					Permanent = false;
+					break;
+				case CachePriority.LongTime:
+					CacheDisposeTime = 300f;
+					Permanent = false;
+					break;
+				case CachePriority.Persistent:
+					CacheDisposeTime = 0;
+					Permanent = true;
+					break;
+				default:
+					CacheDisposeTime = 0;
+					Permanent = false;
+					break;
+			}
+		}
+
+
+		public bool Dispose()
+		{
+			if (Asset && !Permanent && IsDisposeable)
+			{
+				if (Asset is GameObject)
 				{
-					Resources.UnloadAsset(asset);
+					Object.Destroy(Asset);
 				}
-				asset = null;
+				else
+				{
+					Resources.UnloadAsset(Asset);
+				}
+				Asset = null;
+				return true;
+			}
+			return false;
+		}
+
+		public void ForceDispose()
+		{
+			if (Asset)
+			{
+				if (Asset is GameObject)
+				{
+					Object.Destroy(Asset);
+				}
+				else
+				{
+					Resources.UnloadAsset(Asset);
+				}
+				Asset = null;
 			}
 		}
 	}

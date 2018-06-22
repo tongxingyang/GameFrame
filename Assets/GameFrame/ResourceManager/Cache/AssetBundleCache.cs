@@ -4,8 +4,31 @@ using UnityEngine;
 
 namespace GameFrame
 {
-	public class AssetBundleCache : AssetCache
+	public class AssetBundleCache : IAssetCache
 	{
+		public string Name { get; private set; }
+		public Object Asset { get; private set; }
+		public bool Permanent { get; set; }
+		public CachePriority Priority { get; private set; }
+		public float LastUseTime { get; private set; }
+
+		public bool IsDisposeable
+		{
+			get
+			{
+				if (refCount > 0)
+				{
+					return false;
+				}
+				else
+				{
+					if (Permanent) return false;
+					return Asset == null || (Time.time - LastUseTime) > CacheDisposeTime;
+				}
+			}
+		}
+		public float CacheDisposeTime { get; set; }
+		
 		private int refCount = 0;
 		public int RefCount{get { return refCount; }}
 
@@ -18,6 +41,7 @@ namespace GameFrame
 		{
 			return refCount;
 		}
+		
 		public void SubRefCount()
 		{
 			refCount--;
@@ -30,53 +54,72 @@ namespace GameFrame
 				SetLastUseTime(Time.time);
 			}
 		}
-		public override bool IsDisposeable
+		public void SetName(string name)
 		{
-			get
+			Name = name;
+		}
+
+		public void SetAsset(Object obj)
+		{
+			Asset = obj;
+		}
+
+		public void SetLastUseTime(float time)
+		{
+			LastUseTime = time;
+		}
+
+		public void SetCachePriority(CachePriority cachePriority)
+		{
+			Priority = cachePriority;
+			switch (Priority)
 			{
-				if (permanentMemory)
-				{
-					return false;
-				}
-				if (refCount == 0)
-				{
-					return asset == null || Time.time - lastUseTime >= CacheDisposeTime;
-				}
-				return false;
+				case CachePriority.MiddleTime:
+					CacheDisposeTime = 150f;
+					Permanent = false;
+					break;
+				case CachePriority.ShortTime:
+					CacheDisposeTime = 60f;
+					Permanent = false;
+					break;
+				case CachePriority.LongTime:
+					CacheDisposeTime = 300f;
+					Permanent = false;
+					break;
+				case CachePriority.Persistent:
+					CacheDisposeTime = 0;
+					Permanent = true;
+					break;
+				default:
+					CacheDisposeTime = 0;
+					Permanent = false;
+					break;
 			}
 		}
 
-		public override void Dispose()
+		public bool Dispose()
 		{
-			if (asset)
+			if (Asset && !Permanent && IsDisposeable)
 			{
-				if (!permanentMemory)
+				if (Asset is AssetBundle)
 				{
-					if (asset is AssetBundle)
-					{
-						AssetBundle ab = asset as AssetBundle;
-						ab.Unload(false);
-						asset = null;
-					}
+					(Asset as AssetBundle).Unload(false);
 				}
+				Asset = null;
+				return true;
 			}
+			return false;
 		}
 
-		protected override float CacheDisposeTime
+		public void ForceDispose()
 		{
-			get { return 180; }
-		}
-
-		public override void ForcedDispose()
-		{
-			if (asset)
+			if (Asset)
 			{
-				if (asset is AssetBundle)
+				if (Asset is AssetBundle)
 				{
-					AssetBundle ab = asset as AssetBundle;
-					ab.Unload(false);
-					asset = null;
+					(Asset as AssetBundle).Unload(false);
 				}
+				Asset = null;
 			}
 		}
 	}

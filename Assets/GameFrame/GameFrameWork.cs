@@ -95,15 +95,14 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void Awake()
     {
-        //初始化渲染设置 高端机型匹配
         InitRenderFeature();  
+        InitBaseSys();
         Util.SetResolution(Resolution);
         Application.backgroundLoadingPriority = UnityEngine.ThreadPriority.High;
         Application.runInBackground = true;
         Application.targetFrameRate = 30;
         QualitySettings.blendWeights = BlendWeights.TwoBones;//动画期间可影响某个指定顶点的骨骼的数量。可用的选项有一、二或四根骨骼
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
-        
     }
 
     void Start()
@@ -120,24 +119,8 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     private void UpdateCallback(bool isok)
     {
         IsUpdateDone = isok;
-        //加载Lua 虚拟机 todo
-        //初始化resources manager todo
-        //LuaState lua = new LuaState();
-        //lua.Start();
-        //string hello =
-        //                        @"                
-        //                            print('hello tolua#')                                  
-        //                        ";
-        //lua.DoString(hello);
-        
-        Debug.Log("加载Lua虚拟机 初始化资源manager");
-        Debug.Log("开始游戏");
-
-        //Singleton<ResourceManager>.GetInstance().AddTask("sfx/s_qz_yzb_01.bundle",
-        //    (o) =>
-        //    {
-
-        //    }, (int) (enResourceLoadType.Cache|enResourceLoadType.LoadBundleFromFile));
+        //启动lua虚拟机 开始执行lua函数
+        SingletonMono<LuaManager>.GetInstance().InitStart();
         StartCoroutine(ChangeScence());
     }
 
@@ -182,6 +165,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     }
     void InitBaseSys()
     {
+        SingletonMono<LuaManager>.GetInstance();
         Singleton<LauncherString>.GetInstance();
         Singleton<TimeManager>.GetInstance();
         Singleton<EventManager>.GetInstance();

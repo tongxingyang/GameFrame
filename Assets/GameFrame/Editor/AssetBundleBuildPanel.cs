@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using JetBrains.Annotations;
 using UnityEditor;
+using UnityEditor.Experimental.Build.AssetBundle;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -13,29 +14,14 @@ namespace GameFrame.Editor
 {
     public class AssetBundlePanelConfig:ScriptableObject
     {
-        public enum EncryptConfigBundle
-        {
-            Encrypt,
-            NoEncrypt,
-        }
-        public enum EncryptLuaScriptBundle
-        {
-            Encrypt,
-            NoEncrypt,
-        }
-        public EncryptConfigBundle EncryptConfig;
-        public EncryptLuaScriptBundle EncryptLuaScript;
         public List<AssetBundleFilter> Filters = new List<AssetBundleFilter>();
-        public string ConfigBundleName = "Config.assetbundle";
-        public string LuaScriptBundleName = "LuaScript.assetbundle";//加密处理
-        public string BaseLuaBundleName = "BaseLua.assetbundle";//不加密
+        public string BaseLuaBundleName = "tolua.assetbundle";//不加密
         public int IsSpriteTag = 1;
         public int Windows = 1;
         public int Mac = 1;
         public int Android = 1;
         public int IOS = 1;
         public Version Version;
-        public string BaseLuaPath = string.Empty;
     }
     [Serializable]
     public class Version
@@ -78,9 +64,7 @@ namespace GameFrame.Editor
             );
 
             return string.Format("{4}-ver{0:D2}.{1:D2}.{2:D2}-resversion{3}", master, minor, revised, resversion,dstr);
-        }
-
-        
+        } 
     }
     [Serializable]
     public class AssetBundleFilter
@@ -234,29 +218,6 @@ namespace GameFrame.Editor
                 Directory.CreateDirectory(outPath);
             }
             BuildPipeline.BuildAssetBundles(outPath, BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.ChunkBasedCompression, target);
-            //打包资源
-            if (config.EncryptConfig == AssetBundlePanelConfig.EncryptConfigBundle.Encrypt)
-            {
-                //加密luabundle包
-                string configfilename = outPath + "/" + config.ConfigBundleName;
-                if(!File.Exists(configfilename)) return;
-                byte[] bytes = File.ReadAllBytes(configfilename);
-                bytes = EncryptBytes(bytes, Platform.ConfigBundleKey);
-                File.Delete(configfilename);
-                File.WriteAllBytes(configfilename,bytes);
-            }
-            if (config.EncryptLuaScript == AssetBundlePanelConfig.EncryptLuaScriptBundle.Encrypt)
-            {
-                //加密configbundle包
-                string configfilename = outPath + "/" + config.LuaScriptBundleName;
-                if(!File.Exists(configfilename)) return;
-                byte[] bytes = File.ReadAllBytes(configfilename);
-                bytes = EncryptBytes(bytes, Platform.LuaBundleKey);
-                File.Delete(configfilename);
-                File.WriteAllBytes(configfilename,bytes);
-                //baselua是不加密的
-            }
-            //生成依赖关系配置文件
             AssetDatabase.Refresh();
         }
         //保存資源之間的依賴配置文件
@@ -284,8 +245,30 @@ namespace GameFrame.Editor
             }
             using (FileStream fs = new FileStream(Path+"/"+Platform.DepFileName,FileMode.CreateNew))
             {
+                using (BinaryWriter sw = new BinaryWriter(fs))
+                {
+                    sw.Write(depinfos.Count);
+                    foreach (KeyValuePair<string,List<string>> keyValuePair in depinfos)
+                    {
+                        sw.Write(keyValuePair.Key);
+                        sw.Write(keyValuePair.Value.Count);
+                        foreach (string s in keyValuePair.Value)
+                        {
+                            sw.Write(s);
+                        }
+                    }
+                }
+            }
+            
+            if (File.Exists(Path + "/" + Platform.DepFileName+".txt"))
+            {
+                File.Delete(Path+"/"+Platform.DepFileName+".txt");
+            }
+            using (FileStream fs = new FileStream(Path+"/"+Platform.DepFileName+".txt",FileMode.CreateNew))
+            {
                 using (StreamWriter sw = new StreamWriter(fs))
                 {
+                    sw.WriteLine(depinfos.Count);
                     foreach (KeyValuePair<string,List<string>> keyValuePair in depinfos)
                     {
                         sw.WriteLine(keyValuePair.Key);
@@ -294,7 +277,6 @@ namespace GameFrame.Editor
                         {
                             sw.WriteLine(s);
                         }
-                        sw.WriteLine("<---------------------------->");
                     }
                 }
             }
@@ -304,114 +286,185 @@ namespace GameFrame.Editor
         [MenuItem("AssetBundle/Build Config Bundle")]
         public static void BuildConfig()
         {
-            ConfigEditor.EncryptConfigFile();//加密
             AssetBundlePanelConfig config =  LoadAssetAtPath<AssetBundlePanelConfig>(savePath);
             if (config == null)
             {
                 return;
             }
-            if (!Directory.Exists(Platform.ConfigCSVBytes))
+            
+            ConfigEditor.HandleConfigBundle();
+            var outPath = string.Empty;
+            BuildTarget target = BuildTarget.Android;
+            if (config.Windows==1)
             {
-                UnityEngine.Debug.Log("目录不存在"+Platform.ConfigCSVBytes);
+                outPath = Platform.AssetBundleExportPath+"windows/config";
+                target = BuildTarget.StandaloneWindows64;
+                BuildConfigBundle(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+            if (config.Mac == 1)
+            {
+                outPath = Platform.AssetBundleExportPath+"mac/config";
+                target = BuildTarget.StandaloneOSXIntel64;
+                BuildConfigBundle(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+            if (config.Android == 1)
+            {
+                outPath = Platform.AssetBundleExportPath+"android/config";
+                target = BuildTarget.Android;
+                BuildConfigBundle(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+            if (config.IOS == 1)
+            {
+                outPath = Platform.AssetBundleExportPath+"ios/config";
+                target = BuildTarget.iOS;
+                BuildConfigBundle(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+
+        }
+
+        public static void BuildConfigBundle(AssetBundlePanelConfig config, string outpath, BuildTarget target)
+        {
+            if (!Directory.Exists(ConfigConst.tempconfigDir))
+            {
+                UnityEngine.Debug.Log("目录不存在"+ConfigConst.tempconfigDir);
                 return;
             }
-            List<string> m_assetList = new List<string>();
-            GetAssetsRecursively(Platform.ConfigCSVBytes,"*.csv",ref m_assetList);
-            AssetImporter importer = null;
-            foreach (string s in m_assetList)
+            List<AssetBundleBuild> m_assetList = new List<AssetBundleBuild>();
+            string[] dirs = Directory.GetDirectories(ConfigConst.tempconfigDir, "*", SearchOption.AllDirectories);
+            for (int i = 0; i < dirs.Length; i++)
             {
-                importer = AssetImporter.GetAtPath(s);
-                if (importer.assetBundleName == null || importer.assetBundleName != config.ConfigBundleName)
-                {
-                    importer.assetBundleName = config.ConfigBundleName;
-                } 
+                string name = dirs[i].Replace(ConfigConst.tempconfigDir, string.Empty);
+                name = name.Replace('\\', '_').Replace('/', '_');
+                name = "config" + name.ToLower() + Platform.AssetBundleExt;
+
+                string path = "Assets" + dirs[i].Replace(Application.dataPath, "");
+                AddBuildMap(ref m_assetList, name, "*", path);
             }
-            
-            if (!Directory.Exists(Platform.ConfigXMLBytes))
+            // 对临时目录根部的lua打一个包
+            AddBuildMap(ref m_assetList, "config" + Platform.AssetBundleExt, "*", "Assets/TempConfig");
+            BuildAssetBundleOptions opt = BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.UncompressedAssetBundle;
+            if (!Directory.Exists(outpath))
             {
-                UnityEngine.Debug.Log("目录不存在"+Platform.ConfigXMLBytes);
-                return;
+                Directory.CreateDirectory(outpath);
             }
-            m_assetList.Clear();
-            GetAssetsRecursively(Platform.ConfigXMLBytes,"*.csv",ref m_assetList);
-            importer = null;
-            foreach (string s in m_assetList)
-            {
-                importer = AssetImporter.GetAtPath(s);
-                if (importer.assetBundleName == null || importer.assetBundleName != config.ConfigBundleName)
-                {
-                    importer.assetBundleName = config.ConfigBundleName;
-                } 
-            }
-            
+            BuildPipeline.BuildAssetBundles(outpath, m_assetList.ToArray(), opt, target);
+
         }
-        public static byte[] EncryptBytes(byte[] data, string Skey)  
-        {  
-            DESCryptoServiceProvider DES = new DESCryptoServiceProvider();  
-            DES.Key = ASCIIEncoding.ASCII.GetBytes(Skey);  
-            DES.IV = ASCIIEncoding.ASCII.GetBytes(Skey);  
-            ICryptoTransform desEncrypt = DES.CreateEncryptor();  
-            byte[] result = desEncrypt.TransformFinalBlock(data, 0, data.Length);  
-            return result;
-        }
+        
         public static string StandardlizePath(string path)
         {
             string pathReplace = path.Replace(@"\", @"/");
             return pathReplace;
         }
         
-        [MenuItem("AssetBundle/Set LuaScript Bundle Name")]
-        public static void BuildLuaScript()
-        { 
-            LuaEditor.EncodeLuaFile();//先加密lua脚本
-            LuaEditor.EncryptLuaFile();
+        
+        [MenuItem("AssetBundle/Build Lua Tolua Bundle")]
+        static void BuildLuaBundles()
+        {
             AssetBundlePanelConfig config =  LoadAssetAtPath<AssetBundlePanelConfig>(savePath);
             if (config == null)
             {
                 return;
             }
-            if (!Directory.Exists(Platform.LuaBytes))
+            LuaEditor.HandleLuaBundle();
+            var outPath = string.Empty;
+            BuildTarget target = BuildTarget.Android;
+            if (config.Windows==1)
             {
-                UnityEngine.Debug.Log("目录不存在"+Platform.LuaBytes);
-                return;
+                outPath = Platform.AssetBundleExportPath+"windows/lua";
+                target = BuildTarget.StandaloneWindows64;
+                BuildLuaScript(config,outPath,target);
+                AssetDatabase.Refresh();
             }
-            List<string> m_assetList = new List<string>();
-            GetAssetsRecursively(Platform.LuaBytes,"*.lua",ref m_assetList);
-            AssetImporter importer = null;//import
-            foreach (string s in m_assetList)//获取所有的加密后的脚本
+            if (config.Mac == 1)
             {
-                importer = AssetImporter.GetAtPath(s);
-                if (importer.assetBundleName == null || importer.assetBundleName != config.LuaScriptBundleName)
-                {
-                    importer.assetBundleName = config.LuaScriptBundleName;
-                } 
+                outPath = Platform.AssetBundleExportPath+"mac/lua";
+                target = BuildTarget.StandaloneOSXIntel64;
+                BuildLuaScript(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+            if (config.Android == 1)
+            {
+                outPath = Platform.AssetBundleExportPath+"android/lua";
+                target = BuildTarget.Android;
+                BuildLuaScript(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+            if (config.IOS == 1)
+            {
+                outPath = Platform.AssetBundleExportPath+"ios/lua";
+                target = BuildTarget.iOS;
+                BuildLuaScript(config,outPath,target);
+                AssetDatabase.Refresh();
             }
         }
         
-        [MenuItem("AssetBundle/Set BaseLuaScript Bundle Name")]
-        public static void BuildBaseLuaScript()
+        public static void BuildLuaScript( AssetBundlePanelConfig config,string outpath,BuildTarget target)
         { 
-            AssetBundlePanelConfig config =  LoadAssetAtPath<AssetBundlePanelConfig>(savePath);
-            if (config == null)
+
+            if (!Directory.Exists(LuaConst.luaTempDir))
             {
+                UnityEngine.Debug.Log("目录不存在"+LuaConst.luaTempDir);
                 return;
             }
-            if (!Directory.Exists(config.BaseLuaPath))
+            List<AssetBundleBuild> m_assetList = new List<AssetBundleBuild>();
+            string[] dirs = Directory.GetDirectories(LuaConst.luaTempDir, "*", SearchOption.AllDirectories);
+            for (int i = 0; i < dirs.Length; i++)
             {
-                UnityEngine.Debug.Log("目录不存在"+config.BaseLuaPath);
+                string name = dirs[i].Replace(LuaConst.luaTempDir, string.Empty);
+                name = name.Replace('\\', '_').Replace('/', '_');
+                name = "lua" + name.ToLower() + Platform.AssetBundleExt;
+
+                string path = "Assets" + dirs[i].Replace(Application.dataPath, "");
+                AddBuildMap(ref m_assetList, name, "*.bytes", path);
+            }
+            // 对临时目录根部的lua打一个包
+            AddBuildMap(ref m_assetList, "lua" + Platform.AssetBundleExt, "*.bytes", "Assets/Temp/Lua");
+            if (!Directory.Exists(LuaConst.toluaTempDir))
+            {
+                UnityEngine.Debug.Log("目录不存在"+LuaConst.toluaTempDir);
                 return;
             }
-            List<string> m_assetList = new List<string>();
-            GetAssetsRecursively(config.BaseLuaPath,"*.lua",ref m_assetList);
-            AssetImporter importer = null;//import
-            foreach (string s in m_assetList)//获取所有的加密后的脚本
+            dirs = Directory.GetDirectories(LuaConst.toluaTempDir, "*", SearchOption.AllDirectories);
+            for (int i = 0; i < dirs.Length; i++)
             {
-                importer = AssetImporter.GetAtPath(s);
-                if (importer.assetBundleName == null || importer.assetBundleName != config.LuaScriptBundleName)
+
+                string name = config.BaseLuaBundleName;
+                string path = "Assets" + dirs[i].Replace(Application.dataPath, "");
+                AddBuildMap(ref m_assetList, name, "*.bytes", path);
+            }
+            AddBuildMap(ref m_assetList, config.BaseLuaBundleName, "*.bytes", "Assets/Temp/ToLua");
+            BuildAssetBundleOptions opt = BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.UncompressedAssetBundle;
+            if (!Directory.Exists(outpath))
+            {
+                Directory.CreateDirectory(outpath);
+            }
+            BuildPipeline.BuildAssetBundles(outpath, m_assetList.ToArray(), opt, target);
+
+        }
+        
+        static void AddBuildMap(ref List<AssetBundleBuild> buildList, string bundleName, string pattern, string path)
+        {
+            string[] files = Directory.GetFiles(path, pattern);
+            List<string> names = new List<string>();
+            if (files.Length == 0) return;
+
+            for (int i = 0; i < files.Length; i++)
+            {
+                if (!files[i].Contains("DS_Store"))
                 {
-                    importer.assetBundleName = config.BaseLuaBundleName;
-                } 
+                    files[i] = files[i].Replace('\\', '/');
+                    names.Add(files[i]);
+                }
             }
+            AssetBundleBuild build = new AssetBundleBuild();
+            build.assetBundleName = bundleName;
+            build.assetNames = names.ToArray();
+            buildList.Add(build);
         }
         
         [MenuItem("AssetBundle/Clear Mainifest Files")]
@@ -456,9 +509,9 @@ namespace GameFrame.Editor
             }
         }
         
-        [MenuItem("AssetBundle/生成本地md5文件")]
+        [MenuItem("AssetBundle/生成本地MD5文件")]
         public static void MakeMD5File()
-        {
+        {            
             AssetBundlePanelConfig config =  LoadAssetAtPath<AssetBundlePanelConfig>(savePath);
             if (config == null)
             {
@@ -495,20 +548,26 @@ namespace GameFrame.Editor
             {
                 File.Delete(outpath+Platform.Md5FileName);
             }
-            using (FileStream fs = new FileStream(outpath+"/"+Platform.Md5FileName,FileMode.CreateNew))
+            using (FileStream fs = new FileStream(outpath+Platform.Md5FileName,FileMode.CreateNew))
             {
                 using (StreamWriter sw = new StreamWriter(fs))
                 {
-                    string[] files = Directory.GetFiles(outpath+"/"+Platform.AssetBundle, "*" + Platform.AssetBundleExt);
+                    string[] files = Directory.GetFiles(outpath, "*" + Platform.AssetBundleExt,SearchOption.AllDirectories);
                     foreach (string file in files)
                     {
+                        string name = file.Replace(outpath, string.Empty);
                         System.IO.FileInfo fileInfo = new System.IO.FileInfo(file);
                         string md5 = MD5Util.ComputeFileHash(file);
-                        sw.WriteLine(fileInfo.Name+","+md5+","+fileInfo.Length);
+                        sw.WriteLine(name+","+md5+","+fileInfo.Length);
                     }
                 }
             }
-            
+            if (File.Exists(outpath + Platform.HasUpdateFileName))
+            {
+                File.Delete(outpath+Platform.HasUpdateFileName);
+            }
+            File.Create(outpath + Platform.HasUpdateFileName);
+
         }
         static void GetAssetsRecursively(string srcFolder, string searchPattern,  ref List<string> assets)
         {
@@ -714,77 +773,41 @@ namespace GameFrame.Editor
             }
             GUILayout.BeginVertical();
             {
-                
-         
-            GUILayout.BeginHorizontal();
-            {
-                if (GUILayout.Button("添加", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
-                {
-                    Add();
-                }
-                GUILayout.Space(100);
-                if (GUILayout.Button("保存", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
-                {
-                    Save();
-                }
-                GUILayout.Space(100);
-                if (GUILayout.Button("构建", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
-                {
-                    Build();
-                }
-                GUILayout.Space(100);
-                if (GUILayout.Button("生成md5文件", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
-                {
-                    MakeMD5File();
-                }
-            }
-            GUILayout.EndHorizontal();
-            GUILayout.Space(20);
-            GUILayout.BeginVertical();
-            {
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Space(50);
-                    EditorGUILayout.LabelField("Congif打包是否加密");
-                    GUILayout.Space(100);
-                    _config.EncryptConfig =
-                        (AssetBundlePanelConfig.EncryptConfigBundle) EditorGUILayout.EnumPopup(_config.EncryptConfig);
-                }
-                GUILayout.EndHorizontal();
-                
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Space(50);
-                    EditorGUILayout.LabelField("Config BundleName");
-                    _config.ConfigBundleName = GUILayout.TextArea(_config.ConfigBundleName);
-                }
-                GUILayout.EndHorizontal();
-                GUILayout.Space(20);
-                GUILayout.BeginHorizontal();
-                {
-                    if (GUILayout.Button("选择BaseLua Path", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
+                    if (GUILayout.Button("添加", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
                     {
-                        _config.BaseLuaPath = SelectFolder();
+                        Add();
                     }
-                    GUILayout.Space(80);
-                    EditorGUILayout.LabelField("BaseLua Path : "+_config.BaseLuaPath);
-                }
-                GUILayout.EndHorizontal();
-               
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Space(50);
-                    EditorGUILayout.LabelField("LuaScript打包是否加密");
                     GUILayout.Space(100);
-                    _config.EncryptLuaScript =
-                        (AssetBundlePanelConfig.EncryptLuaScriptBundle) EditorGUILayout.EnumPopup(_config.EncryptLuaScript);
+                    if (GUILayout.Button("保存", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
+                    {
+                        Save();
+                    }
+                    GUILayout.Space(100);
+                    if (GUILayout.Button("构建", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
+                    {
+                        Build();
+                    }
+                    GUILayout.Space(100);
+                    if (GUILayout.Button("生成md5文件", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
+                    {
+                        MakeMD5File();
+                    }
                 }
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Space(50);
-                    EditorGUILayout.LabelField("LuaScript BundleName");
-                    _config.LuaScriptBundleName = GUILayout.TextArea(_config.LuaScriptBundleName);
+                    GUILayout.Space(100);
+                    if (GUILayout.Button("打包加密Lua/Tolua", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
+                    {
+                        BuildLuaBundles();
+                    }
+                    GUILayout.Space(200);
+                    if (GUILayout.Button("打包加密Config", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
+                    {
+                        BuildConfig();
+                    }
                 }
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
@@ -794,14 +817,12 @@ namespace GameFrame.Editor
                     _config.BaseLuaBundleName = GUILayout.TextArea(_config.BaseLuaBundleName);
                 }
                 GUILayout.EndHorizontal();
-                GUILayout.Space(20);
                 GUILayout.BeginHorizontal();
                 {
                     GUILayout.Space(50);
                     _config.IsSpriteTag = EditorGUILayout.Toggle("是否启用SpriteTag", _config.IsSpriteTag == 1) ? 1 : 0;
                 }
                 GUILayout.EndHorizontal();
-                GUILayout.Space(20);
                 GUILayout.BeginHorizontal();
                 {
                     GUILayout.Space(20);
@@ -814,45 +835,39 @@ namespace GameFrame.Editor
                     _config.IOS = EditorGUILayout.Toggle("打包IOS平台", _config.IOS == 1) ? 1 : 0;
                 }
                 GUILayout.EndHorizontal();
-                GUILayout.Space(20);
-                GUILayout.BeginVertical();
+                GUILayout.BeginHorizontal();
                 {
-                    //version
-                    GUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField("主版本号");
+                    _config.Version.master = Convert.ToInt32(GUILayout.TextArea(_config.Version.master.ToString()));
+
+                }GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                {
+                    EditorGUILayout.LabelField("次版本号");
+                    _config.Version.minor = Convert.ToInt32(GUILayout.TextArea(_config.Version.minor.ToString()));
+   
+                }GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                {
+                    EditorGUILayout.LabelField("修订版本号");
+                    _config.Version.revised = Convert.ToInt32(GUILayout.TextArea(_config.Version.revised.ToString()));
+   
+                }GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                {
+                    EditorGUILayout.LabelField("资源版本号");
+                    _config.Version.resversion = Convert.ToInt32(GUILayout.TextArea(_config.Version.resversion.ToString()));
+
+                }GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                {
+                    EditorGUILayout.LabelField("生成版本信息");
+                    if (GUILayout.Button("生成", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
                     {
-                        EditorGUILayout.LabelField("主版本号");
-                        _config.Version.master = Convert.ToInt32(GUILayout.TextArea(_config.Version.master.ToString(),20));
- 
-                    }GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    {
-                        EditorGUILayout.LabelField("次版本号");
-                        _config.Version.minor = Convert.ToInt32(GUILayout.TextArea(_config.Version.minor.ToString()));
-                   
-                    }GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    {
-                        EditorGUILayout.LabelField("修订版本号");
-                        _config.Version.revised = Convert.ToInt32(GUILayout.TextArea(_config.Version.revised.ToString()));
-                   
-                    }GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    {
-                        EditorGUILayout.LabelField("资源版本号");
-                        _config.Version.resversion = Convert.ToInt32(GUILayout.TextArea(_config.Version.resversion.ToString()));
-           
-                    }GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    {
-                        EditorGUILayout.LabelField("生成版本信息");
-                        if (GUILayout.Button("生成", GUILayout.MinHeight(30), GUILayout.MaxWidth(200)))
-                        {
-                            CreateVersionInfo();
-                        }
-                    }GUILayout.EndHorizontal();
-                }
-                //版本信息
-                GUILayout.EndVertical();
+                        CreateVersionInfo();
+                    }
+                }GUILayout.EndHorizontal();
+                GUILayout.Space(20);
                 scrollPos = GUILayout.BeginScrollView(scrollPos);
                 {
                     _list.DoLayoutList();
@@ -865,8 +880,6 @@ namespace GameFrame.Editor
                 EditorUtility.SetDirty(_config);
                 AssetDatabase.SaveAssets();
             }
-            }
-            GUILayout.EndHorizontal();
         }
     }
 }

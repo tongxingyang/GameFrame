@@ -5,16 +5,31 @@ using UnityEngine;
 namespace GameFrame
 {
 	public interface IAssetCache  {
-		string Name { get; }// 资源名称
-		Object Asset { get; }// 资源实体
-		bool PermanentMemory { get; }// 是否常驻内存
-		bool IsDisposeable { get; }// 是否可以销毁
-		float LastUseTime { get; }// 上一次使用的时间
+		/// <summary>
+		/// 资源名称
+		/// </summary>
+		string Name { get; }
+		/// <summary>
+		/// 资源
+		/// </summary>
+		Object Asset { get; }
+		/// <summary>
+		/// 常驻内存标志
+		/// </summary>
+		bool Permanent { get; set; }
+		/// <summary>
+		/// 最后一次使用的时间
+		/// </summary>
+		CachePriority Priority { get; }
+		
+		float LastUseTime { get; }
+		bool IsDisposeable { get; }
 		void SetName(string name);
-		void SetAsset(Object asset);
+		void SetAsset(Object obj);
 		void SetLastUseTime(float time);
-		void SetPermanentMemory(bool Permanent);
-		void Dispose();// 销毁
-		void ForcedDispose();// 强制销毁
+
+		void SetCachePriority(CachePriority cachePriority);
+		bool Dispose();
+		void ForceDispose();
 	}
 }

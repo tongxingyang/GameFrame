@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,29 +9,22 @@ namespace GameFrame.Editor
     public class ConfigEditor
     {
         public static bool IsEncryptBatch = true;
-        public static string SrcConfigCSVPath = Platform.ConfigCSV;
-        public static string DesConfigCSVBytesPath = Platform.ConfigCSVBytes;
-        public static  string SrcConfigXMLPath = Platform.ConfigXML;
-        public static  string DesConfigXMLBytesPath = Platform.ConfigXMLBytes;
-        private const int KeyCount = 256;
-        private static int[] sbox;
-        private const string KeyString = "GameFrame";
-        
+        public static string SrcConfigPath = ConfigConst.configDir;
+        public static string DesConfigPath = ConfigConst.tempconfigDir;
 
-        [MenuItem("ConfigTools/Encrypt(RC4) ConfigFile",false)]
+        
+//        [MenuItem("ConfigTools/Encrypt(RC4) ConfigFile",false)]
         public static void EncryptConfigFile()
         {
-            EncryptOperate(SrcConfigCSVPath,DesConfigCSVBytesPath);
-            EncryptOperate(SrcConfigXMLPath,DesConfigXMLBytesPath);
+            EncryptOperate(SrcConfigPath,DesConfigPath);
             AssetDatabase.Refresh();
         }
         
 
-        [MenuItem("ConfigTools/Decrypt(RC4) ConfigFile",false)]
+//        [MenuItem("ConfigTools/Decrypt(RC4) ConfigFile",false)]
         public static void DecryptConfigFile(string src ,string dec)
         {
-            DecryptOperate(SrcConfigCSVPath,DesConfigCSVBytesPath);
-            DecryptOperate(SrcConfigXMLPath,DesConfigXMLBytesPath);
+            DecryptOperate(SrcConfigPath,DesConfigPath);
             AssetDatabase.Refresh();
         }
 
@@ -106,11 +100,11 @@ namespace GameFrame.Editor
                     byte[] retbyte;
                     if (IsEncryptBatch)
                     {
-                        retbyte = Encrypt(srcbyte);
+                        retbyte = ConfigEncrypt.Encrypt(srcbyte);
                     }
                     else
                     {
-                        retbyte = Decrypt(srcbyte);
+                        retbyte = ConfigEncrypt.Decrypt(srcbyte);
                     }
                     string despath = des.FullName + "//" + src.Name;
                     File.WriteAllBytes(despath,retbyte);
@@ -122,47 +116,37 @@ namespace GameFrame.Editor
             }
         }
         
-        public static void  InitKey()
-        {
-            sbox = new int[KeyCount];
-            int b = 0;
-            int[] key = new int[KeyCount];
-            int n = KeyString.Length; //7
-            for (int a = 0; a < KeyCount; a++)
-            {
-                key[a] = (int)KeyString[a % n];
-                sbox[a] = a;
-            }
+      
 
-            for (int a = 0; a < KeyCount; a++)
-            {
-                b = (b + sbox[a] + key[a]) % KeyCount;
-                int tempSwap = sbox[a];
-                sbox[a] = sbox[b];
-                sbox[b] = tempSwap;
-            }
-        }
-        public static byte[] Encrypt(byte[] src)
+        public static void HandleConfigBundle()
         {
-            InitKey();
-            int i = 0, j = 0, k  = 0;
-            for (int a = 0; a < src.Length; a++)
+            string tempLuaDir = ConfigConst.tempconfigDir;
+            if (Directory.Exists(tempLuaDir))
             {
-                i = (i + 1) % KeyCount;
-                j = (j + sbox[i]) % KeyCount;
-                int tempSwap = sbox[i];
-                sbox[i] = sbox[j];
-                sbox[j] = tempSwap;
+                Directory.Delete(ConfigConst.tempconfigDir);
+            }
+            Directory.CreateDirectory(tempLuaDir);
+            string sourceDir = ConfigConst.configDir;
+            string[] files = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
+            int len = sourceDir.Length;
 
-                k = sbox[(sbox[i] + sbox[j]) % KeyCount];
-                int cipherBy = ((int)src[a]) ^ k;  
-                src[a] = Convert.ToByte(cipherBy);
+            if (sourceDir[len - 1] == '/' || sourceDir[len - 1] == '\\')
+            {
+                --len;
             }
-            return src;
-        }
-        public static byte[] Decrypt(byte[] src)
-        {
-            return Encrypt(src);
+            for (int j = 0; j < files.Length; j++)
+            {
+                if(files[j].Contains("DS_Store"))continue;
+                if(files[j].Contains("meta"))continue;
+                string str = files[j].Remove(0, len);
+                string dest = tempLuaDir + str;
+                string dir = Path.GetDirectoryName(dest);
+                Directory.CreateDirectory(dir);
+                byte[] srcbyte = File.ReadAllBytes(files[j]);
+                byte[] enbyte = ConfigEncrypt.Encrypt(srcbyte);
+                File.WriteAllBytes(dest,enbyte);
+            }
+            AssetDatabase.Refresh();
         }
     }
 }

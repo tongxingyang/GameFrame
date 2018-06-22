@@ -10,41 +10,43 @@ namespace GameFrame
                 
 #if UNITY_EDITOR|| UNITY_EDITOR_OSX||UNITY_STANDALONE_OSX
                 public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
-                public static string PERSISTENT_DATA_PATH = Application.dataPath + "/PersistentAssets";
-                public static string SrcRoot = "/mac/";
+//                public static string PERSISTENT_DATA_PATH = Application.dataPath + "/PersistentAssets";
+                public static string PERSISTENT_DATA_PATH = Application.streamingAssetsPath;
 
 #elif UNITY_IPHONE
                 public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
                 public static string PERSISTENT_DATA_PATH = Application.persistentDataPath;
-                public static string SrcRoot = "/android/";
 
 #elif UNITY_ANDROID
                 public static string STREAMING_ASSETS_PATH = Application.streamingAssetsPath;
                 public static string PERSISTENT_DATA_PATH = Application.persistentDataPath;
-                public static string SrcRoot = "/ios/";
-
 #endif
-                public static readonly string Root = "Data/";
-                public static readonly string Path = Platform.PERSISTENT_DATA_PATH + "/" + Root;
-                public static readonly string InitalPath = Platform.STREAMING_ASSETS_PATH + "/" + Root;
+                
+#if UNITY_STANDALONE_WIN
+                public static string osDir = "windows";
+#elif UNITY_STANDALONE_OSX
+                public static string osDir = "mac";    
+#elif UNITY_ANDROID
+                public static string osDir = "android";  
+#elif UNITY_IPHONE
+                public static string osDir = "ios";        
+#else
+                public static string osDir = "";        
+                #endif
+                public static readonly string Path = Platform.PERSISTENT_DATA_PATH + "/" + osDir;
+                public static readonly string InitalPath = Platform.STREAMING_ASSETS_PATH + "/" + osDir;
 
-                public static string Lua = "Assets/GameFrame/Lua";
-                public static string LuaBytes = "Assets/LuaBytes";
-                public static string ConfigCSV =  "Assets/GameFrame/Config/CSV";
-                public static string ConfigXML =  "Assets/GameFrame/Config/XML";
-                public static string ConfigCSVBytes =  "Assets/ConfigBytes/CSV";
-                public static string ConfigXMLBytes =  "Assets/ConfigBytes/XML";
-                public static string AssetBundle = "AssetBundles";
+                public static string AssetBundle = "assetbundles";
                 public static string LuaBundleKey = "LuaKey";
                 public static string ConfigBundleKey = "ConfigKey";
                 public static string AssetBundleExt = ".assetbundle";
                 public static string AssetBundleExportPath = "Assets/StreamingAssets/";
-                public static string DepFileName = "DepInfo.all";
+                public static string DepFileName = "depinfo.all";
                 
-                public static string ResVersionFileName = "Resversion.txt";
-                public static string AppVerFileName = "Appversion.txt";
-                public static string Md5FileName = "Resource_MD5.txt";
-                
+                public static string ResVersionFileName = "resversion.txt";
+                public static string AppVerFileName = "appversion.txt";
+                public static string Md5FileName = "resource_md5.txt";
+                public static string PreloadList = "preloadlist.txt";
                 
                 public static bool IsMobile
                 {
@@ -235,5 +237,60 @@ namespace GameFrame
         }
     }
     }
-   
+        public static class LuaConst
+        {
+                public static bool LuaBundleMode = true;                    //True:从bundle中加载lua, false:直接读lua文件
+                public static bool LuaByteMode = false;                       //Lua字节码模式-默认关闭 
+                public static string luaDir = Application.dataPath + "/Lua";                //lua逻辑代码目录
+                public static string toluaDir = Application.dataPath + "/ToLua/Lua";        //tolua lua文件目录
+                public static string luaTempDir = Application.dataPath + "/Temp/Lua";
+                public static string toluaTempDir = Application.dataPath + "/Temp/ToLua";
+                public static string TempDir = Application.dataPath + "/Temp";
+                #if UNITY_STANDALONE_WIN
+                public static string osDir = "windows";
+                #elif UNITY_STANDALONE_OSX
+                public static string osDir = "mac";    
+                #elif UNITY_ANDROID
+                public static string osDir = "android";  
+                #elif UNITY_IPHONE
+                public static string osDir = "ios";        
+                #else
+                public static string osDir = "";        
+                #endif
+                
+                public static string luaResDir = string.Format("{0}/{1}/lua", Platform.PERSISTENT_DATA_PATH, osDir);      //手机运行时lua文件下载目录    
+                
+                #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN    
+                public static string zbsDir = "D:/ZeroBraneStudio/lualibs/mobdebug";        //ZeroBraneStudio目录       
+                #elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+                public static string zbsDir = "/Applications/ZeroBraneStudio.app/Contents/ZeroBraneStudio/lualibs/mobdebug";
+                #else
+                public static string zbsDir = luaResDir + "/mobdebug/";
+                #endif    
+                
+                public static bool openLuaSocket = true;            //是否打开Lua Socket库
+                public static bool openLuaDebugger = false;         //是否连接lua调试器
+                
+        }
+        public static class ConfigConst
+        {
+                public static string configDir = Application.dataPath + "/Config";                
+                public static string tempconfigDir = Application.dataPath + "/TempConfig";        
+                #if UNITY_STANDALONE_WIN
+                public static string osDir = "windows";
+                #elif UNITY_STANDALONE_OSX
+                public static string osDir = "mac";    
+                #elif UNITY_ANDROID
+                public static string osDir = "android";  
+                #elif UNITY_IPHONE
+                public static string osDir = "ios";        
+                #else
+                public static string osDir = "";        
+                #endif
+                
+                public static string configResDir = string.Format("{0}/{1}/config", Platform.PERSISTENT_DATA_PATH, osDir);     
+                
+             
+                
+        }
 }

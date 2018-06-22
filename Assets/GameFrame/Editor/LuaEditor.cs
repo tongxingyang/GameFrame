@@ -11,7 +11,8 @@ namespace GameFrame.Editor
         [MenuItem("LuaTools/Encode LuaFile with UTF-8",false)]
         public static void EncodeLuaFile()
         {
-            string path = Platform.Lua;
+            return;
+            string path = LuaConst.luaDir;//lua文件夹
             string[] files = Directory.GetFiles(path, "*.lua", SearchOption.AllDirectories);
             foreach (string f in files)
             {
@@ -25,11 +26,9 @@ namespace GameFrame.Editor
         }
 
         public static bool IsEncryptBatch = true;
-        public static string SrcLuaPath = Platform.Lua;
-        public static  string DesLuaPath = Platform.LuaBytes;
-        private const int KeyCount = 256;
-        private static int[] sbox;
-        private const string KeyString = "GameFrame";
+        public static string SrcLuaPath = LuaConst.luaDir;
+        public static  string DesLuaPath = LuaConst.luaTempDir;
+
         
 
         [MenuItem("LuaTools/Encrypt(RC4) LuaFile",false)]
@@ -118,11 +117,11 @@ namespace GameFrame.Editor
                     byte[] retbyte;
                     if (IsEncryptBatch)
                     {
-                        retbyte = Encrypt(srcbyte);
+                        retbyte = LuaEncrype.Encrypt(srcbyte);
                     }
                     else
                     {
-                        retbyte = Decrypt(srcbyte);
+                        retbyte = LuaEncrype.Decrypt(srcbyte);
                     }
                     string despath = des.FullName + "//" + src.Name;
                     File.WriteAllBytes(despath,retbyte);
@@ -134,47 +133,57 @@ namespace GameFrame.Editor
             }
         }
         
-        public static void  InitKey()
-        {
-            sbox = new int[KeyCount];
-            int b = 0;
-            int[] key = new int[KeyCount];
-            int n = KeyString.Length; //7
-            for (int a = 0; a < KeyCount; a++)
-            {
-                key[a] = (int)KeyString[a % n];
-                sbox[a] = a;
-            }
 
-            for (int a = 0; a < KeyCount; a++)
-            {
-                b = (b + sbox[a] + key[a]) % KeyCount;
-                int tempSwap = sbox[a];
-                sbox[a] = sbox[b];
-                sbox[b] = tempSwap;
-            }
-        }
-        public static byte[] Encrypt(byte[] src)
+        
+        [MenuItem("LuaTools/Encode and Encrypt Lua(.bytes)",false)]
+        public static void HandleLuaBundle()
         {
-            InitKey();
-            int i = 0, j = 0, k  = 0;
-            for (int a = 0; a < src.Length; a++)
+            EncodeLuaFile();
+            string tempLuaDir = LuaConst.luaTempDir;
+            if (Directory.Exists(tempLuaDir))
             {
-                i = (i + 1) % KeyCount;
-                j = (j + sbox[i]) % KeyCount;
-                int tempSwap = sbox[i];
-                sbox[i] = sbox[j];
-                sbox[j] = tempSwap;
+                Directory.Delete(LuaConst.luaTempDir);
+            }
+            Directory.CreateDirectory(tempLuaDir);
+            string sourceDir = LuaConst.luaDir;
+            string[] files = Directory.GetFiles(sourceDir, "*.lua", SearchOption.AllDirectories);
+            int len = sourceDir.Length;
 
-                k = sbox[(sbox[i] + sbox[j]) % KeyCount];
-                int cipherBy = ((int)src[a]) ^ k;  
-                src[a] = Convert.ToByte(cipherBy);
+            if (sourceDir[len - 1] == '/' || sourceDir[len - 1] == '\\')
+            {
+                --len;
             }
-            return src;
-        }
-        public static byte[] Decrypt(byte[] src)
-        {
-            return Encrypt(src);
+            for (int j = 0; j < files.Length; j++)
+            {
+                string str = files[j].Remove(0, len);
+                string dest = tempLuaDir + str + ".bytes";
+                string dir = Path.GetDirectoryName(dest);
+                Directory.CreateDirectory(dir);
+                byte[] srcbyte = File.ReadAllBytes(files[j]);
+                byte[] enbyte = LuaEncrype.Encrypt(srcbyte);
+                File.WriteAllBytes(dest,enbyte);
+            }
+            tempLuaDir = LuaConst.toluaTempDir;
+            if (!Directory.Exists(tempLuaDir))
+                Directory.CreateDirectory(tempLuaDir);
+            sourceDir = LuaConst.toluaDir;
+            files = Directory.GetFiles(sourceDir, "*.lua", SearchOption.AllDirectories);
+            len = sourceDir.Length;
+
+            if (sourceDir[len - 1] == '/' || sourceDir[len - 1] == '\\')
+            {
+                --len;
+            }
+            for (int j = 0; j < files.Length; j++)
+            {
+                string str = files[j].Remove(0, len);
+                string dest = tempLuaDir + str + ".bytes";
+                string dir = Path.GetDirectoryName(dest);
+                Directory.CreateDirectory(dir);
+                byte[] srcbyte = File.ReadAllBytes(files[j]);
+                File.WriteAllBytes(dest,srcbyte);
+            }
+            AssetDatabase.Refresh();
         }
     }
 }
