@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Text.RegularExpressions;
+using GameFrame.ConfigManager;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
@@ -121,6 +122,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         IsUpdateDone = isok;
         //启动lua虚拟机 开始执行lua函数
         SingletonMono<LuaManager>.GetInstance().InitStart();
+        Singleton<ConfigManager>.GetInstance().InitConfig();
         StartCoroutine(ChangeScence());
     }
 
@@ -166,6 +168,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     void InitBaseSys()
     {
         SingletonMono<LuaManager>.GetInstance();
+        Singleton<ConfigManager>.GetInstance();
         Singleton<LauncherString>.GetInstance();
         Singleton<TimeManager>.GetInstance();
         Singleton<EventManager>.GetInstance();

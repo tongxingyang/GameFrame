@@ -272,6 +272,7 @@ namespace GameFrame
         }
         public static class ConfigConst
         {
+                public static bool ConfigBundleMode = true;                  
                 public static string configDir = Application.dataPath + "/Config";                
                 public static string tempconfigDir = Application.dataPath + "/TempConfig";        
                 #if UNITY_STANDALONE_WIN

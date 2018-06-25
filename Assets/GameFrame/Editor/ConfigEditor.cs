@@ -142,7 +142,7 @@ namespace GameFrame.Editor
                 string dest = tempLuaDir + str;
                 string dir = Path.GetDirectoryName(dest);
                 Directory.CreateDirectory(dir);
-                byte[] srcbyte = File.ReadAllBytes(files[j]);
+                byte[] srcbyte = System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(files[j]));
                 byte[] enbyte = ConfigEncrypt.Encrypt(srcbyte);
                 File.WriteAllBytes(dest,enbyte);
             }
