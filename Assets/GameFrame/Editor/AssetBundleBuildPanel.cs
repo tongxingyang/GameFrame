@@ -94,8 +94,20 @@ namespace GameFrame.Editor
         static void Open()
         {
             panel = GetWindow<AssetBundleBuildPanel>(true,"AssetBundlePanel");
-            panel.minSize = new Vector2(800,600);
+            panel.minSize = new Vector2(1000,600);
             panel.Show();
+        } 
+        [MenuItem("AssetBundle/Clear Temp File")]
+        static void ClearTempFile()
+        {
+            if (Directory.Exists(LuaConst.luaTempDir))
+            {
+                Directory.Delete(LuaConst.luaTempDir);
+            }
+            if (Directory.Exists(ConfigConst.tempconfigDir))
+            {
+                Directory.Delete(ConfigConst.tempconfigDir);
+            }
         } 
         [MenuItem("AssetBundle/SetAssetBundleName")]
         public static void SetAssetBundleName()
@@ -845,22 +857,10 @@ namespace GameFrame.Editor
                 {
                     EditorGUILayout.LabelField("主版本号");
                     _config.Version.master = Convert.ToInt32(GUILayout.TextArea(_config.Version.master.ToString()));
-
-                }GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal();
-                {
                     EditorGUILayout.LabelField("次版本号");
                     _config.Version.minor = Convert.ToInt32(GUILayout.TextArea(_config.Version.minor.ToString()));
-   
-                }GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal();
-                {
                     EditorGUILayout.LabelField("修订版本号");
                     _config.Version.revised = Convert.ToInt32(GUILayout.TextArea(_config.Version.revised.ToString()));
-   
-                }GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal();
-                {
                     EditorGUILayout.LabelField("资源版本号");
                     _config.Version.resversion = Convert.ToInt32(GUILayout.TextArea(_config.Version.resversion.ToString()));
 
