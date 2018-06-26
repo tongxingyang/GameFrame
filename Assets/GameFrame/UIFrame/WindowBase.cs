@@ -134,9 +134,14 @@ namespace UIFrameWork
         }
         void OnDestroy()
         {
+            foreach (UIComponent uiComponent in m_components)
+            {
+                uiComponent.OnDestory();
+            }
             this.m_components = null;
             OnWindowDestory();
         }
+        //
         protected virtual void OnWindowAwake(){}
         protected virtual void OnWindowStart(){}
         protected virtual void OnWindowCustomUpdate(){}
@@ -198,7 +203,7 @@ namespace UIFrameWork
             {
                 return;
             }
-            if (IsHided() == true)
+            if (IsHided())
             {
                 return;
             }
@@ -226,7 +231,10 @@ namespace UIFrameWork
             {
                 return;
             }
-            this.gameObject.SetActive(false);
+            if (IsClosed())
+            {
+                return;
+            }
             this.m_isHided = true;
             this.m_isClosed = true;
             this.m_isActivied = false;
@@ -234,6 +242,7 @@ namespace UIFrameWork
             CloseComponent();
             PlayCloseMusic();
             OnClose(context);
+            this.gameObject.SetActive(false);
             Singleton<WindowManager>.GetInstance().RecycleWindow(this);
             DestroyImmediate(CacheGameObject);
         }
@@ -322,6 +331,16 @@ namespace UIFrameWork
             {
                 this.m_canvasScaler.matchWidthOrHeight = 0;
             }
+            
+            if (this.m_canvasScaler != null)
+            {
+                this.m_canvasScaler.enabled = false;
+                this.m_canvasScaler.enabled = true;
+            }
+            if (this.m_graphicRaycaster)
+            {
+                this.m_graphicRaycaster.enabled = this.m_enableInput;
+            }
         }
 
         public void SetCanvasMode(Camera camera)
@@ -342,16 +361,6 @@ namespace UIFrameWork
                     this.m_canvas.renderMode = RenderMode.ScreenSpaceCamera;
                 }
                 this.m_canvas.pixelPerfect = true;
-            }
-            //刷新缩放显示
-            if (this.m_canvasScaler != null)
-            {
-                this.m_canvasScaler.enabled = false;
-                this.m_canvasScaler.enabled = true;
-            }
-            if (this.m_graphicRaycaster)
-            {
-                this.m_graphicRaycaster.enabled = this.m_enableInput;
             }
         }
         #region 获取相关属性

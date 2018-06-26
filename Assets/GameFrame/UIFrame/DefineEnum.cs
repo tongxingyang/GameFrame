@@ -61,11 +61,6 @@ namespace UIFrameWork
         HideByCustom = 1,
         HideByOtherForm
     }
-    public enum enWindowEventType
-    {
-        Open,
-        Close
-    }
 
     public enum enLayer2Int
     {

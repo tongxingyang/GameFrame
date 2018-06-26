@@ -41,7 +41,7 @@ namespace GameFrame
                 }
                 else
                 {
-                    //					m_eventMap.Remove(eventType);
+                    m_eventMap.Remove(eventType);
                     result = false;
                 }
             }
