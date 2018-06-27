@@ -46,6 +46,7 @@ namespace GameFrame
                 public static string Md5FileName = "resource_md5.txt";
                 public static string PreloadList = "preloadlist.txt";
                 
+                
                 public static bool IsMobile
                 {
                         get
@@ -288,6 +289,26 @@ namespace GameFrame
                 #endif
                 
                 public static string configResDir = string.Format("{0}/{1}/config", Platform.PERSISTENT_DATA_PATH, osDir);     
+                
+             
+                
+        }
+        public static class SoundConst
+        {
+                public static string soundDir = Application.dataPath + "/Sound";                
+#if UNITY_STANDALONE_WIN
+                public static string osDir = "windows";
+                #elif UNITY_STANDALONE_OSX
+                public static string osDir = "mac";    
+                #elif UNITY_ANDROID
+                public static string osDir = "android";  
+                #elif UNITY_IPHONE
+                public static string osDir = "ios";        
+#else
+                public static string osDir = "";        
+                #endif
+                
+                public static string soundResDir = string.Format("{0}/{1}/sound", Platform.PERSISTENT_DATA_PATH, osDir);     
                 
              
                 

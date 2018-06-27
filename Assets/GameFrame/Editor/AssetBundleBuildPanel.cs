@@ -294,6 +294,72 @@ namespace GameFrame.Editor
             }
             
         }
+        [MenuItem("AssetBundle/Build Sound Bundle")]
+        public static void BuildSound()
+        {
+            AssetBundlePanelConfig config =  LoadAssetAtPath<AssetBundlePanelConfig>(savePath);
+            if (config == null)
+            {
+                return;
+            }
+            var outPath = string.Empty;
+            BuildTarget target = BuildTarget.Android;
+            if (config.Windows==1)
+            {
+                outPath = Platform.AssetBundleExportPath+"windows/sound";
+                target = BuildTarget.StandaloneWindows64;
+                BuildSoundBundle(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+            if (config.Mac == 1)
+            {
+                outPath = Platform.AssetBundleExportPath+"mac/sound";
+                target = BuildTarget.StandaloneOSXIntel64;
+                BuildSoundBundle(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+            if (config.Android == 1)
+            {
+                outPath = Platform.AssetBundleExportPath+"android/sound";
+                target = BuildTarget.Android;
+                BuildSoundBundle(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+            if (config.IOS == 1)
+            {
+                outPath = Platform.AssetBundleExportPath+"ios/sound";
+                target = BuildTarget.iOS;
+                BuildSoundBundle(config,outPath,target);
+                AssetDatabase.Refresh();
+            }
+        }
+        public static void BuildSoundBundle(AssetBundlePanelConfig config, string outpath, BuildTarget target)
+        {
+            if (!Directory.Exists(SoundConst.soundDir))
+            {
+                UnityEngine.Debug.Log("目录不存在"+SoundConst.soundDir);
+                return;
+            }
+            List<AssetBundleBuild> m_assetList = new List<AssetBundleBuild>();
+            string[] dirs = Directory.GetDirectories(SoundConst.soundDir, "*", SearchOption.AllDirectories);
+            for (int i = 0; i < dirs.Length; i++)
+            {
+                string name = dirs[i].Replace(SoundConst.soundDir, string.Empty);
+                name = name.Replace('\\', '_').Replace('/', '_');
+                name = "sound" + name.ToLower() + Platform.AssetBundleExt;
+
+                string path = "Assets" + dirs[i].Replace(Application.dataPath, "");
+                AddBuildMap(ref m_assetList, name, "*", path);
+            }
+            AddBuildMap(ref m_assetList, "sound" + Platform.AssetBundleExt, "*", "Assets/Sound");
+            BuildAssetBundleOptions opt = BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.UncompressedAssetBundle;
+            if (!Directory.Exists(outpath))
+            {
+                Directory.CreateDirectory(outpath);
+            }
+            BuildPipeline.BuildAssetBundles(outpath, m_assetList.ToArray(), opt, target);
+
+        }
         
         [MenuItem("AssetBundle/Build Config Bundle")]
         public static void BuildConfig()
@@ -337,7 +403,7 @@ namespace GameFrame.Editor
             }
 
         }
-
+        
         public static void BuildConfigBundle(AssetBundlePanelConfig config, string outpath, BuildTarget target)
         {
             if (!Directory.Exists(ConfigConst.tempconfigDir))
@@ -356,7 +422,6 @@ namespace GameFrame.Editor
                 string path = "Assets" + dirs[i].Replace(Application.dataPath, "");
                 AddBuildMap(ref m_assetList, name, "*", path);
             }
-            // 对临时目录根部的lua打一个包
             AddBuildMap(ref m_assetList, "config" + Platform.AssetBundleExt, "*", "Assets/TempConfig");
             BuildAssetBundleOptions opt = BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.UncompressedAssetBundle;
             if (!Directory.Exists(outpath))
