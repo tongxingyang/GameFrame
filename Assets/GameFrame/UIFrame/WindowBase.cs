@@ -195,7 +195,7 @@ namespace UIFrameWork
             OnAppear(sequence, openOrder,context);
         }
         /// <summary>
-        /// 
+        /// 使用缓存处理调用此方法
         /// </summary>
         public void Hide( bool force,WindowContext context)
         {
@@ -218,12 +218,13 @@ namespace UIFrameWork
                 this.m_canvas.enabled = false;
             }
             this.TryEnableInput(false);
+            
             Singleton<WindowManager>.GetInstance().RecycleWindow(this);
             this.gameObject.SetActive(false);
             OnHide(context);
         }
         /// <summary>
-        /// 
+        /// 不使用缓存处理调用此方法
         /// </summary>
         public void Close(bool force ,WindowContext context)
         {

@@ -12,6 +12,7 @@ namespace UIFrameWork
         public string m_resPath = string.Empty;
         public List<Renderer> m_renderList = new List<Renderer>();
         public int index = 0;//相对于界面的排序值
+        public GameObject PartObj = null;
         public override void Init(WindowBase windowBase)
         {
             if (this.m_isInitialized)
@@ -29,10 +30,12 @@ namespace UIFrameWork
                     ins.transform.localPosition = Vector3.zero;
                     ins.transform.localRotation = Quaternion.identity;
                     ins.transform.localScale = Vector3.one;
+                    PartObj = ins;
                 }
             }
             //获取特效的所有render组件
             InitRender(gameObject);
+            SetParticlelLayer(gameObject,UIParticleLayer);
             this.m_belongedWindowBase = windowBase;
             if (this.m_belongedWindowBase != null)
             {
@@ -116,10 +119,12 @@ namespace UIFrameWork
                     ins.transform.localPosition = Vector3.zero;
                     ins.transform.localRotation = Quaternion.identity;
                     ins.transform.localScale = Vector3.one;
+                    PartObj = ins;
                 }
             }
             //获取特效的所有render组件
             InitRender(gameObject);
+            SetParticlelLayer(gameObject,UIParticleLayer);
             if (this.m_belongedWindowBase != null)
             {
                 this.SetSortingOrder(this.m_belongedWindowBase.GetSortingOrder()+index);
@@ -143,6 +148,14 @@ namespace UIFrameWork
                     go.SetParent(null);
                     DestroyImmediate(go.gameObject);
                 }
+            }
+        }
+        public void SetParticlelLayer(GameObject go,int layer)
+        {
+            go.layer = layer;
+            for (int i = 0; i < go.transform.childCount; i++)
+            {
+                this.SetParticlelLayer(go.transform.GetChild(i).gameObject, layer);
             }
         }
     }

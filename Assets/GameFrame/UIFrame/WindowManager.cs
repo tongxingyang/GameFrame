@@ -71,13 +71,12 @@ namespace UIFrameWork
             camera.orthographicSize = 50;
             camera.clearFlags = CameraClearFlags.Depth;
             camera.depth = 10;
-            camera.cullingMask = 32;// todo
             this.m_UICamera = camera;
         }
 
         public void UpdateSortingOrder()
         {
-            this.m_windows.Sort();//m_sortingOrder从小到大 
+            this.m_windows.Sort();
             foreach (WindowBase t in this.m_windows)
             {
                 int openorder = this.GetWindowOpenOrder(t.GetSequence());
@@ -160,7 +159,7 @@ namespace UIFrameWork
             }
         }
 
-        public void CloseAllWindow(bool closeImmediated = true,bool clearPool = true,bool isforce = false)
+        public void CloseAllWindow(bool clearPool = true,bool isforce = false)
         {
             int k = 0;
             while (k<this.m_windows.Count)
@@ -306,6 +305,7 @@ namespace UIFrameWork
             }
             else
             {
+                Debug.LogError("error 不应该出现不存在的序列号 请检查调试问题");
                 return 0;
             }
         }
@@ -419,7 +419,7 @@ namespace UIFrameWork
                         button.onClick.AddListener(windowBase.ColliderCallBack);
                         break;
                     case enWindowColliderMode.Transparent:
-                        go = new GameObject("ransparencyCollider", typeof(RectTransform), typeof(Image), typeof(Button));
+                        go = new GameObject("ansparencyCollider", typeof(RectTransform), typeof(Image), typeof(Button));
                         image = go.GetComponent<Image>();
                         image.color = new Color(0, 0, 0, 0);
                         image.raycastTarget = true;
