@@ -105,6 +105,10 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224492154653360468}
+  - component: {fileID: 114894030694768660}
+  - component: {fileID: 223097195955851832}
+  - component: {fileID: 114869393851741094}
+  - component: {fileID: 114313041317867970}
   m_Layer: 5
   m_Name: LoginAndRegister
   m_TagString: Untagged
@@ -1047,6 +1051,22 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: "\u8BF7\u8F93\u5165\u5BC6\u7801"
+--- !u!114 &114313041317867970
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1153341003430646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1301386320, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!114 &114384063066708812
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1668,6 +1688,27 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: "\u8D26\u53F7\u767B\u9646"
+--- !u!114 &114869393851741094
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1153341003430646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1980459831, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_UiScaleMode: 0
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 800, y: 600}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
 --- !u!114 &114891366608265722
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1728,6 +1769,34 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &114894030694768660
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1153341003430646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15f4a14d9f51a8244b880a142a326892, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WindowInfo:
+    Type: 0
+    PerfabPath: 
+    Name: 
+    ColliderMode: 0
+    IsSinglen: 0
+    Priority: 0
+    Group: 0
+    FullScreenBG: 1
+    DisableInput: 0
+    HideUnderForms: 0
+    AlwaysKeepVisible: 0
+  m_referenceResolution: {x: 1024, y: 768}
+  m_isUsePool: 0
+  m_isModel: 0
+  m_canvasScaler: {fileID: 0}
+  m_enableInput: 1
 --- !u!114 &114919007509826170
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2290,6 +2359,26 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1090491139350614}
+--- !u!223 &223097195955851832
+Canvas:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1153341003430646}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!224 &224000893806921642
 RectTransform:
   m_ObjectHideFlags: 1

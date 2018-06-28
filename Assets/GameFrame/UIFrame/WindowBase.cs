@@ -312,7 +312,9 @@ namespace UIFrameWork
             {
                 return;
             }
+            this.m_canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             this.m_canvasScaler.referenceResolution= this.m_referenceResolution;
+            this.m_canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             if ((float)Screen.width / this.m_canvasScaler.referenceResolution.x > (float)Screen.height / this.m_canvasScaler.referenceResolution.y)
             {
                 if (this.WindowInfo.FullScreenBG)

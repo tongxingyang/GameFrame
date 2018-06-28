@@ -51,7 +51,6 @@ public class PhotonManager :Singleton<PhotonManager>,IPhotonPeerListener
     public override void Init()
     {
         base.Init();
-        //初始化 链接服务器
         peer = new PhotonPeer(this, protocol);
         peer.Connect(serverAddress, applicationName);
 

@@ -295,6 +295,7 @@ namespace GameFrame
         }
         public static class SoundConst
         {
+                public static bool SoundBundleMode = true;      
                 public static string soundDir = Application.dataPath + "/Sound";                
 #if UNITY_STANDALONE_WIN
                 public static string osDir = "windows";

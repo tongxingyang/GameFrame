@@ -109,8 +109,8 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     void Start()
     {
         #if UNITY_ANDROID || UNITY_IPHONE
-        PlayLogoVider("logo.mp4",false);
-        Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
+//        PlayLogoVider("logo.mp4",false);
+//        Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
         #endif
         #if UNITY_EDITOR_OSX || UNITY_EDITOR_WIN
         UpdateCallback(true);
@@ -131,7 +131,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     {
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("Login", LoadSceneMode.Single);
         yield return asyncOperation;
-        Singleton<WindowManager>.GetInstance();
+        Singleton<WindowManager>.GetInstance().Init();
         Singleton<WindowManager>.Instance.OpenWindow("LoginAndRegister",true);
     }
     void PlayLogoVider(string filename,bool cancancel)
@@ -168,6 +168,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     void InitBaseSys()
     {
         SingletonMono<LuaManager>.GetInstance();
+        SingletonMono<AudioManager>.GetInstance();
         Singleton<ConfigManager>.GetInstance();
         Singleton<LauncherString>.GetInstance();
         Singleton<TimeManager>.GetInstance();
