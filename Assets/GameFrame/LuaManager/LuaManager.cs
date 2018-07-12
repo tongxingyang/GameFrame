@@ -87,7 +87,8 @@ namespace GameFrame
         {
             lua.LuaGC(LuaGCOptions.LUA_GCCOLLECT);
         }
-    
+        
+
         public void Close()
         {
             loop.Destroy();
@@ -109,7 +110,7 @@ namespace GameFrame
     
         void StartMain()
         {
-            lua.DoFile("Test/Main.lua",true);
+            lua.DoFile("Test/Main.lua",false);
             LuaFunction main = lua.GetFunction("Main");
             main.Call();
             main.Dispose();

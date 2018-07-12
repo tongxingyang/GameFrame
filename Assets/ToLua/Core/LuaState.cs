@@ -205,7 +205,7 @@ namespace LuaInterface
 
         void OpenBaseLuaLibs()
         {
-            DoFile("tolua_tolua.lua");            //tolua table名字已经存在了,不能用require
+            DoFile("tolua.tolua.lua");            //tolua table名字已经存在了,不能用require
             LuaUnityLibs.OpenLuaLibs(L);
         }
 
@@ -614,9 +614,9 @@ namespace LuaInterface
         public void DoFile(string fileName)
         {
             byte[] buffer = LoadFileBuffer(fileName);
-            if (fileName.StartsWith("tolua_"))
+            if (fileName.StartsWith("tolua"))
             {
-                fileName = fileName.Replace("tolua_", "");
+                fileName = fileName.Substring(6);
             }
             fileName = LuaChunkName(fileName);
             LuaLoadBuffer(buffer, fileName);

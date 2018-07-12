@@ -158,9 +158,9 @@ namespace LuaInterface
         {
             if (!beZip)
             {
-                if (fileName.StartsWith("tolua_"))
+                if (fileName.StartsWith("tolua"))
                 {
-                    fileName = fileName.Replace("tolua_", "");
+                    fileName = fileName.Substring(6);
                 }
                 string path = FindFile(fileName);
                 byte[] str = null;
@@ -168,6 +168,7 @@ namespace LuaInterface
                 if (!string.IsNullOrEmpty(path) && File.Exists(path))
                 {
 #if !UNITY_WEBPLAYER
+                    string cont = File.ReadAllText(path);
                     str = File.ReadAllBytes(path);
 #else
                     throw new LuaException("can't run in web platform, please switch to other platform");
@@ -228,16 +229,16 @@ namespace LuaInterface
 
         // tolua_ 代表加载tolua的脚本文件
         byte[] ReadZipFile(string fileName)
-        {
+        {  
             AssetBundle zipFile = null;
             byte[] buffer = null;
             string zipName = null;
 
             using (CString.Block())
             {
-                if (fileName.StartsWith("tolua_"))
+                if (fileName.StartsWith("tolua"))
                 {
-                    fileName = fileName.Replace("tolua_", "");
+                    fileName = fileName.Substring(6);
                     int pos = fileName.LastIndexOf('/');
                     if (pos > 0)
                     {
