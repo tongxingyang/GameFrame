@@ -197,8 +197,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     private void OnDestroy()
     {
-        Singleton<PhotonManager>.GetInstance().OnDestory();
-        SingletonMono<LuaManager>.GetInstance().Close();
+        
     }
     private void OnApplicationPause(bool pauseStatus)
     {
@@ -212,6 +211,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     private void OnApplicationQuit()
     {
-
+        SingletonMono<LuaManager>.GetInstance().Close();
+        Singleton<PhotonManager>.GetInstance().OnDestory();
     }
 }
