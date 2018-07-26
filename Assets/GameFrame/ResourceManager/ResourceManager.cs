@@ -3,98 +3,51 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using GameFrame;
 using Object = UnityEngine.Object;
 
-public class ManagedResource : MonoBehaviour
+namespace GameFrame
 {
-    public string bundlename;
-    public void OnDestroy()
-    {
-        Singleton<ResourceManager>.GetInstance().DelRefCount(bundlename);
-    }
-}
-
-    public delegate IEnumerator ResourceLoader();
-
-    enum ResourceLoadType
-    {
-	    LoadBundleFromWWW = 1 << 1,     // 利用WWW 异步加载 AssetBundle
-	    LoadBundleFromFile= 1 << 2,     // 利用AssetBundle.LoadFromFile加载
-	    LoadBundleFromFileAsync = 1<< 3,// 利用AssetBundle.LoadFromFile异步加载
-	    LoadFromMemory = 1<< 4,         // 利用LoadFromMemory加载
-	    LoadFromMemoryAsync = 1<< 5,    // 利用LoadFromMemoryAsync异步加载
-	    LoadFromStream = 1<< 6,         // 利用LoadFromStream加载
-	    LoadFromStreamAsync = 1<<7 ,    // 利用LoadFromStreamAsync异步加载
-	    ReturnAssetBundle = 1 << 8,    // 返回scene AssetBundle
-    }
-
-    class ResourceLoadTask
-    {
-        public uint Id;
-        public List<uint> ParentTaskIds;
-        public int LoadType;
-        public string Path;
-        public Action<Object> Actions;
-        public List<string> Dependencies;
-        public int LoadedDependenciesCount = 0;
-        public void Reset()
-        {
-            Id = 0;
-            ParentTaskIds = null;
-            Path = string.Empty;
-            Actions = null;
-            Dependencies = null;
-            LoadedDependenciesCount = 0;
-        }
-    }
-
-    class AssetLoadTask
-    {
-        public ResourceLoadTask task;
-        public AssetBundle ab;
-    }
-
-    class CachedResource
-    {
-        public Object Obj;
-        public float LastUseTime;
-    }
-
     public class ResourceManager : Singleton<ResourceManager>
-{
-        private readonly Dictionary<string, Object> _persistantBundles = new Dictionary<string, Object>();
-        private readonly Dictionary<string, CachedResource> _generalCachedBundles = new Dictionary<string, CachedResource>();  //一般Cache策略
-
+    {
+        private static Dictionary<string, List<string>> m_Dependencies = new Dictionary<string, List<string>>();
+        private List<string> m_preLoadList = new List<string>();
         private readonly Dictionary<string, ResourceLoadTask> _loadingFiles = new Dictionary<string, ResourceLoadTask>();
         private readonly Dictionary<uint, ResourceLoadTask> _loadingTasks = new Dictionary<uint, ResourceLoadTask>();
         private readonly ObjectPool<ResourceLoadTask> _resourceLoadTaskPool = new ObjectPool<ResourceLoadTask>(50);
         private readonly Queue<ResourceLoadTask> _delayLoadTasks = new Queue<ResourceLoadTask>();
         private readonly ObjectPool<AssetLoadTask> _assetLoadTaskPool = new ObjectPool<AssetLoadTask>(m_DefaultMaxTaskCount);
         private readonly Queue<AssetLoadTask> _delayAssetLoadTasks = new Queue<AssetLoadTask>();
+        /// <summary>
+        /// 清理内存变量
+        /// </summary>
         private bool _canStartCleanupMemory = true;
         private float _cleanupMemoryLastTime;
-        private float _cleanupCachedBundleLastTime;
+        private const float CleanUpMemoryDelayTime = 120;
+        /// <summary>
+        /// 清理AssetBundle变量
+        /// </summary>
         private float _cleanupDependenciesLastTime;
-
-
+        private const float CleanupDependenciesDelayTime = 120;
+        /// <summary>
+        /// 清理Asset变量
+        /// </summary>
+        private float _cleanupAssetCachedLastTime;
+        private const float CleanupAssetCachedDelatTime = 120;
+        //资源依赖加载的文件 预加载文件
         private  string m_dependencyPath = Platform.DepFileName;
         private  string m_preLoadListPath = Platform.PreloadList;
-	
-        private static Dictionary<string, List<string>> m_Dependencies = new Dictionary<string, List<string>>();
-        private List<string> m_preLoadList = new List<string>();
-
-        private Dictionary<string, AssetBundle> m_DependenciesObj = new Dictionary<string, AssetBundle>();
-        Dictionary<string, int> RefCount = new Dictionary<string, int>();
-        Dictionary<string, float> RefDelTime = new Dictionary<string, float>();
-
+	     //当前加载任务数量
         private int m_currentTaskCount = 0;
-        private const int m_DefaultMaxTaskCount = 10;
+        //默认最大的加载任务数量
+        private const int m_DefaultMaxTaskCount = 20;
+        //当前预加载的文件个数
         private int m_currentPreLoadCount = 0;
+        
+        public int MaxTaskCount { get; set; }
+        public bool IsPreLoadDone { get { return m_currentPreLoadCount >= m_preLoadList.Count; } }
+        private static uint _nextTaskId;
 
-        public static readonly ResourceManager Instance = new ResourceManager();
-
-        public void Init()
+        public override void Init()
         {
             m_currentTaskCount = 0;
             MaxTaskCount = m_DefaultMaxTaskCount;
@@ -102,16 +55,35 @@ public class ManagedResource : MonoBehaviour
             LoadPreLoadList(m_preLoadListPath);
             PreLoadResource();
         }
-
+        /// <summary>
+        /// 以常驻内存方式预加载
+        /// </summary>
+        private void PreLoadResource()
+        {
+            foreach (string path in m_preLoadList)
+            {
+                 AddTask(path, PreLoadEventHandler, (int)(AssetBundleLoadType.LoadBundleFromFile),(int)(CachePriority.Persistent));
+            }
+        }
+        /// <summary>
+        /// 预加载资源的回调处理函数
+        /// </summary>
+        /// <param name="obj"></param>
+        private void PreLoadEventHandler(UnityEngine.Object obj)
+        {
+            m_currentPreLoadCount++;
+        }
+        /// <summary>
+        /// 加载依赖关系 保存到字典數組中
+        /// </summary>
+        /// <param name="path"></param>
         private void LoadDependencyConfig(string path)
         {
-#if UNITY_STANDALONE_OSX
-				string filepath = Application.streamingAssetsPath+"/Data/"+path;
-#else
-            string filepath = "";
-#endif
+            m_Dependencies.Clear();
+            string filepath = Platform.Path + path;
             if (!FileManager.IsFileExist(filepath))
             {
+                UnityEngine.Debug.LogError("AssetBundle依赖Depinfo资源不存在  " + filepath);
                 return;
             }
             using (FileStream fs = new FileStream(filepath, FileMode.Open, FileAccess.Read))
@@ -125,20 +97,38 @@ public class ManagedResource : MonoBehaviour
                     {
                         rename = br.ReadString();
                         int count = br.ReadInt32();
-                        if (!m_Dependencies.ContainsKey(rename))
+                        if (count !=0 && !m_Dependencies.ContainsKey(rename))
                         {
                             m_Dependencies[rename] = new List<string>();
-                        }
-                        for (int j = 0; j < count; j++)
-                        {
-                            depname = br.ReadString();
-                            m_Dependencies[rename].Add(depname);
+                            for (int j = 0; j < count; j++)
+                            {
+                                depname = br.ReadString();
+                                m_Dependencies[rename].Add(depname);
+                            }
                         }
                     }
                 }
             }
         }
-
+        /// <summary>
+        /// 加载预加载文件列表
+        /// </summary>
+        /// <param name="path"></param>
+        private void LoadPreLoadList(string path)
+        {
+            m_preLoadList.Clear();
+            string dataPath = Platform.Path + path;
+            if (!FileManager.IsFileExist(dataPath))
+            {
+                UnityEngine.Debug.LogError("预加载的资源不存在  " + dataPath);
+                return;
+            }
+            foreach (string readAllLine in File.ReadAllLines(dataPath))
+            {
+                m_preLoadList.Add(readAllLine);
+            }
+        }
+      
         public void Update()
         {
             CleanupCacheBundle();
@@ -146,9 +136,49 @@ public class ManagedResource : MonoBehaviour
             CleanupDependenciesInterval();
             DoDelayTasks();
         }
+        /// <summary>
+        /// 清理AssetCache
+        /// </summary>
+        private void CleanupCacheBundle()
+        {
+            if (!(Time.realtimeSinceStartup > _cleanupAssetCachedLastTime + CleanupAssetCachedDelatTime)) return;
+            Singleton<AssetCacheManager>.GetInstance().CleanUpAssetCache();
+        }
+        /// <summary>
+        /// 清理AssetBundleCache
+        /// </summary>
+        public void CleanupDependenciesInterval()
+        {
+            if (!(Time.realtimeSinceStartup > _cleanupDependenciesLastTime + CleanupDependenciesDelayTime)) return;
+            Singleton<AssetBundleCacheManager>.GetInstance().CleanUpAssetBundleCache();
+        }
+        /// <summary>
+        /// 清理内存
+        /// </summary>
+        public void CleanupMemoryInterval()
+        {
+            if(!(Time.realtimeSinceStartup > _cleanupMemoryLastTime + CleanUpMemoryDelayTime) || !_canStartCleanupMemory)return;
+            _canStartCleanupMemory = false;
+            SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(CleanupMemoryAsync());
+        }
 
+        private IEnumerator CleanupMemoryAsync()
+        {
+            //清理内存
+            yield return Resources.UnloadUnusedAssets();
+            //清理mono
+            GC.Collect();
+            //清理lua
+            SingletonMono<LuaManager>.GetInstance().LuaGC();
+            _canStartCleanupMemory = true;
+            _cleanupMemoryLastTime = Time.realtimeSinceStartup;
+        }
+        /// <summary>
+        /// 执行延迟加载任务
+        /// </summary>
         private void DoDelayTasks()
         {
+            // 1. 加载AssetBundle
             if (_delayLoadTasks.Count > 0)
             {
                 while (_delayLoadTasks.Count > 0 && m_currentTaskCount < MaxTaskCount)
@@ -157,6 +187,7 @@ public class ManagedResource : MonoBehaviour
                     DoTask(task);
                 }
             }
+            // 2. 加载Asset
             if (_delayAssetLoadTasks.Count > 0)
             {
                 var maxloadtime = 0.02f;
@@ -169,161 +200,80 @@ public class ManagedResource : MonoBehaviour
                 }
             }
         }
-        public int MaxTaskCount { get; set; }
-
-        private void PreLoadResource()
-        {
-            foreach (string path in m_preLoadList)
-            {
-                if (path.Contains("_etx_alpha") && Application.platform != UnityEngine.RuntimePlatform.Android)
-                {
-                    m_currentPreLoadCount++;
-                }
-                else// todo
-                {
-//                    AddTask(path, PreLoadEventHandler, (int)(ResourceLoadType.LoadBundleFromFile | ResourceLoadType.Persistent));
-                }
-
-            }
-        }
-        private void PreLoadEventHandler(UnityEngine.Object obj)
-        {
-            m_currentPreLoadCount++;
-        }
-
-        public bool IsPreLoadDone { get { return m_currentPreLoadCount >= m_preLoadList.Count; } }
-
-        private void CleanupCacheBundle()
-        {
-            if (_generalCachedBundles.Count <= 0) return;
-            if (!(Time.realtimeSinceStartup > _cleanupCachedBundleLastTime + 10)) return;
-
-            var now = _cleanupCachedBundleLastTime = Time.realtimeSinceStartup;
-
-            const float cleanupTimeInterval = 180;
-            var tempList = new List<string>();
-            foreach (var pair in _generalCachedBundles)
-            {
-                if (now > pair.Value.LastUseTime + cleanupTimeInterval)
-                {
-                    tempList.Add(pair.Key);
-                    if (null != pair.Value.Obj)
-                    {
-                        //Debug.LogError("try to destroy object : " + pair.Key);
-                        if (pair.Value.Obj is GameObject)
-                        {
-                            UnityEngine.Object.DestroyImmediate(pair.Value.Obj, true);
-                        }
-                        else
-                        {
-                            Resources.UnloadAsset(pair.Value.Obj);
-                        }
-                    }
-                }
-            }
-            foreach (var bundle in tempList)
-            {
-                _generalCachedBundles.Remove(bundle);
-            }
-        }
-
-        private void LoadPreLoadList(string path)
-        {
-            m_preLoadList.Clear();
-//            string dataPath = PathResolver.GetPath(path); // todo todo 
-            string dataPath = "";
-            if (!FileManager.IsFileExist(dataPath))
-            {
-                Debug.LogError("预加载的资源不存在  " + dataPath);
-                return;
-            }
-            foreach (string readAllLine in File.ReadAllLines(dataPath))
-            {
-                m_preLoadList.Add(readAllLine);
-            }
-        }
-      
-        public void CleanupMemoryInterval()
-        {
-            const float interval = 120;
-            if (Time.realtimeSinceStartup > _cleanupMemoryLastTime + interval)
-            {
-                CleanupMemoryNow();
-            }
-        }
-
-        public void CleanupMemoryNow()
-        {
-            if (_canStartCleanupMemory)
-            {
-                _canStartCleanupMemory = false;
-                _cleanupMemoryLastTime = Time.realtimeSinceStartup;
-                SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(CleanupMemoryAsync());
-            }
-        }
-
-        private static uint _nextTaskId;
-
+        /// <summary>
+        /// 添加任务
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
         public uint AddTask(string file, Action<UnityEngine.Object> action)
         {
-            return AddTask(file, action, (int)ResourceLoadType.LoadBundleFromFile);
+            return AddTask(file, action, (int)AssetBundleLoadType.LoadBundleFromFile,(int)CachePriority.NoCache);
         }
-
-        public uint AddTask(string file, Action<Object> action, int loadType)
+        /// <summary>
+        /// 添加任务
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="action"></param>
+        /// <param name="loadType"></param>
+        /// <param name="cachepriority"></param>
+        /// <returns></returns>
+        public uint AddTask(string file, Action<Object> action, int loadType,int cachepriority)
         {
-            return AddTask(file, action, loadType, 0);
+            return AddTask(file, action, loadType,cachepriority, 0);
         }
-
-        private uint AddTask(string file, Action<Object> action, int loadType, uint parentTaskId)
+        /// <summary>
+        /// 添加任务
+        /// </summary>
+        /// <param name="file">文件名</param>
+        /// <param name="action">回调函数</param>
+        /// <param name="loadType">加载类型</param>
+        /// <param name="cachepriority">缓存类型</param>
+        /// <param name="parentTaskId">父任务的ID</param>
+        /// <returns></returns>
+        private uint AddTask(string file, Action<Object> action, int loadType, int cachepriority, uint parentTaskId)
         {
-            //Util.LogColor("red", "AddTask:" + file);
             if (String.IsNullOrEmpty(file))
             {
                 return 0;
             }
+            file = Platform.Path + file;
             string fileReplace = file.Replace(@"\", @"/");
             string lowerFile = fileReplace.ToLower();
-            Object o;
-            if (_persistantBundles.TryGetValue(lowerFile, out o))
+            //从AssetBundleCache中查找文件
+            if (parentTaskId == 0)
             {
-                action(o);
-                return 0;
+                AssetCache assetBundleCache = Singleton<AssetCacheManager>.GetInstance().GetAssetCache(lowerFile);
+                if (assetBundleCache != null)
+                {
+                    action(assetBundleCache.GetObject());
+                    return 0;
+                }
             }
-
-            CachedResource cachedTask;
-            if (_generalCachedBundles.TryGetValue(lowerFile, out cachedTask))
-            {
-                cachedTask.LastUseTime = Time.realtimeSinceStartup;
-
-                action(cachedTask.Obj);
-                return 0;
-            }
-
+            //从当前正在加载的字典中查找
             ResourceLoadTask oldTask;
             if (_loadingFiles.TryGetValue(lowerFile, out oldTask))
             {
                 if (action != null)
                 {
                     oldTask.Actions += action;
-                }// todo
-//
-//                if ((loadType & (int)ResourceLoadType.Persistent) > 0)
-//                {
-//                    oldTask.LoadType |= (int)ResourceLoadType.Persistent;
-//                }
-
+                }
+                //修改缓存策略
+                if (oldTask.CacheType != cachepriority)
+                {
+                    if (oldTask.CacheType < cachepriority)
+                    {
+                        oldTask.CacheType = cachepriority;
+                    }
+                }
+                //将当前的父任务id加载到父任务列表的节点
                 if (parentTaskId != 0)
                 {
-                    if (oldTask.ParentTaskIds == null)
-                    {
-                        oldTask.ParentTaskIds = new List<uint>();
-                        LogError("resource path {0} type is , dependency resource or not", oldTask.Path);
-                    }
                     oldTask.ParentTaskIds.Add(parentTaskId);
                 }
-
                 return 0;
             }
+            //新建任务
             uint id = ++_nextTaskId;
             List<uint> ptList = null;
             if (parentTaskId != 0)
@@ -331,26 +281,26 @@ public class ManagedResource : MonoBehaviour
                 ptList = new List<uint>();
                 ptList.Add(parentTaskId);
             }
-            var task = _resourceLoadTaskPool.GetObject();
-            //var task = new ResourceLoadTask
-            {
-                task.Id = id;
-                task.ParentTaskIds = ptList;
-                task.Path = lowerFile;
-                task.LoadType = loadType;
-                task.Actions = action;
-                task.Dependencies = (m_Dependencies.ContainsKey(lowerFile) ? m_Dependencies[lowerFile] : null);
-                task.LoadedDependenciesCount = 0;
-
-            };
+            ResourceLoadTask task = _resourceLoadTaskPool.GetObject();
+            task.Reset();
+            task.Id = id;
+            task.ParentTaskIds = ptList;
+            task.Path = lowerFile;
+            task.LoadType = loadType;
+            task.CacheType = cachepriority;
+            task.Actions = action;
+            task.Dependencies = (m_Dependencies.ContainsKey(lowerFile) ? m_Dependencies[lowerFile] : null);
+            task.LoadedDependenciesCount = 0;
 
             _loadingFiles[lowerFile] = task;
             _loadingTasks[id] = task;
-            if (m_Dependencies.ContainsKey(task.Path))
+
+            if (Singleton<AssetBundleCacheManager>.GetInstance().GetAssetBundleCache(task.Path) != null)
             {
+                //添加引用
                 AddRefCount(task.Path);
             }
-
+            
             if (m_currentTaskCount < MaxTaskCount)
             {
                 DoTask(task);
@@ -361,17 +311,10 @@ public class ManagedResource : MonoBehaviour
             }
             return id;
         }
-
-        private void LogError(string format, params object[] args)
-        {
-            Debug.LogError(string.Format(format, args));
-        }
-
-        private bool IsType(ResourceLoadTask task, ResourceLoadType loadType)
-        {
-            return (task.LoadType & (int)loadType) != 0;
-        }
-
+        /// <summary>
+        /// DoTask函数
+        /// </summary>
+        /// <param name="task"></param>
         private void DoTask(ResourceLoadTask task)
         {
             if (task.Dependencies == null)
@@ -389,7 +332,7 @@ public class ManagedResource : MonoBehaviour
                     int i = task.LoadedDependenciesCount;
                     for (; i < task.Dependencies.Count; ++i)
                     {
-                        if (m_DependenciesObj.ContainsKey(task.Dependencies[i]) || _persistantBundles.ContainsKey(task.Dependencies[i]))
+                        if (Singleton<AssetBundleCacheManager>.GetInstance().GetAssetBundleCache(task.Dependencies[i]).GetAssetBundle()!=null)
                         {
                             task.LoadedDependenciesCount += 1;
                             if (task.LoadedDependenciesCount >= task.Dependencies.Count)
@@ -400,33 +343,48 @@ public class ManagedResource : MonoBehaviour
                         }
                         else
                         {
-                            AddTask(task.Dependencies[i], null, task.LoadType, task.Id);
+                            AddTask(task.Dependencies[i], null, task.LoadType, task.CacheType,task.Id);
                         }
                     }
                 }
             }
         }
 
-
+        /// <summary>
+        /// 实际加载文件的函数
+        /// </summary>
+        /// <param name="task"></param>
         private void DoImmediateTask(ResourceLoadTask task)
         {
             m_currentTaskCount += 1;
-            if (IsType(task, ResourceLoadType.LoadBundleFromWWW))
-            {
-                SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(LoadBundleFromWWW(task));
-            }
-            else if (IsType(task, ResourceLoadType.LoadBundleFromFile))
+            if (task.LoadType == (int)AssetBundleLoadType.LoadBundleFromFile)
             {
                 LoadBundleFromFile(task);
             }
-            else if (IsType(task, ResourceLoadType.LoadBundleFromFileAsync))
+            else if (task.LoadType == (int)AssetBundleLoadType.LoadBundleFromFileAsync)
             {
                 SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(LoadBundleFromFileAsync(task));
+            }
+            else if (task.LoadType == (int)AssetBundleLoadType.LoadFromMemory)
+            {
+                LoadBundleFromMemory(task);
+            }
+            else if (task.LoadType == (int)AssetBundleLoadType.LoadFromMemoryAsync)
+            {
+                SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(LoadBundleFromMemoryAsync(task));
+            }
+            else if (task.LoadType == (int)AssetBundleLoadType.LoadFromStream)
+            {
+                LoadBundleFromStream(task);
+            }
+            else if (task.LoadType == (int)AssetBundleLoadType.LoadFromStreamAsync)
+            {
+                SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(LoadBundleFromStreamAsync(task));
             }
             else
             {
                 m_currentTaskCount -= 1;
-                Debug.LogError("loadtype 出错");
+                UnityEngine.Debug.LogError("loadtype 出错");
             }
         }
         /// <summary>
@@ -435,8 +393,17 @@ public class ManagedResource : MonoBehaviour
         /// <param name="task"></param>
         private void LoadBundleFromFile(ResourceLoadTask task)
         {
-            string path = Application.streamingAssetsPath + "/" + task.Path;
-            AssetBundle ab = AssetBundle.LoadFromFile(path);
+            AssetBundle ab = AssetBundle.LoadFromFile(task.Path);
+            OnBundleLoaded(task, ab);
+        }
+        private void LoadBundleFromMemory(ResourceLoadTask task)
+        {
+            AssetBundle ab = AssetBundle.LoadFromMemory(File.ReadAllBytes(task.Path));
+            OnBundleLoaded(task, ab);
+        }
+        private void LoadBundleFromStream(ResourceLoadTask task)
+        {
+            AssetBundle ab = AssetBundle.LoadFromStream(File.Open(task.Path,FileMode.Open));
             OnBundleLoaded(task, ab);
         }
         /// <summary>
@@ -446,29 +413,21 @@ public class ManagedResource : MonoBehaviour
         /// <returns></returns>
         private IEnumerator LoadBundleFromFileAsync(ResourceLoadTask task)
         {
-            string path = Application.streamingAssetsPath + "/" + task.Path;
-            AssetBundleCreateRequest ab = AssetBundle.LoadFromFileAsync(path);
+            AssetBundleCreateRequest ab = AssetBundle.LoadFromFileAsync(task.Path);
             yield return ab;
             OnBundleLoaded(task, ab.assetBundle);
         }
-        /// <summary>
-        /// www加载资源
-        /// </summary>
-        /// <param name="task"></param>
-        /// <returns></returns>
-        private IEnumerator LoadBundleFromWWW(ResourceLoadTask task)
+        private IEnumerator LoadBundleFromMemoryAsync(ResourceLoadTask task)
         {
-            string path = ""; // todo todo
-//            string path = PathResolver.GetBundlePath(task.Path);
-            using (WWW www = new WWW(path))
-            {
-                yield return www;
-                if (null != www.error)
-                {
-                    Debug.LogError("LoadAssetbundle 失败");
-                }
-                OnBundleLoaded(task, www.assetBundle);
-            }
+            AssetBundleCreateRequest ab = AssetBundle.LoadFromMemoryAsync(File.ReadAllBytes(task.Path));
+            yield return ab;
+            OnBundleLoaded(task, ab.assetBundle);
+        }
+        private IEnumerator LoadBundleFromStreamAsync(ResourceLoadTask task)
+        {
+            AssetBundleCreateRequest ab = AssetBundle.LoadFromStreamAsync(File.Open(task.Path,FileMode.Open));
+            yield return ab;
+            OnBundleLoaded(task, ab.assetBundle);
         }
         private void OnBundleLoaded(ResourceLoadTask task, AssetBundle ab)
         {
@@ -476,8 +435,7 @@ public class ManagedResource : MonoBehaviour
             Object obj = null;
             if (ab == null)
             {
-                LogError("LoadBundle: {0} failed! assetBundle == NULL!", task.Path);
-                OnAseetsLoaded(task, ab, obj);
+                UnityEngine.Debug.LogError(string.Format("LoadBundle: {0} failed! assetBundle == NULL!", task.Path));
             }
             else
             {
@@ -487,8 +445,10 @@ public class ManagedResource : MonoBehaviour
                 _delayAssetLoadTasks.Enqueue(assetLoadTask);
             }
         }
-
-
+        /// <summary>
+        /// 加载Asset资源
+        /// </summary>
+        /// <param name="_task"></param>
         private void LoadAllAssets(AssetLoadTask _task)
         {
             var task = _task.task;
@@ -497,24 +457,20 @@ public class ManagedResource : MonoBehaviour
             Object obj = null;
             if (ab != null)
             {
-                if (!ab.isStreamedSceneAssetBundle)
+                var objs = ab.LoadAllAssets();
+                if (objs.Length > 0)
+                    obj = objs[0];
+                if (obj == null)
                 {
-                    var objs = ab.LoadAllAssets();
-                    if (objs.Length > 0)
-                        obj = objs[0];
-                    if (obj == null)
-                    {
-                        LogError("LoadBundle: {0} ! No Assets in Bundle!", task.Path);
-                    }
+                    UnityEngine.Debug.LogError(string.Format("LoadBundle: {0} ! No Assets in Bundle!", task.Path));
                 }
             }
             OnAseetsLoaded(task, ab, obj);
         }
-
-
+    
         private void OnAseetsLoaded(ResourceLoadTask task, AssetBundle ab, Object obj)
         {
-            if (m_Dependencies.ContainsKey(task.Path))
+            if (Singleton<AssetBundleCacheManager>.GetInstance().GetAssetBundleCache(task.Path)!=null)
             {
                 DelRefCount(task.Path);
             }
@@ -530,56 +486,24 @@ public class ManagedResource : MonoBehaviour
                     var action = (Action<Object>)dele;
                     try
                     {
-                        if ((task.LoadType & (int)ResourceLoadType.ReturnAssetBundle) > 0)
-                        {
-                            action(ab);
-                        }
-                        else
-                        {
-                            action(obj);
-                        }
+                        action(obj);
                     }
                     catch (Exception e)
                     {
                         string error = string.Format("Load Bundle {0} DoAction Exception: {1}", task.Path, e);
-                        Debug.LogError(error);
+                        UnityEngine.Debug.LogError(error);
                     }
                 }
             }
-            if (ab != null && task.ParentTaskIds == null)//todo
+            
+            if (ab != null && task.ParentTaskIds == null)
             {
-//                if ((task.LoadType & (int)ResourceLoadType.Persistent) > 0)
-//                {
-//                    _persistantBundles[task.Path] = obj;
-//                    if ((task.LoadType & (int)ResourceLoadType.NoCache) > 0)
-//                    {
-//                        ab.Unload(false);
-//                    }
-//                }
-//                else
-//                {
-//                    if ((task.LoadType & (int)ResourceLoadType.Cache) > 0)
-//                    {
-//                        var cachedTask = new CachedResource
-//                        {
-//                            LastUseTime = Time.realtimeSinceStartup,
-//                            Obj = obj
-//                        };
-//                        _generalCachedBundles[task.Path] = cachedTask;
-//                    }
-//                    if ((task.LoadType & (int)ResourceLoadType.ReturnAssetBundle) == 0)
-//                    {
-//                        //Util.LogColor("cyan", "~~~ab.Unload(false): " + task.Path);
-//                        ab.Unload(false);
-//                    }
-//
-//                }
+                Singleton<AssetCacheManager>.GetInstance().CacheAsset(task.Path,new AssetCache(Time.realtimeSinceStartup,obj,(CachePriority)task.CacheType));
             }
 
             if (task.ParentTaskIds != null)
             {
-                m_DependenciesObj[task.Path] = ab;
-                //Util.LogColor("yellow", "~~~Loading Dependencies Asset: " + task.Path);
+                Singleton<AssetBundleCacheManager>.GetInstance().CacheAssetBundle(task.Path,new AssetBundleCache(ab,Time.realtimeSinceStartup,task.CacheType == (int)CachePriority.Persistent?true:false));
                 for (int i = 0; i < task.ParentTaskIds.Count; ++i)
                 {
                     uint taskid = task.ParentTaskIds[i];
@@ -595,19 +519,11 @@ public class ManagedResource : MonoBehaviour
                 }
             }
 
-
             task.Reset();
             _resourceLoadTaskPool.PutObject(task);
         }
 
-        private IEnumerator CleanupMemoryAsync()
-        {
-            yield return Resources.UnloadUnusedAssets();
-            GC.Collect();
-            _canStartCleanupMemory = true;
-            _cleanupMemoryLastTime = Time.realtimeSinceStartup;
-        }
-
+           
         public bool IsLoading(uint taskId)
         {
             return _loadingTasks.ContainsKey(taskId);
@@ -628,206 +544,67 @@ public class ManagedResource : MonoBehaviour
             }
         }
 
-//        public uint AddTaskAvatar(string file, Action<UnityEngine.Object> action)
-//        {// todo
-//            return AddTask(file, action, (int)ResourceLoadType.Cache | (int)ResourceLoadType.LoadBundleFromFile);
-//        }
-
         public void Release()
         {
-            foreach (KeyValuePair<string, UnityEngine.Object> pair in _persistantBundles)
-            {
-                if (pair.Value != null)
-                {
-                    if (pair.Value is GameObject)
-                    {
-                        UnityEngine.Object.DestroyImmediate(pair.Value, true);
-                    }
-                    else
-                    {
-                        Resources.UnloadAsset(pair.Value);
-                    }
-
-                }
-            }
-
-            _persistantBundles.Clear();
-
-            foreach (var pair in m_DependenciesObj)
-            {
-                if (pair.Value != null)
-                {
-                    pair.Value.Unload(true);
-                }
-            }
-            m_DependenciesObj.Clear();
-
-            foreach (var pair in _generalCachedBundles)
-            {
-                if (pair.Value != null && pair.Value.Obj != null)
-                {
-                    if (pair.Value.Obj is GameObject)
-                    {
-                        UnityEngine.Object.DestroyImmediate(pair.Value.Obj, true);
-                    }
-                    else
-                    {
-                        Resources.UnloadAsset(pair.Value.Obj);
-                    }
-
-                }
-            }
-            _generalCachedBundles.Clear();
+            Singleton<AssetCacheManager>.GetInstance().Clear();
+            Singleton<AssetBundleCacheManager>.GetInstance().Clear();
         }
-
-
+        /// <summary>
+        /// 添加引用计数
+        /// </summary>
+        /// <param name="bundlename"></param>
         public void AddRefCount(string bundlename)
         {
             if (m_Dependencies.ContainsKey(bundlename))
             {
-                //Util.LogColor("yellow", "AddRefCount:" + bundlename);
                 foreach (var depname in m_Dependencies[bundlename])
                 {
-                    if (!_persistantBundles.ContainsKey(depname))
-                    {
-                        if (!RefCount.ContainsKey(depname))
-                        {
-                            RefCount[depname] = 0;
-                        }
-                        RefCount[depname]++;
-                    }
+                    Singleton<AssetBundleCacheManager>.GetInstance().GetAssetBundleCache(depname).AddCount();
                 }
             }
         }
-
+        /// <summary>
+        /// 删除引用计数
+        /// </summary>
+        /// <param name="bundlename"></param>
         public void DelRefCount(string bundlename)
         {
             if (m_Dependencies.ContainsKey(bundlename))
             {
-                //Util.LogColor("red", "DelRefCount:" + bundlename);
                 foreach (var depname in m_Dependencies[bundlename])
                 {
-                    if (RefCount.ContainsKey(depname))
-                    {
-                        RefCount[depname]--;
-                        if (RefCount[depname] <= 0)
-                        {
-                            RefDelTime[depname] = Time.realtimeSinceStartup;
-                        }
-                    }
+                    Singleton<AssetBundleCacheManager>.GetInstance().GetAssetBundleCache(depname).SubCount();
                 }
             }
         }
-
-        public GameObject NewGameObject(string path)
+   
+            
+        #region Resources加载接口
+    
+        public IEnumerator LoadResourceAsync<T>(string name,Action<Object> callback) where T:Object
         {
-            var gameObj = new GameObject();
-            if (path != null)
+            ResourceRequest request = Resources.LoadAsync<T>(name);
+            yield return request;
+            if (callback != null)
             {
-                var mr = gameObj.AddComponent<ManagedResource>();
-                mr.bundlename = path.Replace(@"\", @"/").ToLower();
-                AddRefCount(mr.bundlename);
-            }
-            return gameObj;
-        }
-
-        public GameObject Instantiate(Object obj, string path)
-        {
-            var gameObj = Object.Instantiate(obj) as GameObject;
-            if (gameObj != null && path != null)
-            {
-                var mr = gameObj.AddComponent<ManagedResource>();
-                mr.bundlename = path.Replace(@"\", @"/").ToLower();
-                AddRefCount(mr.bundlename);
-            }
-            return gameObj;
-        }
-
-        public GameObject Copy(Object obj)
-        {
-            var gameObj = Object.Instantiate(obj) as GameObject;
-            if (gameObj != null)
-            {
-                var mr = gameObj.GetComponent<ManagedResource>();
-                if (mr != null)
-                {
-                    AddRefCount(mr.bundlename);
-                }
-            }
-            return gameObj;
-        }
-
-        public void CleanupDependenciesInterval()
-        {
-            const float interval = 30;
-            if (Time.realtimeSinceStartup > _cleanupDependenciesLastTime + interval)
-            {
-                CleanupDependenciesNow();
+                callback(request.asset);
             }
         }
-
-     
-        public void CleanupDependenciesNow()
+    
+        public void LoadResource<T>(string name, Action<Object> callback) where T : Object
         {
-            if (RefCount == null || RefDelTime == null || m_DependenciesObj == null)
+            T t =Resources.Load<T>(name);
+            if (callback != null)
             {
-                return;
-            }
-            _cleanupDependenciesLastTime = Time.realtimeSinceStartup;
-            List<string> RefCountToRemove = new List<string>();
-            foreach (var pairs in RefCount)
-            {
-                if (pairs.Value <= 0)
-                {
-                    if (m_DependenciesObj.ContainsKey(pairs.Key) &&
-                        RefDelTime.ContainsKey(pairs.Key) &&
-                        Time.realtimeSinceStartup - RefDelTime[pairs.Key] > 60)
-                    {
-                        //Util.LogColor("red", "CleanupDependenciesNow:" + pairs.Key + pairs.Value);
-                        if (m_DependenciesObj.ContainsKey(pairs.Key))
-                        {
-                            if (m_DependenciesObj[pairs.Key] != null)
-                                m_DependenciesObj[pairs.Key].Unload(false);
-                            m_DependenciesObj[pairs.Key] = null;
-                            m_DependenciesObj.Remove(pairs.Key);
-                        }
-                        RefDelTime.Remove(pairs.Key);
-                        RefCountToRemove.Add(pairs.Key);
-                        //Util.LogColor("red", "~~~ Destory Dependencies Asset : " + pairs.Key);
-                    }
-
-                }
-            }
-            foreach (var remove in RefCountToRemove)
-            {
-                RefCount.Remove(remove);
+                callback(t);
             }
         }
-
-    #region Resources加载
-
-    public IEnumerator LoadResourceAsync<T>(string name,Action<Object> callback) where T:Object
-    {
-        ResourceRequest request = Resources.LoadAsync<T>(name);
-        yield return request;
-        if (callback != null)
+        public T LoadResource<T>(string name) where T : Object
         {
-            callback(request.asset);
+            T t = Resources.Load<T>(name);
+            return t;
         }
+        
+        #endregion
     }
-
-    public void LoadResource<T>(string name, Action<Object> callback) where T : Object
-    {
-        T t =Resources.Load<T>(name);
-        if (callback != null)
-        {
-            callback(t);
-        }
-    }
-    public T LoadResource<T>(string name) where T : Object
-    {
-        T t = Resources.Load<T>(name);
-        return t;
-    }
-    #endregion
 }

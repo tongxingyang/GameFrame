@@ -59,7 +59,6 @@ namespace GameFrame.Editor
                     if(importer.textureType == TextureImporterType.Sprite && !string.IsNullOrEmpty(importer.spritePackingTag))
                     {
                         importer.assetBundleName = importer.spritePackingTag + assetbundleExt;
-    
                         AssetNode spriteTagPackageNode;
     
                         if (!spriteTagPackageDict.TryGetValue(importer.spritePackingTag, out spriteTagPackageNode))

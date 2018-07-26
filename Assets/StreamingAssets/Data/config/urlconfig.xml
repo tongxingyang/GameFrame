@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<root>
-<UpdateServer value="http://qyzws.autopatch.173.com/qyz/|http://qyzdl.autopatch.173.com/qyz/|http://120.132.45.44/qyz/"/>
-<AndroidServerListUrl value="http://qyzws.autopatch.173.com/qyz/android_server_test.txt"/>
-<IosServerListUrl value="http://qyzws.autopatch.173.com/qyz/ios_server_test.txt"/>
-<UpdateAppUrl value="http://qyzws.autopatch.173.com/qyz/updateapp.txt"/>
-</root>

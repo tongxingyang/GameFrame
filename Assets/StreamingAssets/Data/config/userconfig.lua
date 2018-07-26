@@ -1,6 +1,0 @@
-UserConfig = 
-{
-["DefaultLogin"]=
-7, 
-}
-

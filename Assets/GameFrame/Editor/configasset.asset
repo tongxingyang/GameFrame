@@ -13,14 +13,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp-Editor:GameFrame.Editor:AssetBundlePanelConfig
   Filters:
   - vaild: 1
-    path: Assets/BuildAssets
+    path: Assets/UIPrefab
     filter: .prefab
   BaseLuaBundleName: tolua.assetbundle
   IsSpriteTag: 1
   Windows: 0
-  Mac: 0
+  Mac: 1
   Android: 0
-  IOS: 1
+  IOS: 0
   Version:
     master: 1
     minor: 1

@@ -97,6 +97,20 @@ namespace GameFrame.Editor
             panel.minSize = new Vector2(1000,600);
             panel.Show();
         } 
+        
+        [MenuItem("AssetBundle/BuildScenceBundle")]
+        static void BuildScene()
+        {
+            string [] levels = Directory.GetFiles("Assets/Scene","*.unity");
+            for (int i = 0; i < levels.Length; i++)
+            {
+                string[] temp = {levels[i]};
+                System.IO.FileInfo fileInfo = new  System.IO.FileInfo(levels[i]);
+                BuildPipeline.BuildPlayer(temp, Application.dataPath+"/"+fileInfo.Name+".unity3d",BuildTarget.StandaloneOSXIntel, BuildOptions.BuildAdditionalStreamedScenes);
+            }
+            // 刷新，可以直接在Unity工程中看见打包后的文件
+            AssetDatabase.Refresh();
+        } 
         [MenuItem("AssetBundle/Clear Temp File")]
         static void ClearTempFile()
         {

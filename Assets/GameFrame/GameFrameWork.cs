@@ -59,25 +59,29 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 #endif
         m_feature[SupportFeatureDynamicShadow] &=  m_feature[SupportFeatureHighPerformance];
 #if UNITY_EDITOR
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.deviceModel: [{0}]",SystemInfo.deviceModel));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.deviceName: [{0}]", SystemInfo.deviceName));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.graphicsDeviceName: [{0}]", SystemInfo.graphicsDeviceName));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.graphicsDeviceID: [{0}]", SystemInfo.graphicsDeviceID));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.graphicsDeviceVendor: [{0}]", SystemInfo.graphicsDeviceVendor));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.graphicsDeviceVendorID: [{0}]", SystemInfo.graphicsDeviceVendorID));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.graphicsDeviceVersion: [{0}]", SystemInfo.graphicsDeviceVersion));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.graphicsMemorySize: [{0}]", SystemInfo.graphicsMemorySize));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.graphicsShaderLevel: [{0}]", SystemInfo.graphicsShaderLevel));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.maxTextureSize: [{0}]", SystemInfo.maxTextureSize));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.npotSupport: [{0}]", SystemInfo.npotSupport.ToString()));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.operatingSystem: [{0}]", SystemInfo.operatingSystem));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.processorType: [{0}]", SystemInfo.processorType));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.supportedRenderTargetCount: [{0}]", SystemInfo.supportedRenderTargetCount));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.supportsImageEffects: [{0}]", SystemInfo.supportsImageEffects));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.supportsRenderTextures: [{0}]", SystemInfo.supportsRenderTextures));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.SupportsRenderTextureFormat Depth: [{0}]", SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth)));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.supportsShadows: [{0}]", SystemInfo.supportsShadows));
-        UnityEngine.Debug.LogWarning(String.Format("SystemInfo.systemMemorySize: [{0}]", SystemInfo.systemMemorySize));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.deviceModel: [{0}]",SystemInfo.deviceModel));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.deviceName: [{0}]", SystemInfo.deviceName));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.graphicsDeviceName: [{0}]", SystemInfo.graphicsDeviceName));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.graphicsDeviceID: [{0}]", SystemInfo.graphicsDeviceID));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.graphicsDeviceVendor: [{0}]", SystemInfo.graphicsDeviceVendor));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.graphicsDeviceVendorID: [{0}]", SystemInfo.graphicsDeviceVendorID));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.graphicsDeviceVersion: [{0}]", SystemInfo.graphicsDeviceVersion));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.graphicsMemorySize: [{0}]", SystemInfo.graphicsMemorySize));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.graphicsShaderLevel: [{0}]", SystemInfo.graphicsShaderLevel));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.maxTextureSize: [{0}]", SystemInfo.maxTextureSize));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.npotSupport: [{0}]", SystemInfo.npotSupport.ToString()));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.operatingSystem: [{0}]", SystemInfo.operatingSystem));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.processorType: [{0}]", SystemInfo.processorType));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.supportedRenderTargetCount: [{0}]", SystemInfo.supportedRenderTargetCount));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.supportsImageEffects: [{0}]", SystemInfo.supportsImageEffects));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.supportsRenderTextures: [{0}]", SystemInfo.supportsRenderTextures));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.SupportsRenderTextureFormat Depth: [{0}]", SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth)));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.supportsShadows: [{0}]", SystemInfo.supportsShadows));
+        UnityEngine.Debug.Log(String.Format("SystemInfo.systemMemorySize: [{0}]", SystemInfo.systemMemorySize));
+        for (int i = 0; i < m_feature.Count; i++)
+        {
+            UnityEngine.Debug.Log(String.Format("RenderInfo : [{0}]", m_feature[i]));
+        }
 #endif
 
     }
@@ -109,8 +113,8 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     void Start()
     {
         #if UNITY_ANDROID || UNITY_IPHONE
-//        PlayLogoVider("logo.mp4",false);
-//        Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
+        PlayLogoVider("logo.mp4",false);
+        Singleton<UpdateManager>.GetInstance().StartCheckUpdate(UpdateCallback);
         #endif
         #if UNITY_EDITOR_OSX || UNITY_EDITOR_WIN
         UpdateCallback(true);
