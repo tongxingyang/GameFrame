@@ -15,7 +15,7 @@ namespace UIFrameWork
         private List<WindowBase> m_pooledWindows;
         private int m_windowSequence;
         private List<int> m_exitWindowSequences;
-        private GameObject m_root;
+        private GameObject m_root; 
         public OnWindowSorted OnWindowSorted;
         private EventSystem m_eventSystem;
         private Camera m_UICamera;
@@ -124,11 +124,11 @@ namespace UIFrameWork
                 }
             }
         }
-        public void CloseWindow(bool isforce,string path, WindowContext windowContext = null)
+        public void CloseWindow(bool isforce,string name, WindowContext windowContext = null)
         {
             for (int i = 0; i < m_windows.Count; i++)
             {
-                if (this.m_windows[i].WindowInfo.PerfabPath == path)
+                if (this.m_windows[i].WindowInfo.Name == name)
                 {
                     if (this.m_windows[i].m_isUsePool)
                     {
@@ -184,11 +184,11 @@ namespace UIFrameWork
             return this.m_windows.Count > 0;
         }
 
-        public WindowBase GetWindow(string path)
+        public WindowBase GetWindow(string name)
         {
             for (int i = 0; i < this.m_windows.Count; i++)
             {
-                if (this.m_windows[i].WindowInfo.PerfabPath == path)
+                if (this.m_windows[i].WindowInfo.Name == name)
                 {
                     return this.m_windows[i];
                 }
@@ -254,11 +254,11 @@ namespace UIFrameWork
             }
         }
 
-        private WindowBase GetUnClosedWindow(string path)
+        private WindowBase GetUnClosedWindow(string name)
         {
             for (int i = 0; i < this.m_windows.Count; i++)
             {
-                if (this.m_windows[i].WindowInfo.PerfabPath.Equals(path) && !this.m_windows[i].IsHided())
+                if (this.m_windows[i].WindowInfo.Name.Equals(name) && !this.m_windows[i].IsHided())
                 {
                     return this.m_windows[i];
                 }
@@ -320,14 +320,23 @@ namespace UIFrameWork
             this.m_windows.Remove(windowBase);
         }
 
-        private GameObject CreateWindow(string path,bool usePool)
+        public void OpenWindow(string name,bool isusePool,bool useCameraRender = true,WindowContext appear = null)
         {
+            WindowBase windowBase = GetUnClosedWindow(name);
+            if (windowBase != null && windowBase.WindowInfo.IsSinglen)
+            {
+                this.RemoveFromExitSquenceList(windowBase.GetSequence());
+                this.AddToExitSquenceList(this.m_windowSequence);
+                int openorder = this.GetWindowOpenOrder(this.m_windowSequence);
+                windowBase.Appear(this.m_windowSequence, openorder, appear);
+                this.m_windowSequence++;
+            }
             GameObject obj = null;
-            if (usePool)
+            if (isusePool)
             {
                 for (int i = 0; i < m_pooledWindows.Count; i++)
                 {
-                    if (string.Equals(path, this.m_pooledWindows[i].WindowInfo.PerfabPath))
+                    if (string.Equals(name, this.m_pooledWindows[i].WindowInfo.Name))
                     {
                         obj = this.m_pooledWindows[i].gameObject;
                         this.m_pooledWindows.RemoveAt(i);
@@ -337,66 +346,87 @@ namespace UIFrameWork
             }
             if (obj == null)
             {
-                GameObject res = Resources.Load<GameObject>(path);
-                if (res == null)
+                GameObject res = null;
+                if (Platform.IsLoadFromBundle)
                 {
-                    return null;
-                }
-                obj = Object.Instantiate(res);
-            }
-            if (obj != null)
-            {
-                WindowBase windowBase = obj.GetComponent<WindowBase>();
-                if (windowBase != null)
-                {
-                    windowBase.m_isUsePool = usePool;
-                }
-            }
-            return obj;
-        }
+                    Singleton<ResourceManager>.GetInstance().AddTask("assetbundles/"+name.ToLower()+".assetbundle", (loadobj) =>
+                    {
+                        res = loadobj as GameObject;
+                        if (res != null)
+                        {
+                            obj = Object.Instantiate(res);
+                            windowBase = obj.GetComponent<WindowBase>();
+                            if (windowBase != null)
+                            {
+                                windowBase.m_isUsePool = isusePool;
+                            }
+                            string uiname = GetWindowName(name);
+                            obj.name = uiname;
+                            if (obj.transform.parent != this.m_root.transform)
+                            {
+                                obj.transform.SetParent(m_root.transform);
+                            }
+                            if (windowBase != null)
+                            {
+                                if (!windowBase.IsInitialized())
+                                {
+                                    AddCollider(windowBase);//添加遮罩
+                                    windowBase.Init(useCameraRender?m_UICamera:null);
+                                } 
+                                this.AddToExitSquenceList(this.m_windowSequence);
+                                int openorder = GetWindowOpenOrder(this.m_windowSequence);
+                                windowBase.Appear(this.m_windowSequence, openorder, appear);
+                                if (windowBase.WindowInfo.Group > 0)
+                                {
+                                    this.CloseGroupWindow(windowBase.WindowInfo.Group,false);
+                                }
+                                this.m_windows.Add(windowBase);
+                            }
+                            this.m_windowSequence++;
+                        }
+                    }, (int) AssetBundleLoadType.LoadBundleFromFile, (int) CachePriority.NoCache);
 
-        public WindowBase OpenWindow(string path,bool isusePool,bool useCameraRender = true,WindowContext appear = null)
-        {
-            WindowBase windowBase = GetUnClosedWindow(path);
-            if (windowBase != null && windowBase.WindowInfo.IsSinglen)
-            {
-                this.RemoveFromExitSquenceList(windowBase.GetSequence());
-                this.AddToExitSquenceList(this.m_windowSequence);
-                int openorder = this.GetWindowOpenOrder(this.m_windowSequence);
-                windowBase.Appear(this.m_windowSequence, openorder, appear);
-                this.m_windowSequence++;
-                return windowBase;
-            }
-            GameObject obj = CreateWindow(path, isusePool);
-            if (obj == null)
-            {
-                return null;
-            }
-            string name = GetWindowName(path);
-            obj.name = name;
-            if (obj.transform.parent != this.m_root.transform)
-            {
-                obj.transform.SetParent(m_root.transform);
-            }
-            windowBase = obj.GetComponent<WindowBase>();
-            if (windowBase != null)
-            {
-                if (!windowBase.IsInitialized())
-                {
-                    AddCollider(windowBase);//添加遮罩
-                    windowBase.Init(useCameraRender?m_UICamera:null);
-                } 
-                this.AddToExitSquenceList(this.m_windowSequence);
-                int openorder = GetWindowOpenOrder(this.m_windowSequence);
-                windowBase.Appear(this.m_windowSequence, openorder, appear);
-                if (windowBase.WindowInfo.Group > 0)
-                {
-                    this.CloseGroupWindow(windowBase.WindowInfo.Group,false);
                 }
-                this.m_windows.Add(windowBase);
+                else
+                {
+                    Singleton<ResourceManager>.GetInstance().LoadResourceAsync<GameObject>(name, (loadobj) =>
+                    {
+                        res = loadobj as GameObject;
+                        if (res != null)
+                        {
+                            obj = Object.Instantiate(res);
+                            windowBase = obj.GetComponent<WindowBase>();
+                            if (windowBase != null)
+                            {
+                                windowBase.m_isUsePool = isusePool;
+                            }
+                            string uiname = GetWindowName(name);
+                            obj.name = uiname;
+                            if (obj.transform.parent != this.m_root.transform)
+                            {
+                                obj.transform.SetParent(m_root.transform);
+                            }
+                            if (windowBase != null)
+                            {
+                                if (!windowBase.IsInitialized())
+                                {
+                                    AddCollider(windowBase);//添加遮罩
+                                    windowBase.Init(useCameraRender?m_UICamera:null);
+                                } 
+                                this.AddToExitSquenceList(this.m_windowSequence);
+                                int openorder = GetWindowOpenOrder(this.m_windowSequence);
+                                windowBase.Appear(this.m_windowSequence, openorder, appear);
+                                if (windowBase.WindowInfo.Group > 0)
+                                {
+                                    this.CloseGroupWindow(windowBase.WindowInfo.Group,false);
+                                }
+                                this.m_windows.Add(windowBase);
+                            }
+                            this.m_windowSequence++;
+                        }
+                    });
+                }
             }
-            this.m_windowSequence++;
-            return windowBase;
         }
 
         public void AddCollider(WindowBase windowBase)

@@ -120,7 +120,7 @@ namespace GameFrame
             string dataPath = Platform.Path + path;
             if (!FileManager.IsFileExist(dataPath))
             {
-                UnityEngine.Debug.LogError("预加载的资源不存在  " + dataPath);
+//                UnityEngine.Debug.LogError("预加载的资源不存在  " + dataPath);
                 return;
             }
             foreach (string readAllLine in File.ReadAllLines(dataPath))
@@ -580,8 +580,8 @@ namespace GameFrame
    
             
         #region Resources加载接口
-    
-        public IEnumerator LoadResourceAsync<T>(string name,Action<Object> callback) where T:Object
+        
+        public IEnumerator IELoadResourceAsync<T>(string name,Action<Object> callback) where T:Object
         {
             ResourceRequest request = Resources.LoadAsync<T>(name);
             yield return request;
@@ -590,7 +590,10 @@ namespace GameFrame
                 callback(request.asset);
             }
         }
-    
+        public void LoadResourceAsync<T>(string name, Action<Object> callback) where T : Object
+        {
+            SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(IELoadResourceAsync<T>(name, callback));
+        }
         public void LoadResource<T>(string name, Action<Object> callback) where T : Object
         {
             T t =Resources.Load<T>(name);
@@ -604,6 +607,7 @@ namespace GameFrame
             T t = Resources.Load<T>(name);
             return t;
         }
+        
         
         #endregion
     }

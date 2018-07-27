@@ -136,7 +136,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("Login", LoadSceneMode.Single);
         yield return asyncOperation;
         Singleton<WindowManager>.GetInstance().Init();
-        Singleton<WindowManager>.Instance.OpenWindow("LoginAndRegister",true);
+        Singleton<WindowManager>.GetInstance().OpenWindow("LoginAndRegister",true);
     }
     void PlayLogoVider(string filename,bool cancancel)
     {

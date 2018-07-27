@@ -46,6 +46,10 @@ namespace GameFrame
                 public static string Md5FileName = "resource_md5.txt";
                 public static string PreloadList = "preloadlist.txt";
                 
+                /// <summary>
+                /// 是否使用bundle 加载UI false默认在resource文件夹中查找
+                /// </summary>
+                public static bool IsLoadFromBundle = false;
                 
                 public static bool IsMobile
                 {
@@ -238,7 +242,7 @@ namespace GameFrame
     }
         public static class LuaConst
         {
-                public static bool LuaBundleMode = false;                    //True:从bundle中加载lua, false:直接读lua文件
+                public static bool LuaBundleMode = true;                    //True:从bundle中加载lua, false:直接读lua文件
                 public static bool LuaByteMode = false;                       //Lua字节码模式-默认关闭 
                 public static string luaDir = Application.dataPath + "/Lua";                //lua逻辑代码目录
                 public static string toluaDir = Application.dataPath + "/ToLua/Lua";        //tolua lua文件目录
@@ -314,4 +318,5 @@ namespace GameFrame
              
                 
         }
+        
 }

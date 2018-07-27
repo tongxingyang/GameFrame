@@ -63,7 +63,6 @@ namespace UIFrameWork
         /// <summary>
         /// 窗口是否可以接受事件
         /// </summary>
-        public bool m_enableInput;
         private List<UIComponent> m_components;
         private enWindowState windowState = enWindowState.None;
         public WindowStateChangeEvent WindowStateChange;
@@ -342,7 +341,7 @@ namespace UIFrameWork
             }
             if (this.m_graphicRaycaster)
             {
-                this.m_graphicRaycaster.enabled = this.m_enableInput;
+                this.m_graphicRaycaster.enabled = !this.WindowInfo.DisableInput;
             }
         }
 
@@ -615,7 +614,7 @@ namespace UIFrameWork
             {
                 this.m_graphicRaycaster.enabled = false;
             }
-            else if (isEnable && this.m_enableInput)
+            else if (isEnable && !this.WindowInfo.DisableInput)
             {
                 this.m_graphicRaycaster.enabled = true;
             }

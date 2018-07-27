@@ -10,7 +10,6 @@ namespace UIFrameWork
 	public class WindowInfo
 	{
 		[SerializeField] public enWindowType Type;
-		[SerializeField] public string PerfabPath;
 		[SerializeField] public string Name;
 		[SerializeField] public enWindowColliderMode ColliderMode;
 		[SerializeField] public bool IsSinglen;
@@ -21,9 +20,8 @@ namespace UIFrameWork
 		[SerializeField] public bool HideUnderForms;
 		[SerializeField] public bool AlwaysKeepVisible;
 		public WindowInfo( enWindowType windowType,enWindowColliderMode windowcolliderMode,bool issinglen,enWindowPriority priority,int group,bool isfullbg,bool isdisableinput
-			,bool hideunderinput,bool alwayskeepxisible,bool disable) 
+			,bool hideunderinput,bool alwayskeepxisible) 
 		{
-			PerfabPath = Tools.GetPrefabPathByType(windowType);
 			Type = windowType;
 			ColliderMode = windowcolliderMode;
 			Name = windowType.ToString();
