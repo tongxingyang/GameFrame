@@ -170,7 +170,7 @@ namespace UIFrameWork
             this.InitComponent();
             OnInit(UICamera);
             this.m_isInitialized = true;
-            
+            Debug.Log("<color=#FFFF00>" + "Init "+WindowInfo.Name +" ................."+ "</color>");
         }
         /// <summary>
         /// 
@@ -179,7 +179,7 @@ namespace UIFrameWork
         {
             if (this.m_isInitialized == false)
             {
-                Debug.LogError("没有初始化 ");return;
+                return;
             }
             this.m_sequence = sequence;
             this.gameObject.SetActive(true);
@@ -189,9 +189,14 @@ namespace UIFrameWork
             windowState= enWindowState.Appear;
             this.SetDisplayOrder(openOrder);
             PlayAppearMusic();
+            if (this.m_canvas != null)
+            {
+                this.m_canvas.enabled = true;
+            }
             this.TryEnableInput(true);
             AppearComponent();
             OnAppear(sequence, openOrder,context);
+            Debug.Log("<color=#FFFF00>" + "Appear "+WindowInfo.Name +" ................."+ "</color>");
         }
         /// <summary>
         /// 使用缓存处理调用此方法
@@ -221,6 +226,7 @@ namespace UIFrameWork
             Singleton<WindowManager>.GetInstance().RecycleWindow(this);
             this.gameObject.SetActive(false);
             OnHide(context);
+            Debug.Log("<color=#FFFF00>" + "Hide "+WindowInfo.Name +" ................."+ "</color>");
         }
         /// <summary>
         /// 不使用缓存处理调用此方法
@@ -242,6 +248,7 @@ namespace UIFrameWork
             CloseComponent();
             PlayCloseMusic();
             OnClose(context);
+            Debug.Log("<color=#FFFF00>" + "Close "+WindowInfo.Name +" ................."+ "</color>");
             this.gameObject.SetActive(false);
             Singleton<WindowManager>.GetInstance().RecycleWindow(this);
             DestroyImmediate(CacheGameObject);
@@ -345,6 +352,13 @@ namespace UIFrameWork
             }
         }
 
+        public void ResetEventInput()
+        {
+            if (this.m_graphicRaycaster)
+            {
+                this.m_graphicRaycaster.enabled = !this.WindowInfo.DisableInput;
+            }
+        }
         public void SetCanvasMode(Camera camera)
         {
             if (this.m_canvas != null)

@@ -133,9 +133,9 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
  
     IEnumerator ChangeScence()
     {
+        Singleton<WindowManager>.GetInstance();
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("Login", LoadSceneMode.Single);
         yield return asyncOperation;
-        Singleton<WindowManager>.GetInstance().Init();
         Singleton<WindowManager>.GetInstance().OpenWindow("LoginAndRegister",true);
     }
     void PlayLogoVider(string filename,bool cancancel)
@@ -192,6 +192,16 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<WindowManager>.GetInstance().Update();
         Singleton<ResourceManager>.GetInstance().Update();
         Singleton<PhotonManager>.GetInstance().Update();
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            Singleton<WindowManager>.GetInstance().CloseWindow(true,"LoginAndRegister");
+        }
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            Singleton<WindowManager>.GetInstance().OpenWindow("LoginAndRegister",true);
+        }
+        
     }
 
     void LateUpdate()

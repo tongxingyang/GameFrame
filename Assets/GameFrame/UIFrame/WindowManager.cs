@@ -35,6 +35,7 @@ namespace UIFrameWork
             CreateUIRoot();
             CreateEventSystem();
             CreateCamera();
+            
         }
       
         private void CreateUIRoot()
@@ -121,28 +122,47 @@ namespace UIFrameWork
                     {
                         this.m_windows[i].Close(isforce, windowContext);
                     }
+                    break;
                 }
             }
         }
+        
+        List<WindowBase> removeList = new List<WindowBase>();
         public void CloseWindow(bool isforce,string name, WindowContext windowContext = null)
         {
+            removeList.Clear();
+            bool isusepool = false;
             for (int i = 0; i < m_windows.Count; i++)
             {
                 if (this.m_windows[i].WindowInfo.Name == name)
                 {
                     if (this.m_windows[i].m_isUsePool)
                     {
-                        this.m_windows[i].Hide(isforce, windowContext);
+                        isusepool = true;
                     }
                     else
-                    {
-                        this.m_windows[i].Close(isforce, windowContext);
+                    { 
+                        isusepool = false;
                     }
+                    removeList.Add(this.m_windows[i]);
+                }
+            }
+            foreach (WindowBase windowBase in removeList)
+            {
+                if (isusepool)
+                {
+                    windowBase.Hide(isforce, windowContext);
+                }
+                else
+                {
+                    windowBase.Close(isforce, windowContext);
                 }
             }
         }
+        
         public void CloseWindow(bool isforce,int sque, WindowContext windowContext = null)
         {
+            
             for (int i = 0; i < m_windows.Count; i++)
             {
                 if (this.m_windows[i].GetSequence() == sque)
@@ -155,6 +175,7 @@ namespace UIFrameWork
                     {
                         this.m_windows[i].Close(isforce, windowContext);
                     }
+                    break;
                 }
             }
         }
@@ -256,9 +277,21 @@ namespace UIFrameWork
 
         private WindowBase GetUnClosedWindow(string name)
         {
+            
             for (int i = 0; i < this.m_windows.Count; i++)
             {
                 if (this.m_windows[i].WindowInfo.Name.Equals(name) && !this.m_windows[i].IsHided())
+                {
+                    return this.m_windows[i];
+                }
+            }
+            return null;
+        }
+        private WindowBase GetHidedWindow(string name)
+        {
+            for (int i = 0; i < this.m_windows.Count; i++)
+            {
+                if (this.m_windows[i].WindowInfo.Name.Equals(name) && this.m_windows[i].IsHided())
                 {
                     return this.m_windows[i];
                 }
@@ -329,7 +362,12 @@ namespace UIFrameWork
                 this.AddToExitSquenceList(this.m_windowSequence);
                 int openorder = this.GetWindowOpenOrder(this.m_windowSequence);
                 windowBase.Appear(this.m_windowSequence, openorder, appear);
+                if (windowBase.WindowInfo.Group > 0)
+                {
+                    this.CloseGroupWindow(windowBase.WindowInfo.Group, false);
+                }
                 this.m_windowSequence++;
+                return;
             }
             GameObject obj = null;
             if (isusePool)
@@ -349,42 +387,43 @@ namespace UIFrameWork
                 GameObject res = null;
                 if (Platform.IsLoadFromBundle)
                 {
-                    Singleton<ResourceManager>.GetInstance().AddTask("assetbundles/"+name.ToLower()+".assetbundle", (loadobj) =>
-                    {
-                        res = loadobj as GameObject;
-                        if (res != null)
+                    Singleton<ResourceManager>.GetInstance().AddTask("assetbundles/" + name.ToLower() + ".assetbundle",
+                        (loadobj) =>
                         {
-                            obj = Object.Instantiate(res);
-                            windowBase = obj.GetComponent<WindowBase>();
-                            if (windowBase != null)
+                            res = loadobj as GameObject;
+                            if (res != null)
                             {
-                                windowBase.m_isUsePool = isusePool;
-                            }
-                            string uiname = GetWindowName(name);
-                            obj.name = uiname;
-                            if (obj.transform.parent != this.m_root.transform)
-                            {
-                                obj.transform.SetParent(m_root.transform);
-                            }
-                            if (windowBase != null)
-                            {
-                                if (!windowBase.IsInitialized())
+                                obj = Object.Instantiate(res);
+                                windowBase = obj.GetComponent<WindowBase>();
+                                if (windowBase != null)
                                 {
-                                    AddCollider(windowBase);//添加遮罩
-                                    windowBase.Init(useCameraRender?m_UICamera:null);
-                                } 
-                                this.AddToExitSquenceList(this.m_windowSequence);
-                                int openorder = GetWindowOpenOrder(this.m_windowSequence);
-                                windowBase.Appear(this.m_windowSequence, openorder, appear);
-                                if (windowBase.WindowInfo.Group > 0)
-                                {
-                                    this.CloseGroupWindow(windowBase.WindowInfo.Group,false);
+                                    windowBase.m_isUsePool = isusePool;
                                 }
-                                this.m_windows.Add(windowBase);
+                                string uiname = GetWindowName(name);
+                                obj.name = uiname;
+                                if (obj.transform.parent != this.m_root.transform)
+                                {
+                                    obj.transform.SetParent(m_root.transform);
+                                }
+                                if (windowBase != null)
+                                {
+                                    if (!windowBase.IsInitialized())
+                                    {
+                                        AddCollider(windowBase); //添加遮罩
+                                        windowBase.Init(useCameraRender ? m_UICamera : null);
+                                    }
+                                    this.AddToExitSquenceList(this.m_windowSequence);
+                                    int openorder = GetWindowOpenOrder(this.m_windowSequence);
+                                    windowBase.Appear(this.m_windowSequence, openorder, appear);
+                                    if (windowBase.WindowInfo.Group > 0)
+                                    {
+                                        this.CloseGroupWindow(windowBase.WindowInfo.Group, false);
+                                    }
+                                    this.m_windows.Add(windowBase);
+                                }
+                                this.m_windowSequence++;
                             }
-                            this.m_windowSequence++;
-                        }
-                    }, (int) AssetBundleLoadType.LoadBundleFromFile, (int) CachePriority.NoCache);
+                        }, (int) AssetBundleLoadType.LoadBundleFromFile, (int) CachePriority.NoCache);
 
                 }
                 else
@@ -410,15 +449,15 @@ namespace UIFrameWork
                             {
                                 if (!windowBase.IsInitialized())
                                 {
-                                    AddCollider(windowBase);//添加遮罩
-                                    windowBase.Init(useCameraRender?m_UICamera:null);
-                                } 
+                                    AddCollider(windowBase); //添加遮罩
+                                    windowBase.Init(useCameraRender ? m_UICamera : null);
+                                }
                                 this.AddToExitSquenceList(this.m_windowSequence);
                                 int openorder = GetWindowOpenOrder(this.m_windowSequence);
                                 windowBase.Appear(this.m_windowSequence, openorder, appear);
                                 if (windowBase.WindowInfo.Group > 0)
                                 {
-                                    this.CloseGroupWindow(windowBase.WindowInfo.Group,false);
+                                    this.CloseGroupWindow(windowBase.WindowInfo.Group, false);
                                 }
                                 this.m_windows.Add(windowBase);
                             }
@@ -426,6 +465,19 @@ namespace UIFrameWork
                         }
                     });
                 }
+            }
+            else
+            {
+                this.AddToExitSquenceList(this.m_windowSequence);
+                int openorder = GetWindowOpenOrder(this.m_windowSequence);
+                windowBase = obj.GetComponent<WindowBase>();
+                windowBase.Appear(this.m_windowSequence, openorder, appear);
+                if (windowBase.WindowInfo.Group > 0)
+                {
+                    this.CloseGroupWindow(windowBase.WindowInfo.Group, false);
+                }
+                this.m_windows.Add(windowBase);
+                this.m_windowSequence++;
             }
         }
 

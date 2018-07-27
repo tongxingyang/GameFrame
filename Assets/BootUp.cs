@@ -11,6 +11,7 @@ public class BootUp : MonoBehaviour
 
     void Start()
     {
+        DontDestroyOnLoad(this.gameObject);
         SingletonMono<GameFrameWork>.GetInstance();
         //Singleton<EventManager>.GetInstance().AddEventListener(enEventID.Test, TestEventManager1);
         //Singleton<EventManager>.GetInstance().AddEventListener(enEventID.Test, TestEventManager2);

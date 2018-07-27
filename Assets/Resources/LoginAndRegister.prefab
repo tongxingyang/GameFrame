@@ -105,10 +105,10 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224492154653360468}
-  - component: {fileID: 114894030694768660}
   - component: {fileID: 223097195955851832}
   - component: {fileID: 114869393851741094}
   - component: {fileID: 114313041317867970}
+  - component: {fileID: 114019850752010318}
   m_Layer: 5
   m_Name: LoginAndRegister
   m_TagString: Untagged
@@ -663,6 +663,32 @@ MonoBehaviour:
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
+--- !u!114 &114019850752010318
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1153341003430646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15f4a14d9f51a8244b880a142a326892, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WindowInfo:
+    Type: 0
+    Name: LoginAndRegister
+    ColliderMode: 0
+    IsSinglen: 1
+    Priority: 0
+    Group: 0
+    FullScreenBG: 1
+    DisableInput: 0
+    HideUnderForms: 0
+    AlwaysKeepVisible: 0
+  m_referenceResolution: {x: 960, y: 640}
+  m_isUsePool: 1
+  m_isModel: 0
+  m_canvasScaler: {fileID: 0}
 --- !u!114 &114037369095832980
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1769,34 +1795,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &114894030694768660
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1153341003430646}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15f4a14d9f51a8244b880a142a326892, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  WindowInfo:
-    Type: 0
-    PerfabPath: 
-    Name: 
-    ColliderMode: 0
-    IsSinglen: 0
-    Priority: 0
-    Group: 0
-    FullScreenBG: 1
-    DisableInput: 0
-    HideUnderForms: 0
-    AlwaysKeepVisible: 0
-  m_referenceResolution: {x: 1024, y: 768}
-  m_isUsePool: 0
-  m_isModel: 0
-  m_canvasScaler: {fileID: 0}
-  m_enableInput: 1
 --- !u!114 &114919007509826170
 MonoBehaviour:
   m_ObjectHideFlags: 1
