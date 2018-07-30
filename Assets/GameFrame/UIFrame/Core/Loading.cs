@@ -5,7 +5,9 @@ using UIFrameWork;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-
+/// <summary>
+/// 加载Scene的Loading进度条 跳转场景
+/// </summary>
 public class Loading : WindowBase
 {
     private Text loadingText;

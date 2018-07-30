@@ -344,7 +344,7 @@ MonoBehaviour:
     Name: Loading
     ColliderMode: 0
     IsSinglen: 1
-    Priority: 9
+    Priority: 1
     Group: 0
     FullScreenBG: 1
     DisableInput: 1
@@ -386,7 +386,7 @@ Canvas:
   m_GameObject: {fileID: 1742411830114438}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 1
+  m_RenderMode: 0
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 1

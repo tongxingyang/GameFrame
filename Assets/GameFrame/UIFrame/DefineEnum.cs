@@ -56,6 +56,7 @@ namespace UIFrameWork
         MainUI,
         FriendUI,
         Loading,
+        UILoading,
     }
     public enum enWindowHideFlag
     {
