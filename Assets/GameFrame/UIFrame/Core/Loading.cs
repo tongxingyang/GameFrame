@@ -56,9 +56,9 @@ public class Loading : WindowBase
         int toProgress = 0;
         _asyncOperation = SceneManager.LoadSceneAsync(_loadingContent.SceneName);
         _asyncOperation.allowSceneActivation = false;
-        while (_asyncOperation.priority<0.9f)
+        while (_asyncOperation.progress<0.9f)
         {
-            toProgress = (int) _asyncOperation.priority * 100;
+            toProgress = (int) _asyncOperation.progress * 100;
             while (displayProgress<toProgress)
             {
                 ++displayProgress;
@@ -74,9 +74,14 @@ public class Loading : WindowBase
             yield return new WaitForEndOfFrame();
         }
         _asyncOperation.allowSceneActivation = true;
-        Singleton<WindowManager>.GetInstance().CloseWindow(false,"Loading");
         _asyncOperation = null;
+        //切换完成的回调
+        if (_loadingContent.CallBack != null)
+        {
+            _loadingContent.CallBack();
+        }
         Clear();
+        Singleton<WindowManager>.GetInstance().CloseWindow(false,"Loading");
     }
 
     private void Clear()

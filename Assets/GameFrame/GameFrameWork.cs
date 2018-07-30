@@ -3,10 +3,9 @@ using GameFrame;
 using UIFrameWork;
 //using LuaInterface;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using System.Collections;
-using System.Text.RegularExpressions;
 using GameFrame.ConfigManager;
+using SceneManager = GameFrame.Scene.SceneManager;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
 {
@@ -127,16 +126,16 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         //启动lua虚拟机 开始执行lua函数
         SingletonMono<LuaManager>.GetInstance().InitStart();
         Singleton<ConfigManager>.GetInstance().InitConfig();
-        StartCoroutine(ChangeScence());
+        ChangeScence();
     }
 
  
-    IEnumerator ChangeScence()
+    void ChangeScence()
     {
-        Singleton<WindowManager>.GetInstance();
-        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("Login", LoadSceneMode.Single);
-        yield return asyncOperation;
-        Singleton<WindowManager>.GetInstance().OpenWindow("LoginAndRegister",true);
+        Singleton<SceneManager>.GetInstance().LoadScene("Login", () =>
+        {
+            Singleton<WindowManager>.GetInstance().OpenWindow("LoginAndRegister",true);
+        });
     }
     void PlayLogoVider(string filename,bool cancancel)
     {
@@ -192,16 +191,6 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<WindowManager>.GetInstance().Update();
         Singleton<ResourceManager>.GetInstance().Update();
         Singleton<PhotonManager>.GetInstance().Update();
-
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            Singleton<WindowManager>.GetInstance().CloseWindow(true,"LoginAndRegister");
-        }
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            Singleton<WindowManager>.GetInstance().OpenWindow("LoginAndRegister",true);
-        }
-        
     }
 
     void LateUpdate()
