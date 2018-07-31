@@ -5,6 +5,7 @@ using UIFrameWork;
 using UnityEngine;
 using System.Collections;
 using GameFrame.ConfigManager;
+using GameFrame.NetWork;
 using SceneManager = GameFrame.Scene.SceneManager;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
@@ -178,7 +179,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<EventManager>.GetInstance();
         Singleton<WindowManager>.GetInstance();
         Singleton<ResourceManager>.GetInstance();
-        Singleton<PhotonManager>.GetInstance();
+        SingletonMono<ServerManager>.GetInstance();
     }
 
     void Update()
@@ -190,7 +191,6 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         }
         Singleton<WindowManager>.GetInstance().Update();
         Singleton<ResourceManager>.GetInstance().Update();
-        Singleton<PhotonManager>.GetInstance().Update();
     }
 
     void LateUpdate()
@@ -215,6 +215,6 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
     private void OnApplicationQuit()
     {
         SingletonMono<LuaManager>.GetInstance().Close();
-        Singleton<PhotonManager>.GetInstance().OnDestory();
+        SingletonMono<ServerManager>.GetInstance().OnDestory();
     }
 }

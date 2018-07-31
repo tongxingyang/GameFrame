@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Common;
-using Common.OperationCode;
+using Common.Model;
 using GameFrame;
 using UIFrameWork;
 using UnityEngine;
@@ -84,7 +84,7 @@ public class MainUI : WindowBase
         
         #endregion
         //ping 
-        ip = Singleton<PhotonManager>.Instance.GetServerIP();
+//        ip = Singleton<PhotonManager>.Instance.GetServerIP();
         //ip = "115.239.211.112";
     }
 
@@ -135,7 +135,7 @@ public class MainUI : WindowBase
                         playerInfo.RunNum = 0;
 
                         //发送数据模型
-                        Singleton<PhotonManager>.Instance.SendReguest((byte)OperationCode.PlayerInfo, (byte)PlayerInfoOpCode.Create, CommonTool.Serialize<PlayerInfoModel>(playerInfo));
+//                        Singleton<PhotonManager>.Instance.SendReguest((byte)OperationCode.PlayerInfo, (byte)PlayerInfoOpCode.Create, CommonTool.Serialize<PlayerInfoModel>(playerInfo));
                         SetCreateButton(false);
                     });
             }
@@ -173,9 +173,7 @@ public class MainUI : WindowBase
             (a, b, c) =>
             {
                 //发送获取好友列表的请求 在返回之后在打开UI
-                Singleton<PhotonManager>.GetInstance().SendReguest((byte)OperationCode.PlayerInfo,(byte)PlayerInfoOpCode.GetFriend,GameData.PlayerInfoModel.ID);
-               // WindowManager.GetInstance().OpenWindow(new WindowInfo(WindowType.FriendUI, ShowMode.Normal,
-               //     OpenAction.DoNothing, ColliderMode.Node));
+//                Singleton<PhotonManager>.GetInstance().SendReguest((byte)OperationCode.PlayerInfo,(byte)PlayerInfoOpCode.GetFriend,GameData.PlayerInfoModel.ID);
             });
     }
 }

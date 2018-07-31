@@ -37,28 +37,28 @@ public class FriendUI : WindowBase
         //感觉content传过来的数据没用 用全局就行 打开之前全局赋值更新过了 // 以后有更改就更新本地数据
         friendsContent = context as FriendsContent;
         //好友
-        if (GameData.FriendList != null)
-        {
-            foreach (FriendModel friendModel in GameData.FriendList)
-            {
-                GameObject obj = GameObject.Instantiate(FriendItemObj);
-                FriendItem friend = obj.GetComponent<FriendItem>();
-                friend.Init(friendModel);
-                FriendItemList.Add(friend);
-                obj.transform.SetParent(FriendContent);
-            }
-        }
-        // todo 好友请求
-        if (GameData.AddFriendList != null)
-        {
-            foreach (FriendModel friendModel in GameData.AddFriendList)
-            {
-                GameObject obj = GameObject.Instantiate(FriendAddItemObj);
-                NewFriendItem friend = obj.GetComponent<NewFriendItem>();
-                friend.Init(friendModel);
-                AddFriendItemList.Add(friend);
-                obj.transform.SetParent(NewFriendContent);
-            }
-        }
+//        if (GameData.FriendList != null)
+//        {
+//            foreach (FriendModel friendModel in GameData.FriendList)
+//            {
+//                GameObject obj = GameObject.Instantiate(FriendItemObj);
+//                FriendItem friend = obj.GetComponent<FriendItem>();
+//                friend.Init(friendModel);
+//                FriendItemList.Add(friend);
+//                obj.transform.SetParent(FriendContent);
+//            }
+//        }
+//        // todo 好友请求
+//        if (GameData.AddFriendList != null)
+//        {
+//            foreach (FriendModel friendModel in GameData.AddFriendList)
+//            {
+//                GameObject obj = GameObject.Instantiate(FriendAddItemObj);
+//                NewFriendItem friend = obj.GetComponent<NewFriendItem>();
+//                friend.Init(friendModel);
+//                AddFriendItemList.Add(friend);
+//                obj.transform.SetParent(NewFriendContent);
+//            }
+//        }
     }
 }

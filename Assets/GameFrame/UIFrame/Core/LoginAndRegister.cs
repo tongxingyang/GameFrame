@@ -1,7 +1,9 @@
 ﻿using System;
 using Common;
-using Common.OperationCode;
+using Common.Model;
+using Common.Protocol;
 using GameFrame;
+using GameFrame.NetWork;
 using UIFrameWork;
 using UnityEngine;
 using UnityEngine.UI;
@@ -94,7 +96,7 @@ public class LoginAndRegister : WindowBase
         //禁用掉按钮的点击事件
         SetLoginButton(false);
         //向服务器发送数据模型验证账户是否存在
-        Singleton<PhotonManager>.Instance.SendReguest((byte)OperationCode.Account, (byte)AccountOpCode.Login, CommonTool.Serialize<AccountModel>(GameData.AccountData));
+        SingletonMono<ServerManager>.Instance.Send(Protocol.Account, AccoutProtocal.LOGIN, 0 ,GameData.AccountData);
     }
 
     private void OnLoginRegister()
@@ -123,8 +125,7 @@ public class LoginAndRegister : WindowBase
         //禁用掉按钮的点击事件
         SetLoginButton(false);
         //向服务器发送数据模型验证账户是否存在
-        Singleton<PhotonManager>.Instance.SendReguest((byte)OperationCode.Account, (byte)AccountOpCode.Register, CommonTool.Serialize<AccountModel>(GameData.AccountData));
-
+        SingletonMono<ServerManager>.Instance.Send<AccountModel>(Protocol.Account, AccoutProtocal.REGISTER, 0 ,GameData.AccountData);
     }
 
     private void OnRegister()

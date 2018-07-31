@@ -45,7 +45,7 @@ namespace GameFrame
             return m_instance;
         }
 
-        public void OnDestory()
+        public virtual void OnDestory()
         {
             UnInit();
         }

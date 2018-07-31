@@ -110,8 +110,9 @@ namespace GameFrame
     
         void StartMain()
         {
-            lua.DoFile("Test/Main.lua",true);
-            LuaFunction main = lua.GetFunction("Main");
+//            lua.DoFile("Test/Main.lua",LuaConst.LuaBundleMode);
+            lua.DoFile("Main.lua",LuaConst.LuaBundleMode);
+            LuaFunction main = lua.GetFunction("main");
             main.Call();
             main.Dispose();
             main = null;
