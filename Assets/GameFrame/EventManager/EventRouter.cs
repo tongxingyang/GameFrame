@@ -67,6 +67,8 @@ namespace GameFrame
             return result;
         }
 
+        #region Action
+
         public void AddEventHandler(string eventType, Action handler)
         {
             if (OnHandlerAdding(eventType, handler))
@@ -102,7 +104,6 @@ namespace GameFrame
                 m_eventMap[eventType] = (Action<T1, T2, T3, T4>)Delegate.Combine((Action<T1, T2, T3, T4>)m_eventMap[eventType], handler);
             }
         }
-
         public void RemoveEventHandler(string eventType, Action handler)
         {
             if (OnHandlerRemoving(eventType, handler))
@@ -138,7 +139,7 @@ namespace GameFrame
                 m_eventMap[eventType] = (Action<T1, T2, T3, T4>)Delegate.Remove((Action<T1, T2, T3, T4>)m_eventMap[eventType], handler);
             }
         }
-        public void BroadCastEvent(string eventType)
+        public void BroadCastEventAction(string eventType)
         {
             if (OnBroadCasting(eventType))
             {
@@ -149,7 +150,7 @@ namespace GameFrame
                 }
             }
         }
-        public void BroadCastEvent<T>(string eventType, T args1)
+        public void BroadCastEventAction<T>(string eventType, T args1)
         {
             if (OnBroadCasting(eventType))
             {
@@ -160,7 +161,7 @@ namespace GameFrame
                 }
             }
         }
-        public void BroadCastEvent<T1, T2>(string eventType, T1 args1, T2 args2)
+        public void BroadCastEventAction<T1, T2>(string eventType, T1 args1, T2 args2)
         {
             if (OnBroadCasting(eventType))
             {
@@ -171,7 +172,7 @@ namespace GameFrame
                 }
             }
         }
-        public void BroadCastEvent<T1, T2, T3>(string eventType, T1 args1, T2 args2, T3 args3)
+        public void BroadCastEventAction<T1, T2, T3>(string eventType, T1 args1, T2 args2, T3 args3)
         {
             if (OnBroadCasting(eventType))
             {
@@ -182,7 +183,7 @@ namespace GameFrame
                 }
             }
         }
-        public void BroadCastEvent<T1, T2, T3, T4>(string eventType, T1 args1, T2 args2, T3 args3, T4 args4)
+        public void BroadCastEventAction<T1, T2, T3, T4>(string eventType, T1 args1, T2 args2, T3 args3, T4 args4)
         {
             if (OnBroadCasting(eventType))
             {
@@ -193,5 +194,184 @@ namespace GameFrame
                 }
             }
         }
+
+        #endregion
+        
+        #region Func
+
+        public void AddEventHandler<T>(string eventType, Func<T> handler)
+        {
+            if (OnHandlerAdding(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T>)Delegate.Combine((Func<T>)m_eventMap[eventType], handler);
+            }
+        }
+        public void AddEventHandler<T1, T2>(string eventType, Func<T1, T2> handler)
+        {
+            if (OnHandlerAdding(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1, T2>)Delegate.Combine((Func<T1, T2>)m_eventMap[eventType], handler);
+            }
+        }
+        public void AddEventHandler<T1, T2, T3>(string eventType, Func<T1, T2, T3> handler)
+        {
+            if (OnHandlerAdding(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1, T2, T3>)Delegate.Combine((Func<T1, T2, T3>)m_eventMap[eventType], handler);
+            }
+        }
+        public void AddEventHandler<T1, T2, T3, T4>(string eventType, Func<T1, T2, T3, T4> handler)
+        {
+            if (OnHandlerAdding(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1, T2, T3, T4>)Delegate.Combine((Func<T1, T2, T3, T4>)m_eventMap[eventType], handler);
+            }
+        }
+        public void AddEventHandler<T1, T2, T3, T4,T5>(string eventType, Func<T1, T2, T3, T4,T5> handler)
+        {
+            if (OnHandlerAdding(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1, T2, T3, T4,T5>)Delegate.Combine((Func<T1, T2, T3, T4,T5>)m_eventMap[eventType], handler);
+            }
+        }
+
+        public void RemoveEventHandler<T1>(string eventType, Func<T1> handler)
+        {
+            if (OnHandlerRemoving(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1>)Delegate.Remove((Func<T1>)m_eventMap[eventType], handler);
+            }
+        }
+        public void RemoveEventHandler<T1, T2>(string eventType, Func<T1, T2> handler)
+        {
+            if (OnHandlerRemoving(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1, T2>)Delegate.Remove((Func<T1, T2>)m_eventMap[eventType], handler);
+            }
+        }
+        public void RemoveEventHandler<T1, T2, T3>(string eventType, Func<T1, T2, T3> handler)
+        {
+            if (OnHandlerRemoving(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1, T2, T3>)Delegate.Remove((Func<T1, T2, T3>)m_eventMap[eventType], handler);
+            }
+        }
+        public void RemoveEventHandler<T1, T2, T3, T4>(string eventType, Func<T1, T2, T3, T4> handler)
+        {
+            if (OnHandlerRemoving(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1, T2, T3, T4>)Delegate.Remove((Func<T1, T2, T3, T4>)m_eventMap[eventType], handler);
+            }
+        }
+        public void RemoveEventHandler<T1, T2, T3, T4,T5>(string eventType, Func<T1, T2, T3, T4,T5> handler)
+        {
+            if (OnHandlerRemoving(eventType, handler))
+            {
+                m_eventMap[eventType] = (Func<T1, T2, T3, T4,T5>)Delegate.Remove((Func<T1, T2, T3, T4,T5>)m_eventMap[eventType], handler);
+            }
+        }
+        
+        public T BroadCastEventFunc<T>(string eventType)
+        {
+            if (OnBroadCasting(eventType))
+            {
+                Func<T> action = m_eventMap[eventType] as Func<T>;
+                if (action != null)
+                {
+                    return action();
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                }
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+            }
+            return (T)new object();
+        }
+        public T2 BroadCastEventFunc<T1,T2>(string eventType,T1 t1)
+        {
+            if (OnBroadCasting(eventType))
+            {
+                Func<T1,T2> action = m_eventMap[eventType] as Func<T1,T2>;
+                if (action != null)
+                {
+                    return action(t1);
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                }
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+            }
+            return (T2)new object();
+        }
+        public T3 BroadCastEventFunc<T1,T2,T3>(string eventType,T1 t1,T2 t2)
+        {
+            if (OnBroadCasting(eventType))
+            {
+                Func<T1,T2,T3> action = m_eventMap[eventType] as Func<T1,T2,T3>;
+                if (action != null)
+                {
+                    return action(t1,t2);
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                }
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+            }
+            return (T3)new object();
+        }
+        public T4 BroadCastEventFunc<T1,T2,T3,T4>(string eventType,T1 t1,T2 t2,T3 t3)
+        {
+            if (OnBroadCasting(eventType))
+            {
+                Func<T1,T2,T3,T4> action = m_eventMap[eventType] as Func<T1,T2,T3,T4>;
+                if (action != null)
+                {
+                    return action(t1,t2,t3);
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                }
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+            }
+            return (T4)new object();
+        }
+        public T5 BroadCastEventFunc<T1,T2,T3,T4,T5>(string eventType,T1 t1,T2 t2,T3 t3,T4 t4)
+        {
+            if (OnBroadCasting(eventType))
+            {
+                Func<T1,T2,T3,T4,T5> action = m_eventMap[eventType] as Func<T1,T2,T3,T4,T5>;
+                if (action != null)
+                {
+                    return action(t1,t2,t3,t4);
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                }
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+            }
+            return (T5)new object();
+        }
+        #endregion
+        
     }
 }

@@ -88,6 +88,12 @@ namespace GameFrame
             m_events.Add(@event);
             return @event;
         }
+
+        public void ClearAllEvents()
+        {
+            m_events = null;
+            this.m_eventMap = null;
+        }
     }
 
 }

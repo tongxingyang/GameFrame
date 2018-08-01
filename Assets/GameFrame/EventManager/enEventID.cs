@@ -8,8 +8,6 @@ namespace GameFrame
     {
         None,
         Test,
-        UI_OnFormPriorityChanged,
-        UI_OnFormVisibleChanged,
     }
 
 }

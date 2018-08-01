@@ -177,6 +177,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<LauncherString>.GetInstance();
         Singleton<TimeManager>.GetInstance();
         Singleton<EventManager>.GetInstance();
+        Singleton<EventRouter>.GetInstance();
         Singleton<WindowManager>.GetInstance();
         Singleton<ResourceManager>.GetInstance();
         SingletonMono<ServerManager>.GetInstance();
@@ -214,6 +215,8 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     private void OnApplicationQuit()
     {
+        Singleton<EventRouter>.GetInstance().ClearAllEvents();
+        Singleton<EventManager>.GetInstance().ClearAllEvents();
         SingletonMono<LuaManager>.GetInstance().Close();
         SingletonMono<ServerManager>.GetInstance().OnDestory();
     }
