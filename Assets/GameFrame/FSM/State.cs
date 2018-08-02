@@ -64,9 +64,9 @@ namespace GameFrame.FSM
         {
             Singleton<EventRouter>.GetInstance().AddEventHandler(eventType,handler);
         }
-        public void AddEvent<T>(string eventType, Action<T> handler)
+        public void AddEvent<T1>(string eventType, Action<T1> handler)
         {
-            Singleton<EventRouter>.GetInstance().AddEventHandler<T>(eventType,handler);
+            Singleton<EventRouter>.GetInstance().AddEventHandler<T1>(eventType,handler);
         }
         public void AddEvent<T1, T2>(string eventType, Action<T1, T2> handler)
         {
@@ -104,9 +104,9 @@ namespace GameFrame.FSM
         {
             Singleton<EventRouter>.GetInstance().BroadCastEventAction(eventType);
         }
-        public void TriggerEventAction<T>(string eventType, T args1)
+        public void TriggerEventAction<T1>(string eventType, T1 args1)
         {
-            Singleton<EventRouter>.GetInstance().BroadCastEventAction<T>(eventType,args1);
+            Singleton<EventRouter>.GetInstance().BroadCastEventAction<T1>(eventType,args1);
         }
         public void TriggerEventAction<T1, T2>(string eventType, T1 args1, T2 args2)
         {
@@ -125,9 +125,9 @@ namespace GameFrame.FSM
         
         #region Func
 
-        public void AddEvent<T>(string eventType, Func<T> handler)
+        public void AddEvent<T1>(string eventType, Func<T1> handler)
         {
-            Singleton<EventRouter>.GetInstance().AddEventHandler<T>(eventType,handler);
+            Singleton<EventRouter>.GetInstance().AddEventHandler<T1>(eventType,handler);
         }
         public void AddEvent<T1, T2>(string eventType, Func<T1, T2> handler)
         {
@@ -165,9 +165,9 @@ namespace GameFrame.FSM
         {
             Singleton<EventRouter>.GetInstance().RemoveEventHandler<T1,T2,T3,T4,T5>(eventType,handler);
         }
-        public T TriggerEventFunc<T>(string eventType)
+        public T1 TriggerEventFunc<T1>(string eventType)
         {
-            return Singleton<EventRouter>.GetInstance().BroadCastEventFunc<T>(eventType);
+            return Singleton<EventRouter>.GetInstance().BroadCastEventFunc<T1>(eventType);
         }
         public T2 TriggerEventFunc<T1,T2>(string eventType,T1 t1)
         {
