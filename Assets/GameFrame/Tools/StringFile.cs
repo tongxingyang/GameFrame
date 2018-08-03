@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace GameFrame
 {
-	public class StringFile : MonoBehaviour {
+	public class StringFile {
 		public const string ErrorStr = "null = ";
 		private Dictionary<string, string> strings;
 
