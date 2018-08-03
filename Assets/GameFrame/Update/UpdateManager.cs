@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using Junfine.Debuger;
 using UIFrameWork;
 using UnityEngine;
 using UnityEngine.UI;
@@ -1174,7 +1173,7 @@ namespace GameFrame
             }
             itr.Dispose();
             isCopyDone = true;
-            Debuger.LogError("拷贝成功");
+            UnityEngine.Debug.LogError("拷贝成功");
         }
         
         IEnumerator CheckSDK()

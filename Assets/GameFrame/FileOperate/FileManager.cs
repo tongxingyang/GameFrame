@@ -6,7 +6,6 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using GameFrame;
-using Junfine.Debuger;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using Path = System.IO.Path;
@@ -339,7 +338,7 @@ namespace GameFrame
                 }
                 else
                 {
-                    Debuger.LogError(w.error);
+                    UnityEngine.Debug.LogError(w.error);
                 }
             }
         }

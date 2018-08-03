@@ -4,8 +4,10 @@ using UIFrameWork;
 //using LuaInterface;
 using UnityEngine;
 using System.Collections;
+using GameFrame.Common;
 using GameFrame.ConfigManager;
 using GameFrame.NetWork;
+using GameFrameDebuger;
 using SceneManager = GameFrame.Scene.SceneManager;
 
 public class GameFrameWork : SingletonMono<GameFrameWork>
@@ -100,6 +102,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void Awake()
     {
+        InitDebuger();
         InitRenderFeature();  
         InitBaseSys();
         Util.SetResolution(Resolution);
@@ -110,6 +113,12 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
     }
 
+    private void InitDebuger()
+    {
+        Debuger.Init(Platform.PERSISTENT_DATA_PATH + "/DebugerLog/", new UnityDebugerConsole());
+        Debuger.EnableLog = true;
+        Debuger.EnableSave = true;
+    }
     void Start()
     {
         #if UNITY_ANDROID || UNITY_IPHONE

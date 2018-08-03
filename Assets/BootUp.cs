@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using GameFrame;
-using Junfine.Debuger;
 using UnityEngine;
 
 public class BootUp : MonoBehaviour

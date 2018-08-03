@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
-using Junfine.Debuger;
 using UnityEngine;
 
 namespace GameFrame
@@ -82,7 +81,7 @@ namespace GameFrame
             }
             catch (Exception e)
             {
-                Debuger.LogError(e.Message);
+                UnityEngine.Debug.LogError(e.Message);
                 if (ContentFileStream != null)
                 {
                     ContentFileStream.Close();
