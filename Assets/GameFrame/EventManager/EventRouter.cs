@@ -289,7 +289,7 @@ namespace GameFrame
             {
                 UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
-            return (T)new object();
+            return default(T);
         }
         public T2 BroadCastEventFunc<T1,T2>(string eventType,T1 t1)
         {
@@ -309,7 +309,7 @@ namespace GameFrame
             {
                 UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
-            return (T2)new object();
+            return default(T2);
         }
         public T3 BroadCastEventFunc<T1,T2,T3>(string eventType,T1 t1,T2 t2)
         {
@@ -329,7 +329,7 @@ namespace GameFrame
             {
                 UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
-            return (T3)new object();
+            return default(T3);
         }
         public T4 BroadCastEventFunc<T1,T2,T3,T4>(string eventType,T1 t1,T2 t2,T3 t3)
         {
@@ -349,7 +349,7 @@ namespace GameFrame
             {
                 UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
-            return (T4)new object();
+            return default(T4);
         }
         public T5 BroadCastEventFunc<T1,T2,T3,T4,T5>(string eventType,T1 t1,T2 t2,T3 t3,T4 t4)
         {
@@ -369,7 +369,7 @@ namespace GameFrame
             {
                 UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
-            return (T5)new object();
+            return default(T5);
         }
         #endregion
         

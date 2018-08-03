@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using GameFrame;
+using GameFrameDebuger;
 using UIFrameWork;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,6 +37,17 @@ namespace UIFrameWork
         private bool m_isClosed;
         private bool m_isHided;
         private bool m_isActivied;
+        
+        private float m_closeAniClipTime;
+        private float m_hideAnimClipTime;
+        private WindowContext closeWindowContext;
+        private WindowContext hideWindowContext;
+
+        [SerializeField] private AnimationClip m_openAnimClip;
+        [SerializeField] private AnimationClip m_closeAnimClip;
+        [SerializeField] private AnimationClip m_hideAnimClip;
+        
+        
         /// <summary>
         /// 当前界面的canvas
         /// </summary>
@@ -67,6 +79,28 @@ namespace UIFrameWork
         private enWindowState windowState = enWindowState.None;
         public WindowStateChangeEvent WindowStateChange;
         private Transform _CacheTransform;
+        private bool m_isPlayOpen = false;
+        private bool m_isPlayClose = false;
+        private bool m_isPlayHide = false;
+
+        public bool IsPlayOpen
+        {
+            get { return m_isPlayOpen; }
+            set { m_isPlayOpen = value; }
+        }
+
+        public bool IsPlayClose
+        {
+            get { return m_isPlayClose; }
+            set { m_isPlayClose = value; }
+        }
+        public bool IsPlayHide
+        {
+            get { return m_isPlayHide; }
+            set { m_isPlayHide = value; }
+        }
+        
+        
         public Transform CacheTransform
         {
             get
@@ -122,6 +156,26 @@ namespace UIFrameWork
         /// </summary>
         public void CustomUpdate()
         {
+            if (m_closeAniClipTime > 0)
+            {
+                m_closeAniClipTime -= Time.deltaTime;
+                if (m_closeAniClipTime <= 0)
+                {
+                    m_closeAniClipTime = 0;
+                    this.m_isPlayClose = false;
+                    CloseWorker();
+                }
+            }
+            if (m_hideAnimClipTime > 0)
+            {
+                m_hideAnimClipTime -= Time.deltaTime;
+                if (m_hideAnimClipTime <= 0)
+                {
+                    m_hideAnimClipTime = 0;
+                    this.m_isPlayHide = false;
+                    HideWorker();
+                }
+            }
             OnWindowCustomUpdate();
         }
         /// <summary>
@@ -182,13 +236,28 @@ namespace UIFrameWork
                 return;
             }
             this.m_sequence = sequence;
-            this.gameObject.SetActive(true);
+            this.m_isPlayClose = false;
+            this.m_isPlayOpen = false;
             this.m_isHided = false;
             this.m_isClosed = false;
             this.m_isActivied = true;
             windowState= enWindowState.Appear;
             this.SetDisplayOrder(openOrder);
             PlayAppearMusic();
+            this.gameObject.SetActive(true);
+            if (m_openAnimClip != null)
+            {
+                var animation = GetComponent<Animation>();
+                if (animation != null)
+                {
+                    animation.Play(m_openAnimClip.name);
+                    this.m_isPlayOpen = true;
+                }
+                else
+                {
+                    Debuger.LogError("设置了OpenAniClip，但是未找到 Animation组件！");
+                }
+            }
             if (this.m_canvas != null)
             {
                 this.m_canvas.enabled = true;
@@ -211,22 +280,27 @@ namespace UIFrameWork
             {
                 return;
             }
-            this.m_isHided = true;
-            this.m_isClosed = false;
-            this.m_isActivied = false;
-            windowState= enWindowState.Hide;
-            HideComponent();
-            PlayHideMusic();
-            if (this.m_canvas != null)
+            m_hideAnimClipTime = 0;
+            hideWindowContext = context;
+            if (m_hideAnimClip != null)
             {
-                this.m_canvas.enabled = false;
+                var animation = GetComponent<Animation>();
+                if (animation != null)
+                {
+                    animation.Play(m_hideAnimClip.name);
+                    m_hideAnimClipTime = m_hideAnimClip.length;
+                    this.m_isPlayHide = true;
+                }
+                else
+                {
+                    Debuger.LogError("设置了CloseAniClip，但是未找到 Animation组件！");
+                    HideWorker();
+                }
             }
-            this.TryEnableInput(false);
-            
-            Singleton<WindowManager>.GetInstance().RecycleWindow(this);
-            this.gameObject.SetActive(false);
-            OnHide(context);
-            Debug.Log("<color=#FFFF00>" + "Hide "+WindowInfo.Name +" ................."+ "</color>");
+            else
+            {
+                HideWorker();
+            }
         }
         /// <summary>
         /// 不使用缓存处理调用此方法
@@ -241,19 +315,62 @@ namespace UIFrameWork
             {
                 return;
             }
+            this.m_closeAniClipTime = 0;
+            this.closeWindowContext = context;
+            if (m_closeAnimClip != null)
+            {
+                var animation = GetComponent<Animation>();
+                if (animation != null)
+                {
+                    animation.Play(m_closeAnimClip.name);
+                    m_closeAniClipTime = m_closeAnimClip.length;
+                    this.m_isPlayClose = true;
+                }
+                else
+                {
+                    Debuger.LogError("设置了CloseAniClip，但是未找到 Animation组件！");
+                    CloseWorker();
+                }
+            }
+            else
+            {
+                CloseWorker();
+            }
+        }
+
+        public void CloseWorker()
+        {
             this.m_isHided = true;
             this.m_isClosed = true;
             this.m_isActivied = false;
             windowState= enWindowState.Close;
             CloseComponent();
             PlayCloseMusic();
-            OnClose(context);
+            OnClose(this.closeWindowContext);
             Debug.Log("<color=#FFFF00>" + "Close "+WindowInfo.Name +" ................."+ "</color>");
             this.gameObject.SetActive(false);
             Singleton<WindowManager>.GetInstance().RecycleWindow(this);
             DestroyImmediate(CacheGameObject);
         }
 
+        public void HideWorker()
+        {
+            this.m_isHided = true;
+            this.m_isClosed = false;
+            this.m_isActivied = false;
+            windowState= enWindowState.Hide;
+            HideComponent();
+            PlayHideMusic();
+            if (this.m_canvas != null)
+            {
+                this.m_canvas.enabled = false;
+            }
+            this.TryEnableInput(false);
+            Singleton<WindowManager>.GetInstance().RecycleWindow(this);
+            this.gameObject.SetActive(false);
+            OnHide(this.hideWindowContext);
+            Debug.Log("<color=#FFFF00>" + "Hide "+WindowInfo.Name +" ................."+ "</color>");
+        }
         protected virtual void OnInit(Camera UICamera){}
         protected virtual void OnAppear(int sequence, int openOrder,WindowContext context){}
         protected virtual void OnHide(WindowContext context){}
