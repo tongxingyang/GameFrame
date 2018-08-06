@@ -50,7 +50,7 @@ namespace UIFrameWork
     public enum enWindowType
     {
         LoginAndRegister,
-        GameInfo,
+        MessageBox,
         Mail,
         Rank,
         MainUI,

@@ -20,6 +20,8 @@ namespace UIFrameWork
         private EventSystem m_eventSystem;
         private Camera m_UICamera;
 
+        private Queue<MessageBoxContent> messageBoxContexts = new Queue<MessageBoxContent>();
+        
         public Camera UICamera
         {
             get { return m_UICamera; }
@@ -128,6 +130,7 @@ namespace UIFrameWork
         }
         
         List<WindowBase> removeList = new List<WindowBase>();
+        
         public void CloseWindow(bool isforce,string name, WindowContext windowContext = null)
         {
             removeList.Clear();
@@ -287,6 +290,7 @@ namespace UIFrameWork
             }
             return null;
         }
+       
         private WindowBase GetHidedWindow(string name)
         {
             for (int i = 0; i < this.m_windows.Count; i++)
@@ -483,46 +487,67 @@ namespace UIFrameWork
 
         public void AddCollider(WindowBase windowBase)
         {
-                Image image = null;
-                Button button = null;
-                GameObject go = null;
-                switch (windowBase.WindowInfo.ColliderMode)
-                {
-                    case enWindowColliderMode.Node:
-                        break;
-                    case enWindowColliderMode.Dark:
-                        go = new GameObject("DarkCollider", typeof(RectTransform), typeof(Image), typeof(Button));
-                        image = go.GetComponent<Image>();
-                        image.color = new Color(0, 0, 0, 100 / 255f);
-                        image.raycastTarget = true;
-                        button = go.GetComponent<Button>();
-                        button.transition = Selectable.Transition.SpriteSwap;
-                        button.targetGraphic = image;
-                        button.onClick.AddListener(windowBase.ColliderCallBack);
-                        break;
-                    case enWindowColliderMode.Transparent:
-                        go = new GameObject("ansparencyCollider", typeof(RectTransform), typeof(Image), typeof(Button));
-                        image = go.GetComponent<Image>();
-                        image.color = new Color(0, 0, 0, 0);
-                        image.raycastTarget = true;
-                        button = go.GetComponent<Button>();
-                        button.transition = Selectable.Transition.SpriteSwap;
-                        button.targetGraphic = image;
-                        button.onClick.AddListener(windowBase.ColliderCallBack);
-                        break;
-                }
-                if (go != null)
-                {
-                    var rectTran = go.GetComponent<RectTransform>();
-                    rectTran.transform.SetParent(windowBase.CacheTransform);
-                    rectTran.transform.SetSiblingIndex(0);
-                    rectTran.localPosition = Vector3.zero;
-                    rectTran.anchorMin = new Vector2(0.5f, 0.5f);
-                    rectTran.anchorMax = new Vector2(0.5f, 0.5f);
-                    rectTran.pivot = new Vector2(0.5f, 0.5f);
-                    rectTran.sizeDelta = new Vector2(2000, 2000);
-                }
+            Image image = null;
+            Button button = null;
+            GameObject go = null;
+            switch (windowBase.WindowInfo.ColliderMode)
+            {
+                case enWindowColliderMode.Node:
+                    break;
+                case enWindowColliderMode.Dark:
+                    go = new GameObject("DarkCollider", typeof(RectTransform), typeof(Image), typeof(Button));
+                    image = go.GetComponent<Image>();
+                    image.color = new Color(0, 0, 0, 100 / 255f);
+                    image.raycastTarget = true;
+                    button = go.GetComponent<Button>();
+                    button.transition = Selectable.Transition.SpriteSwap;
+                    button.targetGraphic = image;
+                    button.onClick.AddListener(windowBase.ColliderCallBack);
+                    break;
+                case enWindowColliderMode.Transparent:
+                    go = new GameObject("ansparencyCollider", typeof(RectTransform), typeof(Image), typeof(Button));
+                    image = go.GetComponent<Image>();
+                    image.color = new Color(0, 0, 0, 0);
+                    image.raycastTarget = true;
+                    button = go.GetComponent<Button>();
+                    button.transition = Selectable.Transition.SpriteSwap;
+                    button.targetGraphic = image;
+                    button.onClick.AddListener(windowBase.ColliderCallBack);
+                    break;
+            }
+            if (go != null)
+            {
+                var rectTran = go.GetComponent<RectTransform>();
+                rectTran.transform.SetParent(windowBase.CacheTransform);
+                rectTran.transform.SetSiblingIndex(0);
+                rectTran.localPosition = Vector3.zero;
+                rectTran.anchorMin = new Vector2(0.5f, 0.5f);
+                rectTran.anchorMax = new Vector2(0.5f, 0.5f);
+                rectTran.pivot = new Vector2(0.5f, 0.5f);
+                rectTran.sizeDelta = new Vector2(2000, 2000);
+            }
+        }
+
+        public void ShowMessageBox(MessageBoxContent context)
+        {
+            var windoe = GetUnClosedWindow("MessageBox");
+            if (windoe)
+            {
+                messageBoxContexts.Enqueue(context);
+            }
+            else
+            {
+                OpenWindow("MessageBox", true, false, context);
+            }
+        }
+
+        public MessageBoxContent GetMessageBoxContext()
+        {
+            if (messageBoxContexts.Count > 0)
+            {
+                return messageBoxContexts.Dequeue();
+            }
+            return null;
         }
     }
-
 }

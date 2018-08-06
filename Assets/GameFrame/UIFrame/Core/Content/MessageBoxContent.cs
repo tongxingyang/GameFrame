@@ -2,7 +2,7 @@
 using UIFrameWork;
 using UnityEngine;
 
-public class GameInfoContent : WindowContext
+public class MessageBoxContent : WindowContext
 {
     /// <summary>
     /// 1 只有一个按钮 2 有两个按钮
@@ -10,17 +10,15 @@ public class GameInfoContent : WindowContext
     private int showtype = 2;
     private string titlestring = string.Empty;
     private string contentstring = string.Empty;
-    private Action<GameObject, object, object[]> oneButtonAction = null;
     private Action<GameObject, object, object[]> twoButtonAction = null;
 
-    public GameInfoContent(int type, string title, string content, Action<GameObject, object, object[]> one,
+    public MessageBoxContent(int type, string title, string content, 
         Action<GameObject, object, object[]> two = null)
     {
         showtype = type;
         titlestring = title;
         contentstring = content;
-        oneButtonAction += one;
-        twoButtonAction += two;
+        twoButtonAction = two;
     }
 
     public int GetShowType()
@@ -38,10 +36,6 @@ public class GameInfoContent : WindowContext
         return contentstring;
     }
 
-    public Action<GameObject, object, object[]> GetOneAction()
-    {
-        return oneButtonAction;
-    }
     public Action<GameObject, object, object[]> GetTwoAction()
     {
         return twoButtonAction;
