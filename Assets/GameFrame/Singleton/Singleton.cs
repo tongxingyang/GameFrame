@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace GameFrame
@@ -8,7 +9,7 @@ namespace GameFrame
     /// <summary>
     /// 普通单例类
     /// </summary>
-    public abstract class Singleton<T> where T : class, new()
+    public abstract class Singleton<T> : HandleMessage where T : class, new() 
     {
         private static T m_instance;
 
@@ -60,6 +61,27 @@ namespace GameFrame
         public virtual void UnInit()
         {
 
+        }
+        
+        public void HandleMessage(string msg, object[] args)
+        {
+            var mi = this.GetType()
+                .GetMethod(msg, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            if (mi != null)
+            {
+                mi.Invoke(this, BindingFlags.NonPublic, null, args, null);
+            }
+        }
+
+        public object HandleMessageValue(string msg, object[] args)
+        {
+            var mi = this.GetType()
+                .GetMethod(msg, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            if (mi != null)
+            {
+                return mi.Invoke(this, BindingFlags.NonPublic, null, args, null);
+            }
+            return null;
         }
     }
 }

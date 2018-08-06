@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace GameFrame
 {
-    public abstract class SingletonMono<T> : MonoBehaviour where T : SingletonMono<T>
+    public abstract class SingletonMono<T> : MonoBehaviour ,HandleMessage where T : SingletonMono<T>
     {
 
         private static T m_instance;
@@ -57,6 +58,27 @@ namespace GameFrame
         public virtual void UnInit()
         {
 
+        }
+        
+        public void HandleMessage(string msg, object[] args)
+        {
+            var mi = this.GetType()
+                .GetMethod(msg, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            if (mi != null)
+            {
+                mi.Invoke(this, BindingFlags.NonPublic, null, args, null);
+            }
+        }
+
+        public object HandleMessageValue(string msg, object[] args)
+        {
+            var mi = this.GetType()
+                .GetMethod(msg, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            if (mi != null)
+            {
+                return mi.Invoke(this, BindingFlags.NonPublic, null, args, null);
+            }
+            return null;
         }
     }
 }
