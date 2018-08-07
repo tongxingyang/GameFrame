@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using GameFrame;
+using GameFrameDebuger;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -21,6 +22,7 @@ namespace UIFrameWork
         private Camera m_UICamera;
 
         private Queue<MessageBoxContent> messageBoxContexts = new Queue<MessageBoxContent>();
+        private Queue<HintContent> hintContexts = new Queue<HintContent>();
         
         public Camera UICamera
         {
@@ -92,9 +94,9 @@ namespace UIFrameWork
         }
         public void Update()
         {
-            foreach (WindowBase t in this.m_windows)
+            for (int i = 0; i < this.m_windows.Count; i++)
             {
-                t.CustomUpdate();
+                this.m_windows[i].CustomUpdate();
             }
         }
         public string GetWindowName(string path)
@@ -104,9 +106,9 @@ namespace UIFrameWork
         }
         public void LateUpdate()
         {
-            foreach (WindowBase t in this.m_windows)
+            for (int i = 0; i < this.m_windows.Count; i++)
             {
-                t.CustomLateUpdate();
+                this.m_windows[i].CustomLateUpdate();
             }
         }
 
@@ -354,7 +356,10 @@ namespace UIFrameWork
             {
                 this.m_pooledWindows.Add(windowBase);
             }
-            this.m_windows.Remove(windowBase);
+            if (m_windows.Contains(windowBase))
+            {
+                this.m_windows.Remove(windowBase);
+            }
         }
 
         public void OpenWindow(string name,bool isusePool,bool useCameraRender = true,WindowContext appear = null)
@@ -530,8 +535,8 @@ namespace UIFrameWork
 
         public void ShowMessageBox(MessageBoxContent context)
         {
-            var windoe = GetUnClosedWindow("MessageBox");
-            if (windoe)
+            var window = GetUnClosedWindow("MessageBox");
+            if (window)
             {
                 messageBoxContexts.Enqueue(context);
             }
@@ -546,6 +551,28 @@ namespace UIFrameWork
             if (messageBoxContexts.Count > 0)
             {
                 return messageBoxContexts.Dequeue();
+            }
+            return null;
+        }
+
+        public void ShowHintMessage(HintContent content)
+        {
+            var window = GetUnClosedWindow("Hint");
+            if (window)
+            {
+                hintContexts.Enqueue(content);
+            }
+            else
+            {
+                OpenWindow("Hint",true,false,content);
+            }
+        }
+
+        public HintContent GetHintContext()
+        {
+            if (hintContexts.Count > 0)
+            {
+                return hintContexts.Dequeue();
             }
             return null;
         }

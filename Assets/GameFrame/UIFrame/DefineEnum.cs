@@ -57,11 +57,7 @@ namespace UIFrameWork
         FriendUI,
         Loading,
         UILoading,
-    }
-    public enum enWindowHideFlag
-    {
-        HideByCustom = 1,
-        HideByOtherForm
+        Hint,
     }
 
     public enum enLayer2Int

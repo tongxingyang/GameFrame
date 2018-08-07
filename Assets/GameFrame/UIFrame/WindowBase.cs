@@ -244,7 +244,6 @@ namespace UIFrameWork
             windowState= enWindowState.Appear;
             this.SetDisplayOrder(openOrder);
             PlayAppearMusic();
-            this.gameObject.SetActive(true);
             if (m_openAnimClip != null)
             {
                 var animation = GetComponent<Animation>();
@@ -265,6 +264,8 @@ namespace UIFrameWork
             this.TryEnableInput(true);
             AppearComponent();
             OnAppear(sequence, openOrder,context);
+            this.gameObject.SetActive(true);
+
             Debug.Log("<color=#FFFF00>" + "Appear "+WindowInfo.Name +" ................."+ "</color>");
         }
         /// <summary>
@@ -366,9 +367,9 @@ namespace UIFrameWork
                 this.m_canvas.enabled = false;
             }
             this.TryEnableInput(false);
-            Singleton<WindowManager>.GetInstance().RecycleWindow(this);
             this.gameObject.SetActive(false);
             OnHide(this.hideWindowContext);
+            Singleton<WindowManager>.GetInstance().RecycleWindow(this);
             Debug.Log("<color=#FFFF00>" + "Hide "+WindowInfo.Name +" ................."+ "</color>");
         }
         protected virtual void OnInit(Camera UICamera){}
@@ -480,18 +481,15 @@ namespace UIFrameWork
         {
             if (this.m_canvas != null)
             {
-                this.m_canvas.worldCamera = camera;
                 //设置界面的渲染方式
                 if (camera == null)
                 {
-                    if (this.m_canvas.renderMode != RenderMode.ScreenSpaceOverlay)
-                    {
-                        this.m_canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                    }
+                    this.m_canvas.renderMode = RenderMode.ScreenSpaceOverlay;
                 }
-                else if (this.m_canvas.renderMode != RenderMode.ScreenSpaceCamera)
+                else 
                 {
                     this.m_canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                    this.m_canvas.worldCamera = camera;
                 }
                 this.m_canvas.pixelPerfect = true;
             }

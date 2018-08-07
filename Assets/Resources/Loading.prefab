@@ -186,7 +186,7 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1024, y: 768}
+  m_ReferenceResolution: {x: 960, y: 640}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -353,6 +353,9 @@ MonoBehaviour:
   m_referenceResolution: {x: 960, y: 640}
   m_isUsePool: 1
   m_isModel: 0
+  m_openAnimClip: {fileID: 0}
+  m_closeAnimClip: {fileID: 0}
+  m_hideAnimClip: {fileID: 0}
   m_canvasScaler: {fileID: 0}
 --- !u!222 &222275296795582364
 CanvasRenderer:
