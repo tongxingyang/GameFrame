@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 
-namespace com.tencent.pandora.MiniJSON
+namespace MiniJSON
 {
 	public static class Json
 	{

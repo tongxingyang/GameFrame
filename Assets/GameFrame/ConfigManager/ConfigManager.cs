@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using GameFrameDebuger;
 using UnityEngine;
 
 namespace GameFrame.ConfigManager
@@ -147,7 +148,7 @@ namespace GameFrame.ConfigManager
         public string LoadConfig(string fileName,bool isCacheBundle = false)
         {
             string buffer = ReadFile(fileName,isCacheBundle);
-            UnityEngine.Debug.Log(buffer);
+            Debuger.Log(buffer);
             return buffer;
         }
         private Dictionary<string,Action<string>> CallBacks = new Dictionary<string, Action<string>>();
@@ -169,7 +170,7 @@ namespace GameFrame.ConfigManager
             }
             else
             {
-                UnityEngine.Debug.LogError("编辑器模式不支持异步夹杂config文件  ConfigBundleMode==false");
+                Debuger.LogError("编辑器模式不支持异步夹杂config文件  ConfigBundleMode==false");
             }
         }
 
@@ -260,7 +261,7 @@ namespace GameFrame.ConfigManager
                             }
                             catch (Exception e)
                             {
-                                UnityEngine.Debug.LogError("异步加载config文件出错 "+fileName);
+                                Debuger.LogError("异步加载config文件出错 "+fileName);
                             }
                         }
                     }

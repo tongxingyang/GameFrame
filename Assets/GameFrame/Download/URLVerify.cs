@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
+using GameFrameDebuger;
 using UnityEngine;
 /// <summary>
 /// 验证url是否可用 返回可以下载的http url
@@ -74,7 +75,7 @@ namespace GameFrame
         catch (Exception e)
         {
             result = false;
-            UnityEngine.Debug.LogError(e.Message);
+            Debuger.LogError(e.Message);
             throw;
         }
         finally

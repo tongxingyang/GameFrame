@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using GameFrameDebuger;
 using UnityEngine;
 
 namespace GameFrame.GameConfig
@@ -64,7 +65,7 @@ namespace GameFrame.GameConfig
                     sw.Write(str);
                 }
             }
-            UnityEngine.Debug.Log("保存设置成功");
+            Debuger.Log("保存设置成功");
         }
         
     }

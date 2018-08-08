@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using GameFrameDebuger;
 
 namespace GameFrame.FSM
 {
@@ -57,7 +58,7 @@ namespace GameFrame.FSM
         {
             if (!typeof(T).IsEnum)
             {
-                UnityEngine.Debug.LogError("类型出错不是枚举类型");
+                Debuger.LogError("类型出错不是枚举类型");
             }
         }
 
@@ -66,7 +67,7 @@ namespace GameFrame.FSM
             var duplicateIDs = GetDuplicateIDs(states);
             if (duplicateIDs.Length > 0)
             {
-                UnityEngine.Debug.LogError("试图去初始化不存在的状态"+duplicateIDs.ToString());
+                Debuger.LogError("试图去初始化不存在的状态"+duplicateIDs.ToString());
             }
         }
 
@@ -75,7 +76,7 @@ namespace GameFrame.FSM
             var missings = GetMessingIDs(states);
             if (missings.Length > 0)
             {
-                UnityEngine.Debug.LogError("试图去初始化不存在的状态"+missings.ToString());
+                Debuger.LogError("试图去初始化不存在的状态"+missings.ToString());
             }
         }
         

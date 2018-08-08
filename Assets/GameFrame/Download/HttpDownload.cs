@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using GameFrame;
+using GameFrameDebuger;
 using UnityEngine;
 
 public class HttpDownload
@@ -112,7 +113,7 @@ public class HttpDownload
             }
         }catch (Exception e)
         {
-                Debug.LogWarning("HttpDownload - \"" + LocalName + "\" download failed!"
+            Debuger.LogWarning("HttpDownload - \"" + LocalName + "\" download failed!"
                                     + "\nMessage:" + e.Message);
                 UnRegisterTimeOut();
                 OnFailed(enDownloadErrorState.NoResponse);
@@ -185,7 +186,7 @@ public class HttpDownload
         }
         catch (Exception e)
         {
-            Debug.LogError(e.Message);
+            Debuger.LogError(e.Message);
             OnFailed(enDownloadErrorState.DownloadError);
         }
     }

@@ -6,8 +6,8 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using GameFrame;
+using GameFrameDebuger;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 using Path = System.IO.Path;
 
 namespace GameFrame
@@ -94,7 +94,7 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    UnityEngine.Debug.LogError("Error GetFileLength");
+                    Debuger.LogError("Error GetFileLength");
                 }
             }
             else
@@ -115,7 +115,7 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    UnityEngine.Debug.LogError("Error ReadFile");
+                    Debuger.LogError("Error ReadFile");
                 }
             }
             return result;
@@ -338,7 +338,7 @@ namespace GameFrame
                 }
                 else
                 {
-                    UnityEngine.Debug.LogError(w.error);
+                    Debuger.LogError(w.error);
                 }
             }
         }

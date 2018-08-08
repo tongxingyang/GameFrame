@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using GameFrameDebuger;
 using Object = UnityEngine.Object;
 
 namespace GameFrame
@@ -83,7 +84,7 @@ namespace GameFrame
             string filepath = Platform.Path + path;
             if (!FileManager.IsFileExist(filepath))
             {
-                UnityEngine.Debug.LogError("AssetBundle依赖Depinfo资源不存在  " + filepath);
+                Debuger.LogError("AssetBundle依赖Depinfo资源不存在  " + filepath);
                 return;
             }
             using (FileStream fs = new FileStream(filepath, FileMode.Open, FileAccess.Read))
@@ -120,7 +121,7 @@ namespace GameFrame
             string dataPath = Platform.Path + path;
             if (!FileManager.IsFileExist(dataPath))
             {
-//                UnityEngine.Debug.LogError("预加载的资源不存在  " + dataPath);
+//                Debuger.LogError("预加载的资源不存在  " + dataPath);
                 return;
             }
             foreach (string readAllLine in File.ReadAllLines(dataPath))
@@ -384,7 +385,7 @@ namespace GameFrame
             else
             {
                 m_currentTaskCount -= 1;
-                UnityEngine.Debug.LogError("loadtype 出错");
+                Debuger.LogError("loadtype 出错");
             }
         }
         /// <summary>
@@ -435,7 +436,7 @@ namespace GameFrame
             Object obj = null;
             if (ab == null)
             {
-                UnityEngine.Debug.LogError(string.Format("LoadBundle: {0} failed! assetBundle == NULL!", task.Path));
+                Debuger.LogError(string.Format("LoadBundle: {0} failed! assetBundle == NULL!", task.Path));
             }
             else
             {
@@ -462,7 +463,7 @@ namespace GameFrame
                     obj = objs[0];
                 if (obj == null)
                 {
-                    UnityEngine.Debug.LogError(string.Format("LoadBundle: {0} ! No Assets in Bundle!", task.Path));
+                    Debuger.LogError(string.Format("LoadBundle: {0} ! No Assets in Bundle!", task.Path));
                 }
             }
             OnAseetsLoaded(task, ab, obj);
@@ -491,7 +492,7 @@ namespace GameFrame
                     catch (Exception e)
                     {
                         string error = string.Format("Load Bundle {0} DoAction Exception: {1}", task.Path, e);
-                        UnityEngine.Debug.LogError(error);
+                        Debuger.LogError(error);
                     }
                 }
             }

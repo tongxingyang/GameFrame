@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using Common.Tools;
+using GameFrameDebuger;
 using NUnit.Framework;
 using ServerFrame.Encode;
 using ServerFrame.Tools;
@@ -53,7 +54,7 @@ namespace GameFrame.NetWork
                 Socket.BeginReceive(readbuff, 0, 1024, SocketFlags.None, ReceiveCallBack, readbuff);
             }
             catch (Exception e) {
-                UnityEngine.Debug.LogError("断开连接.........");
+                Debuger.LogError("断开连接.........");
                 Socket.Close();
     
             }
@@ -76,7 +77,7 @@ namespace GameFrame.NetWork
             {
                 Socket.Send(arr1.getBuff());
             }catch (Exception e){
-                UnityEngine.Debug.LogError("网络错误，请重新登录"+e.Message);
+                Debuger.LogError("网络错误，请重新登录"+e.Message);
             }
             
         }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using GameFrameDebuger;
 using UnityEngine;
 
 namespace GameFrame
@@ -69,7 +70,7 @@ namespace GameFrame
 
 				if (md5.Equals(md5_))
 				{
-					UnityEngine.Debug.LogError("文件下载成功 文件名 "+m_filename);
+					Debuger.LogError("文件下载成功 文件名 "+m_filename);
 					FileInfo fileInfo = Singleton<UpdateManager>.Instance.newmd5Table[m_filename];
 					Singleton<UpdateManager>.Instance.DownloadSize +=
 						Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size;
@@ -77,7 +78,7 @@ namespace GameFrame
 				}
 				else
 				{
-					UnityEngine.Debug.LogError("文件下载失败.......... 文件名 "+m_filename);
+					Debuger.LogError("文件下载失败.......... 文件名 "+m_filename);
 					Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
 				}
 				callback();
@@ -85,10 +86,10 @@ namespace GameFrame
 			}
 			catch (Exception e)
 			{
-				UnityEngine.Debug.Log("download file error = " + m_filename + ", ex = " + e.Message);
+				Debuger.Log("download file error = " + m_filename + ", ex = " + e.Message);
 				Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
 				callback();
-				UnityEngine.Debug.LogError(e.Message);
+				Debuger.LogError(e.Message);
 			}
 		}
 	}

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Security;
 using GameFrame;
+using GameFrameDebuger;
 using Mono.Xml;
 using UnityEngine;
 
@@ -65,7 +66,7 @@ public class ServerConfig : Singleton<ServerConfig>
 		}
 		catch (System.Exception ex)
 		{
-			UnityEngine.Debug.LogError(ex);
+			Debuger.LogError(ex);
 		}
 	}
 	

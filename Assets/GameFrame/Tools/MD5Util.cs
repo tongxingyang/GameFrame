@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using GameFrameDebuger;
 
 namespace GameFrame
 {
@@ -65,7 +66,7 @@ namespace GameFrame
             }
             catch (System.Exception ex)
             {
-                UnityEngine.Debug.LogError(ex);
+                Debuger.LogError(ex);
             }
 
             return string.Empty;

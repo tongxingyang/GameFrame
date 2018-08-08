@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using GameFrame;
+using GameFrameDebuger;
 using UnityEngine;
 
 /// <summary>
@@ -122,27 +123,20 @@ namespace GameFrame
                     if (platform == RuntimePlatform.Android)
                     {
                         androidDone = true;
-//                        Debug.LogError("安卓服务器 字段 "+ androidContent);
                     }
                     else
                     {
                         iosDone = true;
-//                        Debug.LogError("IOS服务器 字段 "+ iosContent);
                     }
                 }
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError(e.Message);
+                Debuger.LogError(e.Message);
                 if (times > 0)
                 {
                     DownloadServerList(times - 1, platform);
                 }
-                //三次下载都失败了 todo
-//                else
-//                {
-//                    Singleton<UpdateManager>.GetInstance().
-//                }
             }
             yield break;
         }
@@ -159,7 +153,7 @@ namespace GameFrame
         {
             if (!serverLoads.ContainsKey(serverid))
             {
-                serverLoads.Add(serverid,new ServerLoad());// todo
+                serverLoads.Add(serverid,new ServerLoad());
             }
             //缺少验证服务器是否可用链接
         }

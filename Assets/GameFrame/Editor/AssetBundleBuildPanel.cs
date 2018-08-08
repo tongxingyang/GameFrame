@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using GameFrameDebuger;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.Experimental.Build.AssetBundle;
@@ -351,7 +352,7 @@ namespace GameFrame.Editor
         {
             if (!Directory.Exists(SoundConst.soundDir))
             {
-                UnityEngine.Debug.Log("目录不存在"+SoundConst.soundDir);
+                Debuger.Log("目录不存在"+SoundConst.soundDir);
                 return;
             }
             List<AssetBundleBuild> m_assetList = new List<AssetBundleBuild>();
@@ -422,7 +423,7 @@ namespace GameFrame.Editor
         {
             if (!Directory.Exists(ConfigConst.tempconfigDir))
             {
-                UnityEngine.Debug.Log("目录不存在"+ConfigConst.tempconfigDir);
+                Debuger.Log("目录不存在"+ConfigConst.tempconfigDir);
                 return;
             }
             List<AssetBundleBuild> m_assetList = new List<AssetBundleBuild>();
@@ -499,7 +500,7 @@ namespace GameFrame.Editor
 
             if (!Directory.Exists(LuaConst.luaTempDir))
             {
-                UnityEngine.Debug.Log("目录不存在"+LuaConst.luaTempDir);
+                Debuger.Log("目录不存在"+LuaConst.luaTempDir);
                 return;
             }
             List<AssetBundleBuild> m_assetList = new List<AssetBundleBuild>();
@@ -517,7 +518,7 @@ namespace GameFrame.Editor
             AddBuildMap(ref m_assetList, "lua" + Platform.AssetBundleExt, "*.bytes", "Assets/Temp/Lua");
             if (!Directory.Exists(LuaConst.toluaTempDir))
             {
-                UnityEngine.Debug.Log("目录不存在"+LuaConst.toluaTempDir);
+                Debuger.Log("目录不存在"+LuaConst.toluaTempDir);
                 return;
             }
             dirs = Directory.GetDirectories(LuaConst.toluaTempDir, "*", SearchOption.AllDirectories);

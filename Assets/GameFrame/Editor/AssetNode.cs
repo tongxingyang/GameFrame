@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using GameFrame.AssetManager;
+using GameFrameDebuger;
 using UnityEditor;
 
 namespace GameFrame.Editor
@@ -284,7 +285,7 @@ namespace GameFrame.Editor
 
         public void PrintTreeInfo()
         {
-            UnityEngine.Debug.Log(GetTreeInfo(0, "-- "));
+            Debuger.Log(GetTreeInfo(0, "-- "));
         }
 
         public static void PrintNodeTree(List<AssetNode> roots, string destr="")
@@ -297,7 +298,7 @@ namespace GameFrame.Editor
                 str += node.GetTreeInfo(0, "-- ");
                 str += "========================\n\n";
             }
-            UnityEngine.Debug.Log(str);
+            Debuger.Log(str);
         }
 
 
@@ -310,7 +311,7 @@ namespace GameFrame.Editor
                 AssetNode node = kvp.Value;
                 str += node + "\n";
             }
-            UnityEngine.Debug.Log(str);
+            Debuger.Log(str);
         }
 
         #endregion

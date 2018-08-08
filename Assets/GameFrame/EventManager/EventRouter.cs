@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using GameFrameDebuger;
 using UnityEngine;
 
 namespace GameFrame
@@ -282,12 +283,12 @@ namespace GameFrame
                 }
                 else
                 {
-                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                    Debuger.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
                 }
             }
             else
             {
-                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+                Debuger.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
             return default(T);
         }
@@ -302,12 +303,12 @@ namespace GameFrame
                 }
                 else
                 {
-                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                    Debuger.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
                 }
             }
             else
             {
-                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+                Debuger.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
             return default(T2);
         }
@@ -322,12 +323,12 @@ namespace GameFrame
                 }
                 else
                 {
-                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                    Debuger.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
                 }
             }
             else
             {
-                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+                Debuger.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
             return default(T3);
         }
@@ -342,12 +343,12 @@ namespace GameFrame
                 }
                 else
                 {
-                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                    Debuger.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
                 }
             }
             else
             {
-                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+                Debuger.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
             return default(T4);
         }
@@ -362,12 +363,12 @@ namespace GameFrame
                 }
                 else
                 {
-                    UnityEngine.Debug.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
+                    Debuger.LogError("EventRouter 出错 尝试调用类型不存在的函数  "+eventType);
                 }
             }
             else
             {
-                UnityEngine.Debug.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
+                Debuger.LogError("EventRouter 出错 尝试调用不存在的函数  "+eventType);
             }
             return default(T5);
         }
