@@ -12,17 +12,17 @@ namespace GameFrame.Editor
         public static void EncodeLuaFile()
         {
             return;
-            string path = LuaConst.luaDir;//lua文件夹
-            string[] files = Directory.GetFiles(path, "*.lua", SearchOption.AllDirectories);
-            foreach (string f in files)
-            {
-                string file = f.Replace('\\', '/');
-                string content = File.ReadAllText(file);
-                using (var sw = new StreamWriter(file,false,Encoding.UTF8))
-                {
-                    sw.Write(content);
-                }
-            }
+//            string path = LuaConst.luaDir;//lua文件夹
+//            string[] files = Directory.GetFiles(path, "*.lua", SearchOption.AllDirectories);
+//            foreach (string f in files)
+//            {
+//                string file = f.Replace('\\', '/');
+//                string content = File.ReadAllText(file);
+//                using (var sw = new StreamWriter(file,false,Encoding.UTF8))
+//                {
+//                    sw.Write(content);
+//                }
+//            }
         }
 
         public static bool IsEncryptBatch = true;
@@ -78,7 +78,7 @@ namespace GameFrame.Editor
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError("加密文件出错");
+                UnityEngine.Debug.LogError("加密文件出错"+e.Message);
             }
         }
 
@@ -103,7 +103,7 @@ namespace GameFrame.Editor
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError("加密文件夹出错");
+                UnityEngine.Debug.LogError("加密文件夹出错"+e.Message);
             }
         }
 
@@ -129,7 +129,7 @@ namespace GameFrame.Editor
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError("加密文件出错");
+                UnityEngine.Debug.LogError("加密文件出错"+e.Message);
             }
         }
         

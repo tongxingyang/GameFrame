@@ -58,6 +58,7 @@ namespace UIFrameWork
         Loading,
         UILoading,
         Hint,
+        Dialogue,
     }
 
     public enum enLayer2Int

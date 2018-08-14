@@ -114,7 +114,8 @@ MonoBehaviour:
   m_closeAnimClip: {fileID: 0}
   m_hideAnimClip: {fileID: 0}
   m_canvasScaler: {fileID: 114000166384960798}
-  Speed: 1
+  Speed: 0.4
+  alphaSpeed: 6
 --- !u!114 &114371212187118612
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -1,12 +1,7 @@
-﻿
-
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
-
-
 namespace UI
-{
-    
+{    
     public class UIEventListener : UnityEngine.EventSystems.EventTrigger
     {
         public delegate void VoidDelegate(GameObject go);

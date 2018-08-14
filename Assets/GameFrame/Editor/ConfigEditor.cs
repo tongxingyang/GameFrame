@@ -61,7 +61,7 @@ namespace GameFrame.Editor
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError("加密文件出错");
+                UnityEngine.Debug.LogError("加密文件出错"+e.Message);
             }
         }
 
@@ -86,7 +86,7 @@ namespace GameFrame.Editor
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError("加密文件夹出错");
+                UnityEngine.Debug.LogError("加密文件夹出错"+e.Message);
             }
         }
 
@@ -112,7 +112,7 @@ namespace GameFrame.Editor
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.LogError("加密文件出错");
+                UnityEngine.Debug.LogError("加密文件出错"+e.Message);
             }
         }
         
