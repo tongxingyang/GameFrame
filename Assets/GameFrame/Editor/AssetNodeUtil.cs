@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Xml.Xsl;
-using GameFrame.AssetManager;
 using UnityEditor;
 
 namespace GameFrame.Editor

@@ -1,5 +1,4 @@
-﻿using GameFrame.GameConfig;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace GameFrame
 {
@@ -17,14 +16,7 @@ namespace GameFrame
 
         public static string GetKey(string key, bool isbinduserid)
         {
-            if (UseUserId && isbinduserid)
-            {
-                return GameConfig.GameConfig.Gamedata.AppPrefix + GameConfig.GameConfig.Gamedata.UserId + "_" + key;
-            }
-            else
-            {
-                return GameConfig.GameConfig.Gamedata.AppPrefix + "_" + key;
-            }
+            return key;
         }
 
         public static bool HasKey(string key)

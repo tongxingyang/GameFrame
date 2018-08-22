@@ -1,11 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using GameFrame.AssetManager;
 using GameFrameDebuger;
 using UnityEditor;
 
 namespace GameFrame.Editor
 {
+    public enum AssetBundleExportType
+    {
+        Asset = 1,
+        Root = 1 << 1,
+    }
+
     public class AssetNode
     {
         public string path;//路径
