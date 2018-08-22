@@ -19,7 +19,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 #else
     private const int Resolution = 1080;
 #endif
-    
+
     #region render feature
     private const int SupportFeaturePostProcess = 0; 
     private const int SupportFeatureDynamicShadow = 1;
