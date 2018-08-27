@@ -92,7 +92,7 @@ namespace UIFrameWork
                 this.OnWindowSorted(this.m_windows);
             }
         }
-        public void Update()
+        public void OnUpdate()
         {
             for (int i = 0; i < this.m_windows.Count; i++)
             {

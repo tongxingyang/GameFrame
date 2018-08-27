@@ -234,7 +234,7 @@ namespace GameFrame
 //            ClearData();
         }
 
-        public void Update()
+        public void OnUpdate()
         {
             if (m_isBeginUpdate && isLoadOldTableAndVersion)
             {

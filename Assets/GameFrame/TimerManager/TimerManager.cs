@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace GameFrame
 {
@@ -201,7 +202,7 @@ namespace GameFrame
             }
         }
 
-        public void Update(int detal, enTimeType enTimeType = enTimeType.TimeScale)
+        private void Update(int detal, enTimeType enTimeType = enTimeType.TimeScale)
         {
             List<Timer> list = m_timers[(int)enTimeType];
             int i = 0;
@@ -219,7 +220,7 @@ namespace GameFrame
             }
         }
 
-        public void Update()
+        public void OnUpdate()
         {
             Update((int)(Time.deltaTime * 1000));
             UpdateNoTimeScale((int)(Time.unscaledDeltaTime * 1000));

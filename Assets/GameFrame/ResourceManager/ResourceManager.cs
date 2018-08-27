@@ -130,7 +130,7 @@ namespace GameFrame
             }
         }
       
-        public void Update()
+        public void OnUpdate()
         {
             CleanupCacheBundle();
             CleanupMemoryInterval();

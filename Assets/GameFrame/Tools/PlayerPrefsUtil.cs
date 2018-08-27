@@ -11,7 +11,7 @@ namespace GameFrame
 
         public static string GetKey(string key)
         {
-            return GetKey(key, true);
+            return GetKey(key, false);
         }
 
         public static string GetKey(string key, bool isbinduserid)
@@ -21,7 +21,7 @@ namespace GameFrame
 
         public static bool HasKey(string key)
         {
-            return HasKey(key, true);
+            return HasKey(key, false);
         }
 
         public static bool HasKey(string key, bool isbinduseid)
@@ -32,7 +32,7 @@ namespace GameFrame
 
         public static bool HasBool(string key)
         {
-            return HasBool(key, true);
+            return HasBool(key, false);
         }
 
         public static bool HasBool(string key, bool isbinduseid)
@@ -55,7 +55,7 @@ namespace GameFrame
             return PlayerPrefs.GetInt(key);
         }
 
-        public static void SetInt(string key,bool isbinduseid,int value)
+        public static void SetInt(string key,int value,bool isbinduseid)
         {
             string name = GetKey(key, isbinduseid);
             PlayerPrefs.DeleteKey(name);
@@ -63,6 +63,7 @@ namespace GameFrame
             PlayerPrefs.Save();
         }
 
+        
         public static int GetIntSimple(string key)
         {
             return PlayerPrefs.GetInt(key);
@@ -80,7 +81,7 @@ namespace GameFrame
             return PlayerPrefs.GetFloat(key);
         }
 
-        public static void SetFloat(string key,bool isbinduseid,float value)
+        public static void SetFloat(string key,float value,bool isbinduseid = false)
         {
             string name = GetKey(key, isbinduseid);
             PlayerPrefs.DeleteKey(name);
@@ -134,6 +135,14 @@ namespace GameFrame
         {
             string name = GetKey(key, isbinduseid);
             PlayerPrefs.DeleteKey(name);
+        }
+        public static void DeleteKey(string key )
+        {
+            PlayerPrefs.DeleteKey(key);
+        }
+        public static void Save()
+        {
+            PlayerPrefs.Save();
         }
     }
 }

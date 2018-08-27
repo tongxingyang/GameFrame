@@ -155,6 +155,7 @@ public class Dialogue : WindowBase
     protected override void OnClose(WindowContext context)
     {
         base.OnClose(context);
+        this.NodeData = null;
         StopContentText();
     }
 }

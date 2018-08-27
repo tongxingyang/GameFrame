@@ -145,6 +145,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<SceneManager>.GetInstance().LoadScene("Login", () =>
         {
             Singleton<WindowManager>.GetInstance().OpenWindow("LoginAndRegister",true);
+//            Singleton<WindowManager>.GetInstance().OpenWindow("Dialogue",true,true,new DialogueContent("dialoguedata.json","node1"));
         });
     }
     void PlayLogoVider(string filename,bool cancancel)
@@ -194,13 +195,15 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void Update()
     {
-        Singleton<TimeManager>.GetInstance().Update();
+        Singleton<TimeManager>.GetInstance().OnUpdate();
         if (IsUpdateDone == false)
         {
-            Singleton<UpdateManager>.GetInstance().Update();
+            Singleton<UpdateManager>.GetInstance().OnUpdate();
         }
-        Singleton<WindowManager>.GetInstance().Update();
-        Singleton<ResourceManager>.GetInstance().Update();
+        Singleton<WindowManager>.GetInstance().OnUpdate();
+        Singleton<ResourceManager>.GetInstance().OnUpdate();
+        Singleton<AudioManager>.GetInstance().OnUpdate();
+        
     }
 
     void LateUpdate()
@@ -228,5 +231,6 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
         Singleton<EventManager>.GetInstance().ClearAllEvents();
         SingletonMono<LuaManager>.GetInstance().Close();
         SingletonMono<ServerManager>.GetInstance().OnDestory();
+        SingletonMono<AudioManager>.GetInstance().OnDestory();
     }
 }
