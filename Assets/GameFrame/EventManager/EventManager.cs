@@ -94,6 +94,10 @@ namespace GameFrame
             m_events = null;
             this.m_eventMap = null;
         }
+        public void OnDestory()
+        {
+            ClearAllEvents();
+        }
     }
 
 }

@@ -104,7 +104,7 @@ namespace UIFrameWork
             string[] arr = path.Split('/');
             return arr[arr.Length - 1];
         }
-        public void LateUpdate()
+        public void OnLateUpdate()
         {
             for (int i = 0; i < this.m_windows.Count; i++)
             {

@@ -12,6 +12,7 @@ namespace GameFrame
         public delegate void OnTimeUpHandlerWithParms(int timesquence, params object[] parms);
 
         public delegate void OnTimeUpHandler(int timesquence);
+        
         public enum enTimeType
         {
             TimeScale,
@@ -19,7 +20,7 @@ namespace GameFrame
         }
 
         private List<Timer>[] m_timers;
-        private int m_timerSquence;
+        private static int m_timerSquence;
         public override void Init()
         {
             this.m_timers = new List<Timer>[Enum.GetValues(typeof(enTimeType)).Length];
@@ -27,7 +28,7 @@ namespace GameFrame
             {
                 m_timers[i] = new List<Timer>();
             }
-            this.m_timerSquence = 0;
+            m_timerSquence = 0;
         }
 
         public override void UnInit()
@@ -184,6 +185,11 @@ namespace GameFrame
             list.Clear();
         }
 
+        public void OnDestory()
+        {
+            RemoveAllTimer();
+        }
+        
         public void UpdateNoTimeScale(int detal, enTimeType enTimeType = enTimeType.NoTimeScale)
         {
             List<Timer> list = m_timers[(int)enTimeType];

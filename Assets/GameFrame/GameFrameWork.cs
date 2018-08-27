@@ -208,7 +208,7 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     void LateUpdate()
     {
-        Singleton<WindowManager>.GetInstance().LateUpdate();
+        Singleton<WindowManager>.GetInstance().OnLateUpdate();
     }
 
     private void OnDestroy()
@@ -227,8 +227,9 @@ public class GameFrameWork : SingletonMono<GameFrameWork>
 
     private void OnApplicationQuit()
     {
-        Singleton<EventRouter>.GetInstance().ClearAllEvents();
-        Singleton<EventManager>.GetInstance().ClearAllEvents();
+        Singleton<EventRouter>.GetInstance().OnDestory();
+        Singleton<EventManager>.GetInstance().OnDestory();
+        Singleton<TimeManager>.GetInstance().OnDestory();
         SingletonMono<LuaManager>.GetInstance().Close();
         SingletonMono<ServerManager>.GetInstance().OnDestory();
         SingletonMono<AudioManager>.GetInstance().OnDestory();

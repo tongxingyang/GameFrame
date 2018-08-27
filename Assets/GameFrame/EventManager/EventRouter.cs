@@ -21,6 +21,8 @@ namespace GameFrame
             m_eventMap.Clear();
         }
 
+        
+        
         private bool OnBroadCasting(string eventType)
         {
             bool result = m_eventMap.ContainsKey(eventType);
@@ -373,6 +375,10 @@ namespace GameFrame
             return default(T5);
         }
         #endregion
-        
+
+        public void OnDestory()
+        {
+            ClearAllEvents();
+        }
     }
 }
