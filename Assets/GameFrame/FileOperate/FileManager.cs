@@ -14,17 +14,9 @@ namespace GameFrame
 {
     public class FileManager
     {
-        public delegate void DelefateOnFileOperateFileFail(string fullpath, enFileOperation enFileOperation,
-            Exception exception);
-        /// <summary>
-        /// 缓存路径
-        /// </summary>
-        private static string m_cachePath = null;
-
-        public static string m_extractFolder = "Resources";
-        private static string m_extractPath = null;
-        private static MD5CryptoServiceProvider m_md5Provider = new MD5CryptoServiceProvider();
-        public static DelefateOnFileOperateFileFail m_delefateOnFileOperateFileFail = delegate { };
+        public delegate void DelegateOnFileOperateFileFail(string fullpath, enFileOperation enFileOperation,Exception exception);
+        
+        public static DelegateOnFileOperateFileFail m_delefateOnFileOperateFileFail = delegate { };
 
         public static bool IsFileExist(string filePath)
         {
@@ -39,7 +31,7 @@ namespace GameFrame
         public static bool CreateDirectory(string directory)
         {
             bool result = false;
-            if (Directory.Exists(directory))
+            if (IsDirectoryExist(directory))
             {
                 result = true;
             }
@@ -94,12 +86,13 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    Debuger.LogError("Error GetFileLength");
+                    Debuger.LogError("GetFileLength出错 filePath:  "+filePath);
                 }
             }
             else
             {
                 result = 0;
+                Debuger.LogError("GetFileLength出错 文件不存在 filePath:  "+filePath);
             }
             return result;
         }
@@ -183,19 +176,19 @@ namespace GameFrame
         {
             if (IsFileExist(filePath))
             {
-                return BitConverter.ToString(m_md5Provider.ComputeHash(ReadFile(filePath))).Replace("-", string.Empty);
+                return MD5Util.ComputeHash(ReadFile(filePath));
             }
             return string.Empty;
         }
 
         public static string GetMD5(byte[] data)
         {
-            return BitConverter.ToString(m_md5Provider.ComputeHash(data)).Replace("-", string.Empty);
+            return MD5Util.ComputeHash(data);
         }
 
         public static string GetMd5(string data)
         {
-            return BitConverter.ToString(m_md5Provider.ComputeHash(Encoding.UTF8.GetBytes(data))).Replace("-", string.Empty);
+            return MD5Util.ComputeHashUTF8(data);
         }
 
         public static string CombinePath(string path1, string path2)

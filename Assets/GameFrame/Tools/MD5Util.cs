@@ -28,7 +28,7 @@ namespace GameFrame
         public static string ComputeHashUTF8(string text)
         {
             MD5CryptoServiceProvider _md5 = new MD5CryptoServiceProvider();
-            byte[] bytes = Encoding.GetEncoding("utf-8").GetBytes(text);
+            byte[] bytes = Encoding.UTF8.GetBytes(text);
             string hash = ComputeHash(bytes);
             _md5.Clear();
             return hash;
