@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace GameFrame
 {
+    /// <summary>
+    /// 事件派发的ID
+    /// </summary>
     public enum enEventID
     {
         None,

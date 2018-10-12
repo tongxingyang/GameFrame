@@ -6,45 +6,49 @@ using UnityEngine;
 
 namespace GameFrame.Common
 {
+    /// <summary>
+    /// 实现每帧调用的帮助类
+    /// </summary>
     public delegate void MonoUpdaterEvent();
+    
     public class MonoHelper:SingletonMono<MonoHelper>
     {
-        private event MonoUpdaterEvent UpdateEvent;
-        private event MonoUpdaterEvent FixedUpdateEvent;
+        private event MonoUpdaterEvent UpdateEvent = null;
+        private event MonoUpdaterEvent FixedUpdateEvent = null;
+        private event MonoUpdaterEvent LaterUpdateEvent = null;
 
-        public static void AddUpdateListener(MonoUpdaterEvent listener)
+        public void AddUpdateListener(MonoUpdaterEvent listener)
         {
-            if (Instance != null)
-            {
-                Instance.UpdateEvent += listener;
-            }
+             UpdateEvent += listener;
         }
 
-        public static void RemoveUpdateListener(MonoUpdaterEvent listener)
+        public void RemoveUpdateListener(MonoUpdaterEvent listener)
         {
-            if (Instance != null)
-            {
-                Instance.UpdateEvent -= listener;
-            }
+            UpdateEvent -= listener;
+        }
+        
+        public void AddLaterUpdateListener(MonoUpdaterEvent listener)
+        {
+            LaterUpdateEvent += listener;
         }
 
-        public static void AddFixedUpdateListener(MonoUpdaterEvent listener)
+        public void RemoveLaterUpdateListener(MonoUpdaterEvent listener)
         {
-            if (Instance != null)
-            {
-                Instance.FixedUpdateEvent += listener;
-            }
+            LaterUpdateEvent -= listener;
         }
 
-        public static void RemoveFixedUpdateListener(MonoUpdaterEvent listener)
+
+        public void AddFixedUpdateListener(MonoUpdaterEvent listener)
         {
-            if (Instance != null)
-            {
-                Instance.FixedUpdateEvent -= listener;
-            }
+            FixedUpdateEvent += listener;
         }
 
-        void Update()
+        public void RemoveFixedUpdateListener(MonoUpdaterEvent listener)
+        {
+            FixedUpdateEvent -= listener;
+        }
+
+        public void OnUpdate()
         {
             if (UpdateEvent != null)
             {
@@ -59,7 +63,7 @@ namespace GameFrame.Common
             }
         }
 
-        void FixedUpdate()
+        public void OnFixedUpdate()
         {
             if (FixedUpdateEvent != null)
             {
@@ -73,12 +77,20 @@ namespace GameFrame.Common
                 }
             }
         }
-
-
-        public static void StartCoroutine(IEnumerator routine)
+        public void OnLaterUpdate()
         {
-            MonoBehaviour mono = Instance;
-            mono.StartCoroutine(routine);
+            if (LaterUpdateEvent != null)
+            {
+                try
+                {
+                    LaterUpdateEvent();
+                }
+                catch (Exception e)
+                {
+                    Debuger.LogError("MonoHelper", "LaterUpdate() Error:{0}\n{1}", e.Message, e.StackTrace);
+                }
+            }
         }
+
     }
 }

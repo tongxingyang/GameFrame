@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace GameFrame
 {
+    /// <summary>
+    /// Event类
+    /// </summary>
     public class Event
     {
         public enEventID EnEventId;

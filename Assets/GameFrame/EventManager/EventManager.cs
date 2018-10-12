@@ -6,14 +6,21 @@ using UnityEngine;
 
 namespace GameFrame
 {
+    /// <summary>
+    /// Event事件管理类
+    /// </summary>
     public class EventManager : Singleton<EventManager>
     {
+        /// <summary>
+        /// 定义委托
+        /// </summary>
+        /// <param name="event"></param>
         public delegate void OnEventHandler(Event @event);
-        private List<object> m_events = null;
+        private List<Event> m_events = null;
         private OnEventHandler[] m_eventMap = null;
         public override void Init()
         {
-            m_events = new List<object>();
+            m_events = new List<Event>();
             m_eventMap = new OnEventHandler[Enum.GetValues(typeof(enEventID)).Length];
         }
 
@@ -49,7 +56,7 @@ namespace GameFrame
             }
         }
 
-        public void DispathEvent(Event @event)
+        private void DispathEvent(Event @event)
         {
             @event.m_isused = true;
             OnEventHandler callback = m_eventMap[(int)@event.EnEventId];
@@ -79,9 +86,9 @@ namespace GameFrame
         {
             for (int i = 0; i < m_events.Count; i++)
             {
-                if (((Event)m_events[i]).m_isused == false)
+                if (m_events[i].m_isused == false)
                 {
-                    return (Event)m_events[i];
+                    return m_events[i];
                 }
             }
             Event @event = new Event();

@@ -20,8 +20,6 @@ namespace GameFrame
         {
             m_eventMap.Clear();
         }
-
-        
         
         private bool OnBroadCasting(string eventType)
         {

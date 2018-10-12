@@ -96,18 +96,21 @@ namespace GameFrame
             lua.Dispose();
             lua = null;
         }
-    
-        public object[] CallFunction(string funcName,params  object[] args)
+        
+        public void CallLuaFunction(string funcName,object p1=null, object p2 = null, object p3 = null
+            ,object p4 = null, object p5 = null, object p6 = null, object p7 = null, object p8 = null, object p9 = null)
         {
-            LuaFunction function = lua.GetFunction(funcName);
-            if (function != null)
+            if (Instance == null) return ;
+            LuaFunction func = lua.GetFunction(funcName);
+            if (func == null)
             {
-                return function.LazyCall(args);
+                return ;
             }
-            return null;
+            func.Call(p1, p2, p3, p4, p5, p6, p7, p8, p9);
+            func.Dispose();
+            return ;
         }
         
-    
         void StartMain()
         {
 //            lua.DoFile("Test/Main.lua",LuaConst.LuaBundleMode);

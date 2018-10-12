@@ -5,26 +5,8 @@ using UnityEditor;
 using UnityEngine;
 namespace GameFrame.Editor
 {
-//    [InitializeOnLoad]
     public static  class LuaEditor
     {
-        [MenuItem("LuaTools/Encode LuaFile with UTF-8",false)]
-        public static void EncodeLuaFile()
-        {
-            return;
-//            string path = LuaConst.luaDir;//lua文件夹
-//            string[] files = Directory.GetFiles(path, "*.lua", SearchOption.AllDirectories);
-//            foreach (string f in files)
-//            {
-//                string file = f.Replace('\\', '/');
-//                string content = File.ReadAllText(file);
-//                using (var sw = new StreamWriter(file,false,Encoding.UTF8))
-//                {
-//                    sw.Write(content);
-//                }
-//            }
-        }
-
         public static bool IsEncryptBatch = true;
         public static string SrcLuaPath = LuaConst.luaDir;
         public static  string DesLuaPath = LuaConst.luaTempDir;
@@ -138,7 +120,6 @@ namespace GameFrame.Editor
         [MenuItem("LuaTools/Encode and Encrypt Lua(.bytes)",false)]
         public static void HandleLuaBundle()
         {
-            EncodeLuaFile();
             string tempLuaDir = LuaConst.luaTempDir;
             if (Directory.Exists(tempLuaDir))
             {

@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace GameFrame
 {
+    /// <summary>
+    /// 事件派发的参数
+    /// </summary>
     public struct stEventParms
     {
         public int id;

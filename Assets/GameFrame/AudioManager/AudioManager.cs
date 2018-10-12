@@ -735,11 +735,11 @@ namespace GameFrame
 
         IEnumerator LoadAudioClipFromUrl(string audio_url, AudioType audio_type, Action<AudioClip> callback)
         {
-            using (UnityEngine.Networking.UnityWebRequest www = UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip(audio_url, audio_type))
+            using (UnityEngine.Networking.UnityWebRequest www = UnityEngine.Networking.UnityWebRequest.GetAudioClip(audio_url, audio_type))
             {
                 yield return www.Send();
 
-                if (www.isNetworkError)
+                if (www.isError)
                 {
                     Debug.Log(string.Format("Error downloading audio clip at {0} : ", audio_url, www.error));
                 }
@@ -816,11 +816,10 @@ namespace GameFrame
             }
         }
 
-        private List<int> remIndex = new List<int>();
         private void ManageSoundEffects()
         {
-            remIndex.Clear();
-            for (int i = 0; i < soundEffectPool.Count; i++)
+            int i = 0;
+            while (i < soundEffectPool.Count)
             {
                 SoundEffect soundEffect = soundEffectPool[i];
                 if (soundEffect.Source.isPlaying && !float.IsPositiveInfinity(soundEffect.Time))
@@ -834,15 +833,12 @@ namespace GameFrame
                     {
                         soundEffect.Callback.Invoke();
                     }
-                    remIndex.Add(i);
+                    Destroy(soundEffect.gameObject);
+                    soundEffectPool.RemoveAt(i);
                 }
-            }
-            if (remIndex.Count > 0)
-            {
-                for (int i = 0; i < remIndex.Count; i++)
+                else
                 {
-                    Destroy(soundEffectPool[remIndex[i]].gameObject);
-                    soundEffectPool.RemoveAt(remIndex[i]);
+                    i++;
                 }
             }
         }

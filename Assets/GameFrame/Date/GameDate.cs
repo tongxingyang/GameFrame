@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using Common;
 using Common.Model;
-
+/// <summary>
+/// 保存游戏的全局数据
+/// </summary>
 public class GameData
 {
     public static AccountModel AccountData = new AccountModel();
