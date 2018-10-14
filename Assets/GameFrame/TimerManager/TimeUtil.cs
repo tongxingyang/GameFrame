@@ -22,7 +22,7 @@ namespace GameFrame
         public const int month = 30 * day;
         public const int year = 365 * day;
 
-        static public string GetTimeShort(int time, int len = 1)
+        static public string GetTimeShort(int time, int len = 1,bool showyear = false,bool showmouth = false,bool showweek = true)
         {
             StringBuilder s = new StringBuilder();
             Action<int, string> act = (u, c) => {
@@ -32,9 +32,9 @@ namespace GameFrame
                 time -= u * num;
                 len--;
             };
-            if (time >= year) act(year, "年");
-            if (len > 0 && time >= month) act(month, "月");
-            if (len > 0 && time >= week) act(week, "周");
+            if (time >= year && showyear) act(year, "年");
+            if (len > 0 && time >= month && showmouth) act(month, "月");
+            if (len > 0 && time >= week && showweek) act(week, "周");
             if (len > 0 && time >= day) act(day, "天");
             if (len > 0 && time > hour) act(hour, "时");
             if (len > 0 && time > minute) act(minute, "分");

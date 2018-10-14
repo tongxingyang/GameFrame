@@ -7,11 +7,10 @@ namespace GameFrame
 {
     public class Timer
     {
-        //唯一的序列号
         private int m_squence;
         private object[] parms;
-        private TimeManager.OnTimeUpHandler OnTimeUpHandler;
-        private TimeManager.OnTimeUpHandlerWithParms OnTimeUpHandlerWithParms;
+        private TimeManager.OnTimeUpHandler OnTimeUpHandler = null;
+        private TimeManager.OnTimeUpHandlerWithParms OnTimeUpHandlerWithParms = null;
         /// <summary>
         /// 循环次数
         /// </summary>
@@ -191,6 +190,14 @@ namespace GameFrame
             m_finish = false;
             m_isrunning = true;
         }
+
+        public void Clear()
+        {
+            m_squence = -1;
+            parms = null;
+            OnTimeUpHandler = null;
+           OnTimeUpHandlerWithParms = null;
+    }
     }
 
 }

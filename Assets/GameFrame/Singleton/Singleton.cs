@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using GameFrameDebuger;
 using UnityEngine;
 
 namespace GameFrame
@@ -30,7 +31,14 @@ namespace GameFrame
             if (m_instance == null)
             {
                 m_instance = Activator.CreateInstance<T>();
-                (m_instance as Singleton<T>).Init();
+                if (m_instance != null)
+                {
+                    (m_instance as Singleton<T>).Init();
+                }
+                else
+                {
+                    Debuger.LogError("创建对象出错 Type ："+typeof(T));
+                }
             }
         }
 
@@ -62,7 +70,12 @@ namespace GameFrame
         {
 
         }
-        
+
+        /// <summary>
+        /// 调用一些非公开的方法
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="args"></param>
         public void HandleMessage(string msg, object[] args)
         {
             var mi = this.GetType()
@@ -73,7 +86,7 @@ namespace GameFrame
             }
         }
 
-        public object HandleMessageValue(string msg, object[] args)
+        public object HandleMessageRetValue(string msg, object[] args)
         {
             var mi = this.GetType()
                 .GetMethod(msg, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);

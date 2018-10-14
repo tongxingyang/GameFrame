@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using GameFrame;
+using GameFrameDebuger;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Networking.NetworkSystem;
@@ -77,6 +78,7 @@ namespace GameFrame
         [SerializeField] private bool useSoundEffectOnStart = false;
         [SerializeField] private AudioMixerGroup soundEffectMixerGroup = null;
         [SerializeField] string volumeOfSoundEffectMixer = String.Empty;
+
         Dictionary<string,AudioClip> audioClipDic = new Dictionary<string, AudioClip>();
         
         private List<SoundEffect> soundEffectPool = new List<SoundEffect>();
@@ -181,10 +183,14 @@ namespace GameFrame
             sequence++;
             return ret;
         }
-
+        /// <summary>
+        /// 初始化Audio Source的一些属性
+        /// </summary>
+        /// <param name="audioSource"></param>
+        /// <returns></returns>
         AudioSource InitAudioSource(AudioSource audioSource)
         {
-            audioSource.outputAudioMixerGroup = musicMixerGroup;// todo txy
+            audioSource.outputAudioMixerGroup = musicMixerGroup;
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0;
             audioSource.rolloffMode  = AudioRolloffMode.Linear;
@@ -232,7 +238,7 @@ namespace GameFrame
             return vol;
         }
 
-        #region CacheAudioClip
+        #region 缓存文件操作
 
         public void ClearCacheDic()
         {
@@ -269,7 +275,7 @@ namespace GameFrame
 
         #endregion
 
-        #region Prefs Functions
+        #region 保存数据
 
         /// <summary>
         /// 从本地数据获取如果没有返回musicVolume
@@ -337,8 +343,7 @@ namespace GameFrame
         
         #endregion
 
-
-        #region SoundEffect Functions
+        #region 音效相关操作
 
         private GameObject CreateSoundEffect(AudioClip clip,Vector2 localpos)
         {
@@ -346,7 +351,7 @@ namespace GameFrame
             go.transform.position = localpos;
             go.transform.SetParent(transform);
             go.AddComponent<SoundEffect>();
-            AudioSource audioSource = go.AddComponent<AudioSource>();// todo txy
+            AudioSource audioSource = go.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0;
             audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
@@ -360,7 +365,7 @@ namespace GameFrame
         {
             for (int i = 0; i < soundEffectPool.Count; i++)
             {
-                if (soundEffectPool[i].Name == name && soundEffectPool[i].Singleton == true)
+                if (soundEffectPool[i].Name == name && soundEffectPool[i].Singleton)
                 {
                     return soundEffectPool[i];
                 }
@@ -369,10 +374,15 @@ namespace GameFrame
         }
 
         public AudioSource PlaySoundEffect(AudioClip clip, Vector2 localtion, float duration, float volume,
-            bool singleton = false, float pitch = 1f, Action callback = null)
+            bool singleton = false, float pitch = 1f, bool follow = false, Transform targe = null, Action callback = null)
         {
             if (duration <= 0 || clip == null)
             {
+                return null;
+            }
+            if (follow && !targe)
+            {
+                Debuger.LogError("没有跟随的目标");
                 return null;
             }
             SoundEffect soundEffect = GetSoundEffect(clip.name);
@@ -387,8 +397,10 @@ namespace GameFrame
             source = go.GetComponent<AudioSource>();
             source.loop = duration > clip.length;
             source.volume = soundEffectVolume * volume;
-            source.pitch = pitch;    //todo txy
+            source.pitch = pitch; 
             SoundEffect effect = go.GetComponent<SoundEffect>();
+            effect.IsFollow = follow;
+            effect.Target = targe;
             effect.Sequence = GetSequence();
             effect.Singleton = singleton;
             effect.Source = source;
@@ -402,19 +414,24 @@ namespace GameFrame
         
         public AudioSource PlaySoundEffect(AudioClip clip, Vector2 location, float duration, bool singleton = false, Action callback = null)
         {
-            return PlaySoundEffect(clip, location, duration, soundEffectVolume, singleton, 1f, callback);
+            return PlaySoundEffect(clip, location, duration, soundEffectVolume, singleton, 1f,false,null, callback);
         }
 
         public AudioSource PlaySoundEffect(AudioClip clip, float duration, bool singleton = false, Action callback = null)
         {
-            return PlaySoundEffect(clip, Vector2.zero, duration, soundEffectVolume, singleton, 1f, callback);
+            return PlaySoundEffect(clip, Vector2.zero, duration, soundEffectVolume, singleton, 1f,false,null, callback);
         }
 
         public AudioSource RepeatPlaySoundEffect(AudioClip clip, Vector2 location, int repeat, float volume,
-            bool singleton = false, float pitch = 1f, Action callback = null)
+            bool singleton = false, float pitch = 1f, bool follow = false, Transform targe = null, Action callback = null)
         {
             if (clip == null)
             {
+                return null;
+            }
+            if (follow && !targe)
+            {
+                Debuger.LogError("没有跟随的目标");
                 return null;
             }
             if (repeat != 0)
@@ -432,6 +449,8 @@ namespace GameFrame
                 source.volume = soundEffectVolume * volume;
                 source.pitch = pitch;
                 SoundEffect effect = go.GetComponent<SoundEffect>();
+                effect.IsFollow = follow;
+                effect.Target = targe;
                 effect.Sequence = GetSequence();
                 effect.Singleton = singleton;
                 effect.Source = source;
@@ -443,21 +462,21 @@ namespace GameFrame
 				
                 return source;
             }
-            return PlayOneShot(clip, location, volume, pitch, callback);
+            return PlayOneShot(clip, location, volume, pitch, follow,targe,callback);
         }
 		
         public AudioSource RepeatPlaySoundEffect(AudioClip clip, Vector2 location, int repeat, bool singleton = false, Action callback = null)
         {
-            return RepeatPlaySoundEffect(clip, location, repeat, soundEffectVolume, singleton, 1f, callback);
+            return RepeatPlaySoundEffect(clip, location, repeat, soundEffectVolume, singleton, 1f,false,null, callback);
         }
 
         public AudioSource RepeatPlaySoundEffect(AudioClip clip, int repeat, bool singleton = false, Action callback = null)
         {
-            return RepeatPlaySoundEffect(clip, Vector2.zero, repeat, soundEffectVolume, singleton, 1f, callback);
+            return RepeatPlaySoundEffect(clip, Vector2.zero, repeat, soundEffectVolume, singleton, 1f, false,null,callback);
         }
 
         public AudioSource PlayOneShot(AudioClip clip, Vector2 location, float volume, float pitch = 1f,
-            Action callback = null)
+            bool follow = false, Transform targe = null, Action callback = null)
         {
             if (clip == null)
             {
@@ -470,6 +489,8 @@ namespace GameFrame
             source.volume = soundEffectVolume * volume;
             source.pitch = pitch;
             SoundEffect effect = go.GetComponent<SoundEffect>();
+            effect.IsFollow = follow;
+            effect.Target = targe;
             effect.Sequence = GetSequence();
             effect.Singleton = false;
             effect.Source = source;
@@ -484,12 +505,12 @@ namespace GameFrame
         
         public AudioSource PlayOneShot(AudioClip clip, Vector2 location, Action callback = null)
         {
-            return PlayOneShot(clip, location, soundEffectVolume, 1f, callback);
+            return PlayOneShot(clip, location, soundEffectVolume, 1f, false, null,callback);
         }
 
         public AudioSource PlayOneShot(AudioClip clip, Action callback = null)
         {
-            return PlayOneShot(clip, Vector2.zero, soundEffectVolume, 1f, callback);
+            return PlayOneShot(clip, Vector2.zero, soundEffectVolume, 1f, false, null, callback);
         }
 
         public void PauseAllSounfEffect()
@@ -505,7 +526,33 @@ namespace GameFrame
                 }
             }
         }
-        
+
+        public void DelteSoundEffect(int Sequence)
+        {
+            foreach (SoundEffect soundEffect in soundEffectPool)
+            {
+                if (soundEffect != null)
+                {
+                    if (soundEffect.Sequence == Sequence)
+                    {
+                        soundEffect.Time = 0f;
+                    }
+                }
+            }
+        }
+        public void DelteSoundEffect(SoundEffect se)
+        {
+            foreach (SoundEffect soundEffect in soundEffectPool)
+            {
+                if (soundEffect != null)
+                {
+                    if (soundEffect == se)
+                    {
+                        soundEffect.Time = 0f;
+                    }
+                }
+            }
+        }
         public void ResumeAllSounfEffect()
         {
             foreach (SoundEffect soundEffect in soundEffectPool)
@@ -538,7 +585,6 @@ namespace GameFrame
         
         #endregion
 
-        
         
         #region Background Functions
 
@@ -683,14 +729,14 @@ namespace GameFrame
             return fullname;
         }
 		
-        public AudioClip LoadClip(string path, bool add_to_playlist = false)
+        public AudioClip LoadClip(string path, bool addcache = false)
         {
 			
             AudioClip clip = null;
             clip = GetCilpFromDic(GetAudioCilpName(path));
             if (clip == null)
             {
-                clip = Resources.Load(path) as AudioClip;
+                clip = Resources.Load(path) as AudioClip;// TODO 加载声音文件
             }
             if (clip == null)
             {
@@ -698,7 +744,7 @@ namespace GameFrame
                 return null;
             }
 
-            if (add_to_playlist)
+            if (addcache)
             {
                 AddToCache(clip);
             }
@@ -706,7 +752,7 @@ namespace GameFrame
             return clip;
         }
 
-        public void LoadClip(string path, AudioType audio_type, bool add_to_playlist, Action<AudioClip> callback)
+        public void LoadClip(string path, AudioType audio_type, bool addcache, Action<AudioClip> callback)
         {
             AudioClip clip = null;
             clip = GetCilpFromDic(GetAudioCilpName(path));
@@ -714,7 +760,7 @@ namespace GameFrame
             {
                 StartCoroutine(LoadAudioClipFromUrl(path, audio_type, (downloadedContent) =>
                 {
-                    if (downloadedContent != null && add_to_playlist)
+                    if (downloadedContent != null && addcache)
                     {
                         AddToCache(downloadedContent);
                     }
@@ -724,7 +770,7 @@ namespace GameFrame
             }
             else
             {
-                if (add_to_playlist)
+                if (addcache)
                 {
                     AddToCache(clip);
                 }
@@ -735,11 +781,11 @@ namespace GameFrame
 
         IEnumerator LoadAudioClipFromUrl(string audio_url, AudioType audio_type, Action<AudioClip> callback)
         {
-            using (UnityEngine.Networking.UnityWebRequest www = UnityEngine.Networking.UnityWebRequest.GetAudioClip(audio_url, audio_type))
+            using (UnityEngine.Networking.UnityWebRequest www = UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip(audio_url, audio_type))
             {
-                yield return www.Send();
+                yield return www.SendWebRequest();
 
-                if (www.isError)
+                if (www.isNetworkError)
                 {
                     Debug.Log(string.Format("Error downloading audio clip at {0} : ", audio_url, www.error));
                 }
@@ -770,7 +816,7 @@ namespace GameFrame
 
         public void OnUpdate()
         {
-            while (alive)
+            if (alive)
             {
                 ManageSoundEffects();
                 if (IsMusicAltered())
@@ -825,6 +871,10 @@ namespace GameFrame
                 if (soundEffect.Source.isPlaying && !float.IsPositiveInfinity(soundEffect.Time))
                 {
                     soundEffect.Time -= Time.deltaTime;
+                    if (soundEffect.IsFollow)
+                    {
+                        soundEffect.transform.position = soundEffect.Target.position;
+                    }
                 }
                 if (soundEffect.Time <= 0.0f)
                 {
@@ -931,6 +981,5 @@ namespace GameFrame
             alive = false;
             SaveAllPrefs();
         }
-        
     }
 }

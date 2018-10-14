@@ -3,6 +3,8 @@ using GameFrame;
 using UIFrameWork;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using Assets.GameFrame.Language;
 using GameFrame.Common;
 using GameFrame.ConfigManager;
 using GameFrame.NetWork;
@@ -17,17 +19,20 @@ namespace GameFrame
         private bool IsUpdateDone = false;
     
         public GameConfig GameConfig = null;
-        
+
+
+
         #region 当前机器的渲染能力参数
-        
+
         private const int SupportFeaturePostProcess = 0; 
         private const int SupportFeatureDynamicShadow = 1;
         private const int SupportFeatureMaxTextureSize2048 = 2;
         private const int SupportFeatureRenderTarget30 = 3;
         private const int SupportFeatureHighPerformance = 4;
         private const int SupportFeatureNum = 5;
-    
+        
         private static BitArray feature = new BitArray(SupportFeatureNum);
+
         public static BitArray Feature
         {
             get { return feature; }
@@ -69,7 +74,6 @@ namespace GameFrame
             Debuger.Log(String.Format("SystemInfo.processorType: [{0}]", SystemInfo.processorType));
             Debuger.Log(String.Format("SystemInfo.supportedRenderTargetCount: [{0}]", SystemInfo.supportedRenderTargetCount));
             Debuger.Log(String.Format("SystemInfo.supportsImageEffects: [{0}]", SystemInfo.supportsImageEffects));
-            Debuger.Log(String.Format("SystemInfo.supportsRenderTextures: [{0}]", SystemInfo.supportsRenderTextures));
             Debuger.Log(String.Format("SystemInfo.SupportsRenderTextureFormat Depth: [{0}]", SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth)));
             Debuger.Log(String.Format("SystemInfo.supportsShadows: [{0}]", SystemInfo.supportsShadows));
             Debuger.Log(String.Format("SystemInfo.systemMemorySize: [{0}]", SystemInfo.systemMemorySize));
@@ -86,18 +90,23 @@ namespace GameFrame
         {
             if (!GameConfig)
             {
-                GameConfig = gameObject.GetComponent<GameConfig>();
+                GameConfig = gameObject.AddComponent<GameConfig>();
             }
+
             Util.SetResolution(GameConfig.Resolution);
             InitDebuger();
             InitRenderFeature();
             InitBaseSys();
+            Singleton<LanguageManager>.GetInstance().SetCurrentLanguage(GameConfig.Language);
+            Singleton<LanguageManager>.GetInstance().LoadLanguageConfig();
             Application.backgroundLoadingPriority = UnityEngine.ThreadPriority.High;
             Application.runInBackground = true;
             Application.targetFrameRate = GameConfig.FrameRate;
             QualitySettings.blendWeights = BlendWeights.TwoBones;
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
         }
+
+       
         /// <summary>
         /// 初始化Debuger
         /// </summary>
@@ -136,11 +145,11 @@ namespace GameFrame
      
         void ChangeScence()
         {
-            Singleton<SceneManager>.GetInstance().LoadScene("Login", () =>
+            SingletonMono<SceneManager>.GetInstance().LoadScene("Login",null, () =>
             {
                 Singleton<WindowManager>.GetInstance().OpenWindow("LoginAndRegister",true);
-    //            Singleton<WindowManager>.GetInstance().OpenWindow("Dialogue",true,true,new DialogueContent("dialoguedata.json","node1"));
-            });
+
+            },null);
         }
         void PlayLogoVider(string filename,bool cancancel)
         {
@@ -189,6 +198,7 @@ namespace GameFrame
             SingletonMono<CoroutineExecutor>.GetInstance();
             Singleton<ResourceManager>.GetInstance();
             SingletonMono<ServerManager>.GetInstance();
+            Singleton<LanguageManager>.GetInstance();
         }
     
         void Update()
@@ -200,7 +210,7 @@ namespace GameFrame
             }
             Singleton<WindowManager>.GetInstance().OnUpdate();
             Singleton<ResourceManager>.GetInstance().OnUpdate();
-            Singleton<AudioManager>.GetInstance().OnUpdate();
+            SingletonMono<AudioManager>.GetInstance().OnUpdate();
             SingletonMono<MonoHelper>.GetInstance().OnUpdate();
         }
     

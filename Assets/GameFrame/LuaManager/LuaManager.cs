@@ -67,8 +67,9 @@ namespace GameFrame
         void AddBundle(string bundleName)
         {
             string url = LuaConst.luaResDir+"/"+ bundleName.ToLower();
-            if (File.Exists(url))
+            if (FileManager.IsFileExist(url))
             {
+                //TODO lua bundle加载未完成
                 AssetBundle bundle = AssetBundle.LoadFromFile(url);
                 if (bundle != null)
                 {
@@ -113,7 +114,6 @@ namespace GameFrame
         
         void StartMain()
         {
-//            lua.DoFile("Test/Main.lua",LuaConst.LuaBundleMode);
             lua.DoFile("Main.lua",LuaConst.LuaBundleMode);
             LuaFunction main = lua.GetFunction("main");
             main.Call();

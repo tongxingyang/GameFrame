@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using GameFrameDebuger;
+using UnityEngine;
 
 namespace GameFrame.FSM
 {
@@ -30,9 +32,11 @@ namespace GameFrame.FSM
         {
             get { return States[previousStateID]; }
         }
-
+        /// <summary>
+        /// 当前状态机的ID
+        /// </summary>
         public int ID;
-        
+
         public StateMachine(IState<T>[] states, T initStateID,int id)
         {
             this.Initialize(states,initStateID);
@@ -67,7 +71,7 @@ namespace GameFrame.FSM
             var duplicateIDs = GetDuplicateIDs(states);
             if (duplicateIDs.Length > 0)
             {
-                Debuger.LogError("试图去初始化不存在的状态"+duplicateIDs.ToString());
+               Debuger.LogError("重复添加枚举："+duplicateIDs);
             }
         }
 
@@ -76,7 +80,7 @@ namespace GameFrame.FSM
             var missings = GetMessingIDs(states);
             if (missings.Length > 0)
             {
-                Debuger.LogError("试图去初始化不存在的状态"+missings.ToString());
+                Debuger.LogError("丢失相关枚举结构："+missings);
             }
         }
         
@@ -109,7 +113,7 @@ namespace GameFrame.FSM
         /// </summary>
         /// <param name="states"></param>
         /// <returns></returns>
-        private static T[] GetMessingIDs(IState<T>[] states)
+        private static string GetMessingIDs(IState<T>[] states)
         {
             var  found = new List<T>();
             for (int i = 0; i < states.Length; i++)
@@ -117,23 +121,23 @@ namespace GameFrame.FSM
                 found.Add(states[i].ID);
             }
             var entries = Enum.GetValues(typeof(T));
-            var missings = new List<T>();
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < entries.Length; i++)
             {
                 var entry = (T)entries.GetValue(i);
                 if (!found.Contains(entry))
                 {
-                    missings.Add(entry);
+                    sb.Append(entry.ToString());
                 }
             }
-            return missings.ToArray();
+            return sb.ToString();
         }
         /// <summary>
         /// 获得重复的IDs
         /// </summary>
         /// <param name="states"></param>
         /// <returns></returns>
-        private static T[] GetDuplicateIDs(IState<T>[] states)
+        private static string GetDuplicateIDs(IState<T>[] states)
         {
             var extras = new List<T>();
             for (int i = 0; i < states.Length; i++)
@@ -149,7 +153,12 @@ namespace GameFrame.FSM
                     extras.Remove(entry);
                 }
             }
-            return extras.ToArray();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < extras.Count; i++)
+            {
+                sb.Append(extras[i].ToString());
+            }
+            return sb.ToString();
         }
     }
 }

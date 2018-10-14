@@ -54,7 +54,7 @@ namespace GameFrame.NetWork
                 Socket.BeginReceive(readbuff, 0, 1024, SocketFlags.None, ReceiveCallBack, readbuff);
             }
             catch (Exception e) {
-                Debuger.LogError("断开连接.........");
+                Debuger.LogError("断开连接........."+e.Message);
                 Socket.Close();
     
             }

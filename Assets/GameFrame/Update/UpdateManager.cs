@@ -9,17 +9,15 @@ using UnityEngine;
 using UnityEngine.UI;
 namespace GameFrame
 {
-    //定义委托
-    public delegate void UpdateAction();
     
     public enum enClientState
     {
         State_Init,//初始化
         State_InitSDK,//初始化sdk
         State_UnZipData,//解压资源
-        State_UpdateApp,//updateapp
-        State_UpdateResource,//updateres
-        State_GetServerList,//获取服务器列表
+        State_UpdateApp,//更新应用
+        State_UpdateResource,//更新资源
+        //State_GetServerList,//获取服务器列表
         State_Start,//更新完成
     }
 
@@ -36,11 +34,6 @@ namespace GameFrame
 
     public class UpdateManager : Singleton<UpdateManager>
     {
-        //下载数量限制
-        private static int DOWNLOAD_COUNT = 50;
-        /// <summary>
-        /// 获取组件
-        /// </summary>
         private Text AlertContextText;
         private Text StatusText;
         private Text ProgressText;
@@ -52,8 +45,11 @@ namespace GameFrame
         private Slider ProgressSliber;
         private GameObject UpdateGameObject;
         private GameObject AlertObject;
-        private int CurrentDownCount = 0;
         private GameObject CanvasObj;
+
+        //下载数量限制
+        private static int DOWNLOAD_COUNT = 50;
+        private int CurrentDownCount = 0;
         private Action<bool> UpdateCallback;
         private bool m_isBeginUpdate = false;
         private bool m_isCheckSDK = false;
@@ -66,7 +62,32 @@ namespace GameFrame
         public List<string> m_redownloadList = new List<string>();
         public List<string> m_downloadList = new List<string>();
         public  ConcurrentQueue<DownloadTask> m_taskQueue = new ConcurrentQueue<DownloadTask>();
-        public  readonly object m_obj = new object();//线程安全锁 对象
+        public  readonly object m_obj = new object();
+
+        private string initalVersion; //安装包的版本
+        private string currentVersion;//沙河目录的版本
+        private string onlineVersion; //服务器上的版本
+
+        private int initalResVersion;
+        private int currentResVersion;
+        private int onlineResVersion;
+
+        private bool isLoadOldTableAndVersion = false;
+        private bool isCopyDone = false;
+        private bool isUpdateAppDone = false;
+        private bool isDownloadDone = false;
+
+        private int filecount = 0;
+        private int currentcopycount = 0;
+        public int TotalDownloadSize = 0;//总共需要下载的文件大小
+        public int DownloadSize = 0;//已经下载的文件大小
+
+        private int m_updateState = 0;
+        private bool m_loadOver = true;
+        private int m_urlIndex = 2;
+        private int m_overThreadNum = 0;
+        private string SrcUrl = string.Empty;
+
         public float DownLoadProgress
         {
             get
@@ -81,38 +102,17 @@ namespace GameFrame
                 }
             }
         }
-        private string initalVersion;// 安装包的版本
-        private string currentVersion;//沙河目录的版本
-        private string onlineVersion;//服务器上的版本
-        
-        private int initalResVersion;
-        private int currentResVersion;
-        private int onlineResVersion;
-        
-        private bool isLoadOldTableAndVersion = false;//是否加载old Version完成
-        private bool isCopyDone = false; // 是否拷贝完成
-        private bool isUpdateAppDone = false;
-        private int filecount = 0;
-        private int currentcopycount = 0;
 
-        public  int TotalDownloadSize = 0;
-        public int DownloadSize = 0;
-        private bool isDoneloadDone = false;
 
         public bool IsDoneloadDone
         {
-            get { return isDoneloadDone; }
+            get { return isDownloadDone; }
         }
         public int UpdateState
         {
             get { return m_updateState; }
         }
 
-        private int m_updateState = 0;
-        private bool m_loadOver = true;
-        private int m_urlIndex = 2;
-        private int m_overThreadNum = 0;
-        private string SrcUrl = string.Empty;
         public override void Init()
         {
             base.Init();
@@ -296,31 +296,32 @@ namespace GameFrame
                         RefLauncherInfo();
                         break;
                     case  enClientState.State_UpdateResource:
-                        if (isDoneloadDone)
+                        if (isDownloadDone)
                         {
-                            State = enClientState.State_GetServerList;
-                            SingletonMono<GameFrameWork>.GetInstance()
-                                .StartCoroutine(Singleton<ServerListManager>.GetInstance().GetServerList());
-                            //开始获取可用的服务器列表
+                            State = enClientState.State_Start;
+                            //SingletonMono<GameFrameWork>.GetInstance()
+                            //    .StartCoroutine(Singleton<ServerListManager>.GetInstance().GetServerList());
+                            ////开始获取可用的服务器列表
+                            RefLauncherInfo();
                         }
                         else
                         {
                             RefLauncherInfo();
                         }
                         break;
-                    case  enClientState.State_GetServerList:
-                        if (Singleton<ServerListManager>.GetInstance().DownloadDone)
-                        {
-                            this.State = enClientState.State_Start;
-                            RefLauncherInfo();
+                    //case  enClientState.State_GetServerList:
+                    //    if (Singleton<ServerListManager>.GetInstance().DownloadDone)
+                    //    {
+                    //        this.State = enClientState.State_Start;
+                    //        RefLauncherInfo();
                             
-                        }
-                        else
-                        {
-                            RefLauncherInfo();
-                        }
+                    //    }
+                    //    else
+                    //    {
+                    //        RefLauncherInfo();
+                    //    }
                         
-                        break;
+                    //    break;
                     case  enClientState.State_Start:
                         //开始游戏
                         UpdateCallback(true);
@@ -474,12 +475,12 @@ namespace GameFrame
                 StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_Unzip");
                 RefProgress((float)currentcopycount/filecount);
 
-            }else if (State == enClientState.State_GetServerList)
-            {
+            //}else if (State == enClientState.State_GetServerList)
+            //{
                 
-                StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_GetServerList");
-                ProgressSliber.value = 0;
-                ProgressText.text = string.Format("{0}%", 0);
+            //    StatusText.text = Singleton<LauncherString>.GetInstance().GetString("Resource_GetServerList");
+            //    ProgressSliber.value = 0;
+            //    ProgressText.text = string.Format("{0}%", 0);
 
             }else if (State == enClientState.State_UpdateApp)
             {
@@ -706,7 +707,7 @@ namespace GameFrame
             }
             if (m_downloadList.Count == 0)
             {
-                isDoneloadDone = true;
+                isDownloadDone = true;
             }
             Debuger.LogError("需要下载的数量 "+m_downloadList.Count +",    大小  "+TotalDownloadSize);
         }
@@ -885,7 +886,7 @@ namespace GameFrame
         IEnumerator UpdateResource()
         {
             m_updateState = 1;
-            isDoneloadDone = false; 
+            isDownloadDone = false; 
             //读取沙河md5 确保解压之后的文件
             LoadCurrentMd5Table();
             //读取hasUpdate文本
@@ -917,7 +918,7 @@ namespace GameFrame
             if (!bCheck && bVersion)//沙河目录文件没有问题 并且 版本相同
             {
                 m_updateState = 3;
-                isDoneloadDone = true;
+                isDownloadDone = true;
                 yield break;
             }
             m_urlIndex = Singleton<ServerConfig>.GetInstance().UpdateServer.Length-1;
@@ -934,7 +935,7 @@ namespace GameFrame
             }
             DeleteUselessFiles();
             GetDownloadFileList(); //如果要下载的列表为0 isdownloaddone = true
-            if (!isDoneloadDone)
+            if (!isDownloadDone)
             {
                 NetworkReachability networkState = Application.internetReachability;
                 if (networkState == NetworkReachability.ReachableViaCarrierDataNetwork)
@@ -1035,7 +1036,7 @@ namespace GameFrame
                     }
                     //清空hasupdate的内容
                     ClearResourceHasUpdate();
-                    isDoneloadDone = true;
+                    isDownloadDone = true;
                     Debuger.LogError("下载完成........");
                     SaveResourceVersion();
                     currentResVersion = onlineResVersion;
@@ -1059,7 +1060,7 @@ namespace GameFrame
                     }
                     //清空hasupdate的内容
                     ClearResourceHasUpdate();
-                    isDoneloadDone = true;
+                    isDownloadDone = true;
                     Debuger.LogError("下载完成..........");
                     SaveResourceVersion();
                     currentResVersion = onlineResVersion;

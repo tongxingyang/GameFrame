@@ -34,7 +34,7 @@ namespace GameFrame
 
 		public T GetObject()
 		{
-			++m_AllocNum;
+		    this.m_AllocNum++;
 
 			if (m_Objects.Count > 0)
 			{
@@ -53,7 +53,7 @@ namespace GameFrame
 		}
 		public bool PutObject(T item)
 		{
-			--m_AllocNum;
+		    this.m_AllocNum--;
 			if (item == null)
 				return false;
 

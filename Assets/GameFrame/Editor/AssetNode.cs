@@ -178,7 +178,7 @@ namespace GameFrame.Editor
             string assetBundleName;
             string[] strs = path.Split('/');
             assetBundleName = strs[strs.Length - 1];
-            assetBundleName = PathResolver.ChangeExtension(assetBundleName, ext).ToLower();
+            assetBundleName = FileManager.ChangeExtension(assetBundleName, ext).ToLower();
             return assetBundleName;
         }
         

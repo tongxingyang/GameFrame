@@ -22,7 +22,7 @@ namespace GameFrame.Editor
         public int Mac = 1;
         public int Android = 1;
         public int IOS = 1;
-        public Version Version;
+        public Version Version = new Version();
     }
     [Serializable]
     public class Version
@@ -144,7 +144,7 @@ namespace GameFrame.Editor
                     {
                         exts.Add(strs[j]);
                     }
-                    PathResolver.RecursiveFile(resourcesPath,list,exts);
+                    FileManager.RecursiveFile(resourcesPath,list,exts);
                 }
              
             }

@@ -433,7 +433,7 @@ namespace GameFrame
         private void OnBundleLoaded(ResourceLoadTask task, AssetBundle ab)
         {
             m_currentTaskCount -= 1;
-            Object obj = null;
+            //Object obj = null;
             if (ab == null)
             {
                 Debuger.LogError(string.Format("LoadBundle: {0} failed! assetBundle == NULL!", task.Path));

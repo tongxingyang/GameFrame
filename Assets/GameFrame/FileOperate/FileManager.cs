@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using GameFrame;
 using GameFrameDebuger;
 using UnityEngine;
 using Path = System.IO.Path;
@@ -51,14 +47,14 @@ namespace GameFrame
             return result;
         }
 
-        public static bool DeleteDirectory(string directory)
+        public static bool DeleteDirectory(string directory, bool recursive = true)
         {
             bool result = false;
             if (IsDirectoryExist(directory))
             {
                 try
                 {
-                    Directory.Delete(directory);
+                    Directory.Delete(directory, recursive);
                     result = true;
                 }
                 catch (Exception e)
@@ -86,7 +82,7 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    Debuger.LogError("GetFileLength出错 filePath:  "+filePath);
+                    Debuger.LogError("GetFileLength出错 filePath:  "+filePath+" "+e.Message);
                 }
             }
             else
@@ -108,8 +104,12 @@ namespace GameFrame
                 }
                 catch (Exception e)
                 {
-                    Debuger.LogError("Error ReadFile");
+                    Debuger.LogError("Error ReadFile "+e.Message);
                 }
+            }
+            else
+            {
+                Debuger.LogError("读取文件出错 文件不存在 filePath :"+filePath);
             }
             return result;
         }
@@ -126,6 +126,10 @@ namespace GameFrame
                 {
                     m_delefateOnFileOperateFileFail(filePath, enFileOperation.DeleteFile, e);
                 }
+            }
+            else
+            {
+                Debuger.LogError("删除文件出错 文件不存在 filePath :"+filePath);
             }
         }
         public static bool WriteFile(string filePath, byte[] data)
@@ -153,6 +157,7 @@ namespace GameFrame
                 fileStream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite);
                 fileStream.Write(data, offect, length);
                 fileStream.Close();
+                fileStream = null;
                 result = true;
             }
             catch (Exception e)
@@ -165,11 +170,6 @@ namespace GameFrame
                 m_delefateOnFileOperateFileFail(filePath, enFileOperation.WriteFile, e);
             }
             return result;
-        }
-
-        public static void CopyFile(string srcFile, string desFile)
-        {
-            File.Copy(srcFile, desFile);
         }
 
         public static string GetFileMD5(string filePath)
@@ -186,9 +186,14 @@ namespace GameFrame
             return MD5Util.ComputeHash(data);
         }
 
-        public static string GetMd5(string data)
+        public static string GetMd5UTF8(string data)
         {
             return MD5Util.ComputeHashUTF8(data);
+        }
+
+        public static string GetMd5Unicode(string data)
+        {
+            return MD5Util.ComputeHashUnicode(data);
         }
 
         public static string CombinePath(string path1, string path2)
@@ -209,7 +214,7 @@ namespace GameFrame
         public static string GetFullName(string fullPath)
         {
             string result = string.Empty;
-            int length = fullPath.LastIndexOf("/");
+            int length = fullPath.LastIndexOf("/", StringComparison.Ordinal);
             if (length > 0)
             {
                 result = fullPath.Substring(length + 1, fullPath.Length - length - 1);
@@ -217,10 +222,37 @@ namespace GameFrame
             return result;
         }
 
+        public static string ChangeExtension(string path, string ext)
+        {
+            string e = Path.GetExtension(path);
+            if (string.IsNullOrEmpty(e))
+            {
+                return path + ext;
+            }
+
+            bool backDSC = path.IndexOf('\\') != -1;
+            path = path.Replace('\\', '/');
+            if (path.IndexOf('/') == -1)
+            {
+                return path.Substring(0, path.LastIndexOf('.')) + ext;
+            }
+
+            string dir = path.Substring(0, path.LastIndexOf('/'));
+            string name = path.Substring(path.LastIndexOf('/'), path.Length - path.LastIndexOf('/'));
+            name = name.Substring(0, name.LastIndexOf('.')) + ext;
+            path = dir + name;
+
+            if (backDSC)
+            {
+                path = path.Replace('/', '\\');
+            }
+            return path;
+        }
+
         public static string EraseExtension(string fullname)
         {
             string result = string.Empty;
-            int length = fullname.LastIndexOf(".");
+            int length = fullname.LastIndexOf(".", StringComparison.Ordinal);
             if (length > 0)
             {
                 result = fullname.Substring(0,length);
@@ -231,7 +263,7 @@ namespace GameFrame
         public static string GetExtension(string fullname)
         {
             string result = string.Empty;
-            int length = fullname.LastIndexOf(".");
+            int length = fullname.LastIndexOf(".", StringComparison.Ordinal);
             if (length > 0 && length+1>fullname.Length)
             {
                 result = fullname.Substring(length+1);
@@ -239,7 +271,64 @@ namespace GameFrame
             return result;
         }
 
-        public static string GetFullDirectory(string fullName)
+        public static void RecursiveFile(List<string> paths, List<string> fileList, List<string> exts = null)
+        {
+            RecursiveFile(paths.ToArray(), fileList, exts);
+        }
+
+        public static void RecursiveFile(string[] paths, List<string> fileList, List<string> exts = null)
+        {
+            for (int i = 0; i < paths.Length; i++)
+            {
+                RecursiveFile(paths[i], fileList, exts);
+            }
+        }
+        public static void RecursiveFile(string path, List<string> fileList, List<string> exts = null)
+        {
+
+
+            string[] names = Directory.GetFiles(path);
+            string[] dirs = Directory.GetDirectories(path);
+            bool isCheckExt = exts != null && exts.Count > 0;
+            foreach (string filename in names)
+            {
+                if (isCheckExt)
+                {
+                    string ext = Path.GetExtension(filename).ToLower();
+                    if (!exts.Contains(ext))
+                        continue;
+                }
+
+
+                string fn = Path.GetFileName(filename);
+                if (fn.Equals(".DS_Store")) continue;
+
+                string file = filename.Replace('\\', '/');
+                fileList.Add(file);
+            }
+
+#if UNITY_EDITOR
+            int count = dirs.Length;
+            int index = 0;
+#endif
+
+
+            foreach (string dir in dirs)
+            {
+
+#if UNITY_EDITOR
+                UnityEditor.EditorUtility.DisplayProgressBar("遍历目录", path, 1f * (index++) / count);
+#endif
+                RecursiveFile(dir, fileList, exts);
+            }
+
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.ClearProgressBar();
+#endif
+        }
+
+
+        public static string GetDirectoryName(string fullName)
         {
             return Path.GetDirectoryName(fullName);
         }
@@ -298,11 +387,16 @@ namespace GameFrame
                 {
                     string dirname = Path.GetDirectoryName(dir);
                     string name = Path.Combine(desDir, dirname);
-                    CopyDirectory(dir, dirname);
+                    CopyDirectory(dir, name);
                 }
                 result = true;
             }
             return result;
+        }
+
+        public static void CopyFile(string srcFile, string desFile)
+        {
+            File.Copy(srcFile, desFile);
         }
 
         public static IEnumerator StartCopyInitialFile(string localname)
@@ -331,17 +425,17 @@ namespace GameFrame
                 }
                 else
                 {
-                    Debuger.LogError(w.error);
+                    Debuger.LogError("文件拷贝出错 源文件 :"+src+"  目标文件:   "+des+"  "+w.error);
                 }
             }
         }
 
         public static void WriteBytesToFile(string path, byte[] bytes, int length)
         {
-            string directory = Path.GetDirectoryName(path);
-            if (!FileManager.IsDirectoryExist(directory))
+            string directory = GetDirectoryName(path);
+            if (!IsDirectoryExist(directory))
             {
-                FileManager.CreateDirectory(directory);
+                CreateDirectory(directory);
             }
             System.IO.FileInfo fileInfo = new System.IO.FileInfo(path);
             using (Stream sw = fileInfo.Open(FileMode.Create,FileAccess.ReadWrite))

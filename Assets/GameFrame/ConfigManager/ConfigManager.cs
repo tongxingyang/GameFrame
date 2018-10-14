@@ -26,6 +26,7 @@ namespace GameFrame.ConfigManager
         {
             if (IsOpenStartLoadConfigBundle)
             {
+                //TODO config bundle 加载未完成
                 string[] files = Directory.GetFiles(ConfigConst.configResDir, "*" + Platform.AssetBundleExt);
                 foreach (string file in files)
                 {
@@ -261,7 +262,7 @@ namespace GameFrame.ConfigManager
                             }
                             catch (Exception e)
                             {
-                                Debuger.LogError("异步加载config文件出错 "+fileName);
+                                Debuger.LogError("异步加载config文件出错 "+fileName+" "+e.Message);
                             }
                         }
                     }

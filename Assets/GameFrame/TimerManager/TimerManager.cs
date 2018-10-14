@@ -32,6 +32,8 @@ namespace GameFrame
 
         public override void UnInit()
         {
+            m_timers = null;
+            m_timerSquence = 0;
         }
 
         public int AddTimer(int time, int loop, enTimeType enTimeType, OnTimeUpHandler onTimeUpHandler)
@@ -109,17 +111,10 @@ namespace GameFrame
 
         public void PauseTimer(int squence)
         {
-            for (int i = 0; i < m_timers.Length; i++)
+            Timer timer = GetTimer(squence);
+            if (timer != null)
             {
-                List<Timer> lise = m_timers[i];
-                for (int j = 0; j < lise.Count; j++)
-                {
-                    if (lise[j].IsSquenceMatch(squence))
-                    {
-                        lise[j].Pause();
-                        return;
-                    }
-                }
+                timer.Pause();
             }
         }
 
@@ -132,9 +127,9 @@ namespace GameFrame
             }
         }
 
-        public void ResetTimer(int squq)
+        public void ResetTimer(int squence)
         {
-            Timer timer = GetTimer(squq);
+            Timer timer = GetTimer(squence);
             if (timer != null)
             {
                 timer.Reset();
@@ -150,9 +145,9 @@ namespace GameFrame
             }
         }
 
-        public int GetTimerCurrent(int dquen)
+        public int GetTimerCurrent(int squence)
         {
-            Timer timer = GetTimer(dquen);
+            Timer timer = GetTimer(squence);
             if (timer != null)
             {
                 return timer.CurrentTime;
@@ -197,6 +192,7 @@ namespace GameFrame
             {
                 if (list[i].IsFinish)
                 {
+                    list[i].Clear();
                     list.RemoveAt(i);
                 }
                 else
@@ -215,6 +211,7 @@ namespace GameFrame
             {
                 if (list[i].IsFinish)
                 {
+                    list[i].Clear();
                     list.RemoveAt(i);
                 }
                 else

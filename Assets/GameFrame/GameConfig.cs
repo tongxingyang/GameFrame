@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Assets.GameFrame.Language;
+using UnityEngine;
 
 namespace GameFrame
 {
@@ -8,6 +9,9 @@ namespace GameFrame
         public int FrameRate = 30;
         public bool EnableLog = true;
         public bool EnableSave = true;
+
+        public Language Language = Language.ZH_CN;
+
 #if UNITY_IPHONE
         public  Vector2 Resolution = new Vector2(1280,720);
 #else
@@ -36,7 +40,14 @@ namespace GameFrame
         #endif
         
         public static string luaResDir = string.Format("{0}/{1}/lua", Platform.PERSISTENT_DATA_PATH, osDir);      //手机运行时lua文件下载目录       
-        
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+        public static string zbsDir = "D:/ZeroBraneStudio/lualibs/mobdebug";        //ZeroBraneStudio目录       
+#elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+        public static string zbsDir = "/Applications/ZeroBraneStudio.app/Contents/ZeroBraneStudio/lualibs/mobdebug";
+#else
+        public static string zbsDir = luaResDir + "/mobdebug/";
+#endif
+
         public static bool openLuaSocket = true;            //是否打开Lua Socket库
         public static bool openLuaDebugger = false;         //是否连接lua调试器
         

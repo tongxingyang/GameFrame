@@ -3,6 +3,6 @@
     public interface HandleMessage
     {
         void HandleMessage(string msg, object[] args);
-        object HandleMessageValue(string msg, object[] args);
+        object HandleMessageRetValue(string msg, object[] args);
     }
 }

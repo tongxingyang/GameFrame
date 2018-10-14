@@ -37,6 +37,15 @@ namespace GameFrame
         /// 唯一标志
         /// </summary>
         private bool singleton;
+        /// <summary>
+        /// 是否跟随物体
+        /// </summary>
+        private bool isFollow;
+        /// <summary>
+        /// 跟随的目标
+        /// </summary>
+        private Transform target;
+
 
         public string Name
         {
@@ -75,7 +84,11 @@ namespace GameFrame
             get{ return duration; }
             set { duration = value; }
         }
-
+        public bool IsFollow
+        {
+            get { return isFollow; }
+            set { isFollow = value; }
+        }
         public float Time
         {
             get{ return time; }
@@ -97,6 +110,11 @@ namespace GameFrame
         {
             get{ return singleton; }
             set { singleton = value; }
+        }
+        public Transform Target
+        {
+            get { return target; }
+            set { target = value; }
         }
     }
 }

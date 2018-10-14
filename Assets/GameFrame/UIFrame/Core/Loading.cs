@@ -5,6 +5,8 @@ using UIFrameWork;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using SceneManager = GameFrame.Scene.SceneManager;
+
 /// <summary>
 /// 加载Scene的Loading进度条 跳转场景
 /// </summary>
@@ -13,7 +15,6 @@ public class Loading : WindowBase
     private Text loadingText;
     private Slider Slider;
     private LoadingContent _loadingContent = null;
-    private AsyncOperation _asyncOperation = null;
     protected override void OnInit(Camera UICamera)
     {
         base.OnInit(UICamera);
@@ -22,19 +23,18 @@ public class Loading : WindowBase
 
     }
 
-    protected override void OnWindowCustomUpdate()
-    {
-        base.OnWindowCustomUpdate();
-        
-    }
-
     protected override void OnAppear(int sequence, int openOrder, WindowContext context)
     {
         base.OnAppear(sequence, openOrder, context);
         _loadingContent = context as LoadingContent;
+        Clear();
         if (_loadingContent != null)
         {
-            SingletonMono<GameFrameWork>.GetInstance().StartCoroutine(StartLoading());
+            if (_loadingContent.AppearCallBack != null)
+            {
+                _loadingContent.AppearCallBack.Invoke();
+                SingletonMono<SceneManager>.GetInstance().ProgressLoad += RefreshInfo;
+            }
         }
         else
         {
@@ -47,61 +47,25 @@ public class Loading : WindowBase
         loadingText.text = "Loading........." + value + "%";
         Slider.value = value;
     }
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="scenename"></param>
-    /// <returns></returns>
-    protected IEnumerator StartLoading()//防止出现进度条卡顿的问题
-    {
-        int displayProgress = 0;
-        int toProgress = 0;
-        _asyncOperation = SceneManager.LoadSceneAsync(_loadingContent.SceneName);
-        _asyncOperation.allowSceneActivation = false;
-        while (_asyncOperation.progress<0.9f)
-        {
-            toProgress = (int) _asyncOperation.progress * 100;
-            while (displayProgress<toProgress)
-            {
-                ++displayProgress;
-                RefreshInfo(displayProgress);
-                yield return new WaitForEndOfFrame();
-            }
-        }
-        toProgress = 100;
-        while (displayProgress<toProgress)
-        {
-            ++displayProgress;
-            RefreshInfo(displayProgress);
-            yield return new WaitForEndOfFrame();
-        }
-        _asyncOperation.allowSceneActivation = true;
-        _asyncOperation = null;
-        //切换完成的回调
-        if (_loadingContent.CallBack != null)
-        {
-            _loadingContent.CallBack();
-        }
-        Clear();
-        Singleton<WindowManager>.GetInstance().CloseWindow(false,"Loading");
-    }
 
     private void Clear()
     {
-        _asyncOperation = null;
         loadingText.text = "Loading.........";
         Slider.value = 0;
-        
     }
     protected override void OnHide(WindowContext context)
     {
         base.OnHide(context);
+        _loadingContent.Clear();
+        SingletonMono<SceneManager>.GetInstance().ProgressLoad -= RefreshInfo;
         _loadingContent = null;
     }
 
     protected override void OnClose(WindowContext context)
     {
         base.OnClose(context);
+        _loadingContent.Clear();
+        SingletonMono<SceneManager>.GetInstance().ProgressLoad -= RefreshInfo;
         _loadingContent = null;
     }
 }

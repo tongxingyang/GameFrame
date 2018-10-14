@@ -31,7 +31,6 @@ namespace GameFrame
                 {
                     m_instance = new GameObject(typeof(T).ToString()).AddComponent<T>();
                     m_instance.Init();
-                    //
                     DontDestroyOnLoad(m_instance);
                 }
             }
@@ -48,7 +47,11 @@ namespace GameFrame
 
         public virtual void OnDestory()
         {
-            UnInit();
+            if (m_instance != null)
+            {
+                UnInit();
+                m_instance = null;
+            }
         }
         public virtual void Init()
         {
@@ -59,7 +62,11 @@ namespace GameFrame
         {
 
         }
-        
+        /// <summary>
+        /// 调用一些非公开的方法
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="args"></param>
         public void HandleMessage(string msg, object[] args)
         {
             var mi = this.GetType()
@@ -70,7 +77,7 @@ namespace GameFrame
             }
         }
 
-        public object HandleMessageValue(string msg, object[] args)
+        public object HandleMessageRetValue(string msg, object[] args)
         {
             var mi = this.GetType()
                 .GetMethod(msg, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);

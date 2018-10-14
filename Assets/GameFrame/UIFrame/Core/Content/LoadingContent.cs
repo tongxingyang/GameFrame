@@ -7,7 +7,7 @@ using UnityEngine;
 public class LoadingContent : WindowContext
 {
     public string SceneName = string.Empty;
-    public Action CallBack = null;
+    public Action AppearCallBack = null;
     /// <summary>
     /// 构造
     /// </summary>
@@ -15,6 +15,12 @@ public class LoadingContent : WindowContext
     public LoadingContent(string name,Action action)
     {
         SceneName = name;
-        CallBack = action;
+        AppearCallBack = action;
+    }
+
+    public void Clear()
+    {
+        SceneName = string.Empty;
+        AppearCallBack = null;
     }
 }

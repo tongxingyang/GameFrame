@@ -18,10 +18,12 @@ namespace GameFrame
 
         public IEnumerator CheckSDK()
         {
+            // TODO
             yield return new WaitForSeconds(5);
         }
         public IEnumerator InitSDK()
         {
+            //TODO
             yield return new WaitForSeconds(5);
         }
         

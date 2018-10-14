@@ -4,16 +4,13 @@ using UnityEngine;
 
 namespace GameFrame
 {
-	/// <summary>
-	/// 自定义currentQueue
-	/// </summary>
 	public class ConcurrentQueue<T>
 	{
-		private readonly Queue<T> m_inner = new Queue<T>();
-
-		public bool TryDequeue(out T item)
+		private Queue<T> m_inner = new Queue<T>();
+	    public readonly object m_obj = new object();
+        public bool TryDequeue(out T item)
 		{
-			lock (Singleton<UpdateManager>.GetInstance().m_obj)
+			lock (m_obj)
 			{
 				if (m_inner.Count == 0)
 				{
@@ -27,7 +24,7 @@ namespace GameFrame
 
 		public void Enqueue(T item)
 		{
-			lock (Singleton<UpdateManager>.GetInstance().m_obj)
+			lock (m_obj)
 			{
 				m_inner.Enqueue(item);
 			}
@@ -37,7 +34,7 @@ namespace GameFrame
 		{
 			get
 			{
-				lock (Singleton<UpdateManager>.GetInstance().m_obj)
+				lock (m_obj)
 				{
 					return m_inner.Count;
 				}
@@ -46,7 +43,7 @@ namespace GameFrame
 
 		public void Clear()
 		{
-			lock (Singleton<UpdateManager>.GetInstance().m_obj)
+			lock (m_obj)
 			{
 				m_inner.Clear();
 			}
