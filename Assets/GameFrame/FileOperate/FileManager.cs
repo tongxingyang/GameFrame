@@ -24,6 +24,11 @@ namespace GameFrame
             return Directory.Exists(directory);
         }
 
+        public static string ReadAllText(string path)
+        {
+            return File.ReadAllText(path);
+        }
+        
         public static bool CreateDirectory(string directory)
         {
             bool result = false;

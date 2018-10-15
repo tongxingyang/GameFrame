@@ -38,7 +38,7 @@ namespace GameFrame
 				{
 					FileManager.DeleteFile(m_filepath);
 				}
-				HttpWebRequest httpWebRequest = (HttpWebRequest) HttpWebRequest.Create(new Uri(m_url));
+				HttpWebRequest httpWebRequest = (HttpWebRequest) WebRequest.Create(new Uri(m_url));
 				httpWebRequest.Timeout = TIMEOUT;
 				httpWebRequest.KeepAlive = false;
 				HttpWebResponse httpWebResponse = (HttpWebResponse) httpWebRequest.GetResponse();
@@ -47,13 +47,14 @@ namespace GameFrame
 				{
 					using (Stream stream = httpWebResponse.GetResponseStream())
 					{
-						int readTotalSize = 0;
-						int size = stream.Read(buffer, 0, buffer.Length);
-						while (size>0)
+						if (stream != null)
 						{
-							fs.Write(buffer,0,size);
-							readTotalSize += size;
-							size = stream.Read(buffer, 0, buffer.Length);
+							int size = stream.Read(buffer, 0, buffer.Length);
+							while (size>0)
+							{
+								fs.Write(buffer,0,size);
+								size = stream.Read(buffer, 0, buffer.Length);
+							}
 						}
 					}
 				}
@@ -61,24 +62,21 @@ namespace GameFrame
 				httpWebRequest = null;
 				httpWebResponse.Close();
 				httpWebResponse = null;
-				string md5 = String.Empty;
+				string downloadmd5 = String.Empty;
 				if (FileManager.IsFileExist(m_filepath))
 				{
-					md5 = MD5Util.ComputeFileHash(m_filepath);
+					downloadmd5 = MD5Util.ComputeFileHash(m_filepath);
 				}
-				string md5_ = Singleton<UpdateManager>.GetInstance().newmd5Table[m_filename].md5;
+				string servermd5 = Singleton<UpdateManager>.GetInstance().newmd5Table[m_filename].md5;
 
-				if (md5.Equals(md5_))
+				if (downloadmd5.Equals(servermd5))
 				{
-					Debuger.LogError("文件下载成功 文件名 "+m_filename);
 					FileInfo fileInfo = Singleton<UpdateManager>.Instance.newmd5Table[m_filename];
-					Singleton<UpdateManager>.Instance.DownloadSize +=
-						Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size;
-					Singleton<UpdateManager>.Instance.AppendHasUpdateFile(m_filename,md5,Singleton<UpdateManager>.Instance.newmd5Table[m_filename].size);
+					Singleton<UpdateManager>.Instance.DownloadSize +=fileInfo.size;
+					Singleton<UpdateManager>.Instance.AppendHasUpdateFile(m_filename,downloadmd5,fileInfo.size);
 				}
 				else
 				{
-					Debuger.LogError("文件下载失败.......... 文件名 "+m_filename);
 					Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
 				}
 				callback();
@@ -86,10 +84,8 @@ namespace GameFrame
 			}
 			catch (Exception e)
 			{
-				Debuger.Log("download file error = " + m_filename + ", ex = " + e.Message);
 				Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
 				callback();
-				Debuger.LogError(e.Message);
 			}
 		}
 	}

@@ -64,9 +64,9 @@ namespace GameFrame
         }
 
         
-        public static int GetIntSimple(string key)
+        public static int GetIntSimple(string key,int defaultval = 0)
         {
-            return PlayerPrefs.GetInt(key);
+            return PlayerPrefs.GetInt(key,0);
         }
 
         public static void SetIntSimple(string key, int value)

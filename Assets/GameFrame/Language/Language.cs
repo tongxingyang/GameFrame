@@ -42,5 +42,6 @@ namespace Assets.GameFrame.Language
         Resource_OffLine = 8,
         DownloadSizeAlert = 9,
         Resource_Notice = 10,
+        Resource_ServerError = 11,
     }
 }

@@ -231,6 +231,13 @@ namespace GameFrame
 				return Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork;
 			}
 		}
+		public static bool IsCarrier
+		{
+			get
+			{
+				return Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork;
+			}
+		}
 	    
 		//根据assembly加载组件
 		public static Component AddComponent(GameObject go, string assembly, string classname)

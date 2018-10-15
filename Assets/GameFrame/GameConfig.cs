@@ -3,8 +3,15 @@ using UnityEngine;
 
 namespace GameFrame
 {
-    public class GameConfig:MonoBehaviour
+    public class     GameConfig:MonoBehaviour
     {
+        
+        public static string IP = "127.0.0.1";//链接服务器
+        public static int Port = 6650;
+
+        public static string[] UpdateServer = new[] {"http://192.168.6.24:8000"};
+        public static string UpdateAppUrl = "http://192.168.6.24:8000";
+        
         public bool CheckUpdate = false;
         public int FrameRate = 30;
         public bool EnableLog = true;

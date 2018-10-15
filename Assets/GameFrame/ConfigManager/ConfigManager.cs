@@ -124,7 +124,7 @@ namespace GameFrame.ConfigManager
             
             if (zipFile != null)
             {
-#if UNITY_5 || UNITY_2017
+#if UNITY_5 || UNITY_2017 || UNITY_2018
                 TextAsset configCode = zipFile.LoadAsset<TextAsset>(fileName);
 #else
                 TextAsset configCode = zipFile.Load(fileName, typeof(TextAsset)) as TextAsset;
@@ -223,7 +223,7 @@ namespace GameFrame.ConfigManager
             if (zipFile != null)
             {
                 TextAsset configCode = null;
-#if UNITY_5 || UNITY_2017 
+#if UNITY_5 || UNITY_2017 || UNITY_2018
                 AssetBundleRequest assetBundleRequest;
                 assetBundleRequest = zipFile.LoadAssetAsync<TextAsset>(fileName);
                 yield return assetBundleRequest;

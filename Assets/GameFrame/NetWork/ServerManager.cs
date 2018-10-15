@@ -4,7 +4,6 @@ using System.IO;
 using System.Net.Sockets;
 using Common.Tools;
 using GameFrameDebuger;
-using NUnit.Framework;
 using ServerFrame.Encode;
 using ServerFrame.Tools;
 
@@ -16,8 +15,8 @@ namespace GameFrame.NetWork
     public class ServerManager:SingletonMono<ServerManager>
     {
         private Socket Socket;
-        private string IP = "127.0.0.1";
-        private int Port = 6650;
+        private string IP = GameConfig.IP;
+        private int Port = GameConfig.Port;
         private byte[] readbuff = new byte[1024];
         List<byte> cache = new List<byte>();
         private bool isReading = false;
