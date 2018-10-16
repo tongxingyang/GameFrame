@@ -415,8 +415,6 @@ namespace GameFrame
 #if UNITY_EDITOR || UNITY_STANDALONE || UNITY_IPHONE
             src = "file:///" + src;
 #endif
-//            Debug.LogError("拷贝原路径 安装目录    "+src);
-//            Debug.LogError("沙河目录   "+des);
             using (WWW w = new WWW(src))
             {
                 yield return w;

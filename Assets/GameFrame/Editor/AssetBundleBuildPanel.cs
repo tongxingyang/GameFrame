@@ -646,7 +646,6 @@ namespace GameFrame.Editor
                     string[] files = Directory.GetFiles(outpath, "*" + Platform.AssetBundleExt,SearchOption.AllDirectories);
                     if(files.Length<=0) return;
                     sw.WriteLine(Platform.DepFileName);
-                    sw.WriteLine(Platform.ResVersionFileName);
                     sw.WriteLine(Platform.AppVerFileName);
                     sw.WriteLine(Platform.Md5FileName);
                     sw.WriteLine(Platform.PreloadList);
@@ -846,17 +845,7 @@ namespace GameFrame.Editor
                    sw.Write(config.Version.master+"."+config.Version.minor+"."+config.Version.revised);
                 }
             }
-            if (File.Exists(outpath + Platform.ResVersionFileName))
-            {
-                File.Delete(outpath+Platform.ResVersionFileName);
-            }
-            using (FileStream fs = new FileStream(outpath+"/"+Platform.ResVersionFileName,FileMode.CreateNew))
-            {
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
-                    sw.Write(config.Version.resversion);
-                }
-            }
+           
         }
         void OnGUI()
         {

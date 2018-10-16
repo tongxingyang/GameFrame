@@ -10,6 +10,5 @@ namespace GameFrame
 		Completed,
 		Failed,
 	}
-
 }
 

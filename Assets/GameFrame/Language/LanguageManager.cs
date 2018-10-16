@@ -4,7 +4,7 @@ using GameFrame;
 using GameFrameDebuger;
 using UnityEngine;
 
-namespace Assets.GameFrame.Language
+namespace GameFrame.Language
 {
     class LanguageManager:Singleton<LanguageManager>
     {

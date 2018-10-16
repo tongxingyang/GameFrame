@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using GameFrameDebuger;
-using UnityEngine;
+using GameFrame.Update;
 
 namespace GameFrame
 {
 	public class DownloadTask
 	{
 		public static long ChunkSize = 4096L;
-		public  static int TIMEOUT = 2 * 60 * 1000;
+		public static int TIMEOUT = 2 * 60 * 1000;
 
 		private string m_url;
 		private string m_filename;
@@ -71,7 +68,7 @@ namespace GameFrame
 
 				if (downloadmd5.Equals(servermd5))
 				{
-					FileInfo fileInfo = Singleton<UpdateManager>.Instance.newmd5Table[m_filename];
+					GameFrame.Update.FileInfo fileInfo = Singleton<UpdateManager>.Instance.newmd5Table[m_filename];
 					Singleton<UpdateManager>.Instance.DownloadSize +=fileInfo.size;
 					Singleton<UpdateManager>.Instance.AppendHasUpdateFile(m_filename,downloadmd5,fileInfo.size);
 				}
@@ -80,7 +77,6 @@ namespace GameFrame
 					Singleton<UpdateManager>.GetInstance().m_redownloadList.Add(m_filename);
 				}
 				callback();
-
 			}
 			catch (Exception e)
 			{

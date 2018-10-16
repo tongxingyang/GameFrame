@@ -11,19 +11,17 @@ namespace GameFrame
             InitPlugin();
         }
 
-        //初始化sdk
         public void InitPlugin()
         {
+            
         }
-
+        
         public IEnumerator CheckSDK()
         {
-            // TODO
             yield return new WaitForSeconds(5);
         }
         public IEnumerator InitSDK()
         {
-            //TODO
             yield return new WaitForSeconds(5);
         }
         

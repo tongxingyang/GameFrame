@@ -1,23 +1,23 @@
-﻿using Assets.GameFrame.Language;
+﻿using GameFrame.Language;
 using UnityEngine;
 
 namespace GameFrame
 {
-    public class     GameConfig:MonoBehaviour
+    public class GameConfig:MonoBehaviour
     {
         
         public static string IP = "127.0.0.1";//链接服务器
         public static int Port = 6650;
 
-        public static string[] UpdateServer = new[] {"http://192.168.6.24:8000"};
-        public static string UpdateAppUrl = "http://192.168.6.24:8000";
+        public static string[] UpdateServer = new[] {"http://192.168.6.24:8000"};    
+        public static string UpdateAppUrl = "http://192.168.6.24:8000/android.apk";
         
         public bool CheckUpdate = false;
         public int FrameRate = 30;
         public bool EnableLog = true;
         public bool EnableSave = true;
 
-        public Language Language = Language.ZH_CN;
+        public Language.Language Language = GameFrame.Language.Language.ZH_CN;
 
 #if UNITY_IPHONE
         public  Vector2 Resolution = new Vector2(1280,720);
@@ -25,6 +25,8 @@ namespace GameFrame
         public  Vector2 Resolution = new Vector2(1280,720);
 #endif
     }
+
+
     public static class LuaConst
     {
         public static bool LuaBundleMode = false;                    //True:从bundle中加载lua, false:直接读lua文件

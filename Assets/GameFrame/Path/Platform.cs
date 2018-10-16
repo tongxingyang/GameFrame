@@ -37,7 +37,6 @@ public class Platform
         public static string AssetBundleExt = ".assetbundle";
         public static string AssetBundleExportPath = "Assets/StreamingAssets/";
         public static string DepFileName = "depinfo.all";
-        public static string ResVersionFileName = "resversion.txt";
         public static string AppVerFileName = "appversion.txt";
         public static string Md5FileName = "resource_md5.txt";
         public static string PreloadList = "preloadlist.txt";

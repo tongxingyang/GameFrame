@@ -3,11 +3,10 @@ using GameFrame;
 using UIFrameWork;
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
-using Assets.GameFrame.Language;
+using GameFrame.Language;
 using GameFrame.Common;
-using GameFrame.ConfigManager;
 using GameFrame.NetWork;
+using GameFrame.Update;
 using GameFrameDebuger;
 using SceneManager = GameFrame.Scene.SceneManager;
 
@@ -98,7 +97,7 @@ namespace GameFrame
             InitRenderFeature();
             InitBaseSys();
             Singleton<LanguageManager>.GetInstance().SetCurrentLanguage(GameConfig.Language);
-            Singleton<LanguageManager>.GetInstance().LoadLanguageConfig();
+            //Singleton<LanguageManager>.GetInstance().LoadLanguageConfig();
             Application.backgroundLoadingPriority = UnityEngine.ThreadPriority.High;
             Application.runInBackground = true;
             Application.targetFrameRate = GameConfig.FrameRate;
@@ -189,7 +188,6 @@ namespace GameFrame
             SingletonMono<LuaManager>.GetInstance();
             SingletonMono<AudioManager>.GetInstance();
             Singleton<ConfigManager.ConfigManager>.GetInstance();
-            Singleton<LauncherString>.GetInstance();
             SingletonMono<MonoHelper>.GetInstance();
             Singleton<TimeManager>.GetInstance();
             Singleton<EventManager>.GetInstance();

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Assets.GameFrame.Language
+namespace GameFrame.Language
 {
     public class LanguageConfigs : ScriptableObject
     {
@@ -33,15 +33,18 @@ namespace Assets.GameFrame.Language
     public enum LanguageId
     {
         Resource_InitSDK = 1,
-        Resource_Unzip = 2,
-        Resource_CheckVersion = 3,
-        Resource_DownloadNewApp = 4,
-        Resource_CheckResource = 5,
-        Resource_UpdateResource = 6,
-        Resource_StartGame = 7,
-        Resource_OffLine = 8,
-        DownloadSizeAlert = 9,
-        Resource_Notice = 10,
-        Resource_ServerError = 11,
+        Resource_CheckSDK = 2,
+        Resource_Unzip = 3,
+        Resource_CheckVersion = 4,
+        Resource_DownloadNewApp = 5,
+        Resource_CheckResource = 6,
+        Resource_UpdateResource = 7,
+        Resource_StartGame = 8,
+        Resource_OffLine = 9,
+        DownloadSizeAlert = 10,
+        Resource_Notice = 11,
+        Resource_ServerError = 12,
+        Resource_UpdateDone = 13,
+        Resource_DownLoadError = 14,
     }
 }
