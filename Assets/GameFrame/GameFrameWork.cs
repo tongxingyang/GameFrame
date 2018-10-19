@@ -96,8 +96,8 @@ namespace GameFrame
             InitDebuger();
             InitRenderFeature();
             InitBaseSys();
-            Singleton<LanguageManager>.GetInstance().SetCurrentLanguage(GameConfig.Language);
             //Singleton<LanguageManager>.GetInstance().LoadLanguageConfig();
+            Singleton<LanguageManager>.GetInstance().SetCurrentLanguage(GameConfig.Language);
             Application.backgroundLoadingPriority = UnityEngine.ThreadPriority.High;
             Application.runInBackground = true;
             Application.targetFrameRate = GameConfig.FrameRate;

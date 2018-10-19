@@ -32,6 +32,7 @@ namespace GameFrame.Language
     }
     public enum LanguageId
     {
+        None = 0, 
         Resource_InitSDK = 1,
         Resource_CheckSDK = 2,
         Resource_Unzip = 3,

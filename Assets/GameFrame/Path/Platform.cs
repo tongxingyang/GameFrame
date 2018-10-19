@@ -30,6 +30,7 @@ public class Platform
 
         public static readonly string Path = Platform.PERSISTENT_DATA_PATH + "/" + osDir+"/";
         public static readonly string InitalPath = Platform.STREAMING_ASSETS_PATH + "/" + osDir+"/";
+        
         public static string HasUpdateFileName = "hasupdate.txt";
         public static string AssetBundle = "assetbundles";
         public static string LuaBundleKey = "LuaKey";

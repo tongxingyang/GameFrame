@@ -13,13 +13,13 @@ namespace GameFrame.Editor
 
     public class AssetNode
     {
-        public string path;//路径
+        public string path;
         public System.IO.FileInfo file;
         public AssetBundleExportType exportType = AssetBundleExportType.Asset;
         public List<AssetNode> parents = new List<AssetNode>();
         public List<AssetNode> childs = new List<AssetNode>();
         public List<AssetNode> assets = new List<AssetNode>();
-        public int assetCount
+        public int AssetCount
         {
             get
             {
@@ -27,7 +27,7 @@ namespace GameFrame.Editor
             }
         }
 
-        public int childCount
+        public int ChildCount
         {
             get
             {
@@ -35,7 +35,7 @@ namespace GameFrame.Editor
             }
         }
 
-        public int parentCount
+        public int ParentCount
         {
             get
             {
@@ -43,19 +43,22 @@ namespace GameFrame.Editor
             }
         }
 
-        public bool isRoot
+        public bool IsRoot
         {
             get
             {
-                return parentCount == 0;
+                return ParentCount == 0;
             }
         }
         
         public override string ToString()
         {
-            return string.Format("{0}   \t[parentCount={1},    childCount={2},\t\tassetCount={3}]", path, parentCount, childCount, assetCount);
+            return string.Format("{0}-[父节点数量={1},孩子节点={2},资源数量={3}]", path, ParentCount, ChildCount, AssetCount);
         }
-        
+        /// <summary>
+        /// 添加资源
+        /// </summary>
+        /// <param name="node"></param>
         public void AddAsset(AssetNode node)
         {
             if (!assets.Contains(node))
@@ -64,7 +67,10 @@ namespace GameFrame.Editor
                 node.parents.Add(this);
             }
         }
-
+        /// <summary>
+        /// 添加依赖
+        /// </summary>
+        /// <param name="node"></param>
         public void AddDependencie(AssetNode node)
         {
             if (!childs.Contains(node))
@@ -73,7 +79,10 @@ namespace GameFrame.Editor
                 node.parents.Add(this);
             }
         }
-
+        /// <summary>
+        /// 移除依赖
+        /// </summary>
+        /// <param name="node"></param>
         public void RemoveDependencie(AssetNode node)
         {
             if (childs.Contains(node))
@@ -131,7 +140,7 @@ namespace GameFrame.Editor
                 AssetNode cnode = childs[i]; 
                 cnode.MergeParentCountOnce();
                 
-                if (cnode.parentCount == 1 && cnode.CanMergeParent()) //如果孩子节点有parent数量大于2的就不能merge 会造成引用重复资源
+                if (cnode.ParentCount == 1 && cnode.CanMergeParent())
                 {
                     // 子节点 变为 包含资源
                     assets.Add(cnode);
@@ -147,7 +156,7 @@ namespace GameFrame.Editor
         {
             foreach (AssetNode assetNode in childs)
             {
-                if (assetNode.parentCount >= 2)
+                if (assetNode.ParentCount >= 2)
                 {
                     return false;
                 }
@@ -157,7 +166,7 @@ namespace GameFrame.Editor
         
         public void GetRoots(Dictionary<string, AssetNode> dict)
         {
-            if (isRoot)
+            if (IsRoot)
             {
                 if (!dict.ContainsKey(path))
                 {

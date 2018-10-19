@@ -8,6 +8,7 @@ namespace GameFrame.Editor
 {
     public class ConfigEditor
     {
+        
         public static bool IsEncryptBatch = true;
         public static string SrcConfigPath = ConfigConst.configDir;
         public static string DesConfigPath = ConfigConst.tempconfigDir;

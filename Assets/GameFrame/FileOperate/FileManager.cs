@@ -290,8 +290,7 @@ namespace GameFrame
         }
         public static void RecursiveFile(string path, List<string> fileList, List<string> exts = null)
         {
-
-
+            
             string[] names = Directory.GetFiles(path);
             string[] dirs = Directory.GetDirectories(path);
             bool isCheckExt = exts != null && exts.Count > 0;
@@ -299,11 +298,14 @@ namespace GameFrame
             {
                 if (isCheckExt)
                 {
-                    string ext = Path.GetExtension(filename).ToLower();
-                    if (!exts.Contains(ext))
-                        continue;
+                    var extension = Path.GetExtension(filename);
+                    if (extension != null)
+                    {
+                        string ext = extension.ToLower();
+                        if (!exts.Contains(ext))
+                            continue;
+                    }
                 }
-
 
                 string fn = Path.GetFileName(filename);
                 if (fn.Equals(".DS_Store")) continue;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 
@@ -10,14 +11,14 @@ namespace GameFrame.Editor
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="resList"></param>
+        /// <param name="resList">需要打包的列表</param>
         /// <param name="filterDirList">过滤的目录</param>
         /// <param name="filterExts">过滤的扩展名</param>
         /// <param name="imageExts"></param>
         /// <param name="isSpriteTag"></param>
         /// <param name="assetbundleExt"></param>
         /// <returns></returns>
-        public static Dictionary<string, AssetNode> GenerateAllNode(List<string> resList, string[] filterDirList, List<string> filterExts, List<string> imageExts, bool isSpriteTag = false, string assetbundleExt = ".assetbundle")
+        public static Dictionary<string, AssetNode> GenerateAllNode(List<string> resList, List<string> filterDirList, List<string> filterExts, List<string> imageExts, bool isSpriteTag = false, string assetbundleExt = ".assetbundle")
         {
     
             Dictionary<string, AssetNode> nodeDict = new Dictionary<string, AssetNode>();
@@ -32,28 +33,29 @@ namespace GameFrame.Editor
                 EditorUtility.DisplayProgressBar("生成所有节点",  i + "/" + count, 1f * i / count);
                 string path = dependencies[i];
                 bool isFilterDir = false;
-                foreach(string filterDir in filterDirList)
+                if (filterDirList.Count > 0)
                 {
-                    if(path.IndexOf(filterDir) != -1)
+                    foreach(string filterDir in filterDirList)
                     {
-                        isFilterDir = true;
-                        break;
+                        if(path.IndexOf(filterDir, StringComparison.Ordinal) != -1)
+                        {
+                            isFilterDir = true;
+                            break;
+                        }
                     }
                 }
+              
                 if(isFilterDir) continue;
                 string ext = Path.GetExtension(path).ToLower();
                 if (filterExts.IndexOf(ext) != -1) continue;
                 AssetImporter assetImporter = AssetImporter.GetAtPath(path);
                 if (!string.IsNullOrEmpty(assetImporter.assetBundleName))
                 {
-                    if (assetImporter.assetBundleName.IndexOf(assetbundleExt) == -1)
-                    {
-                        continue;
-                    }
+                    assetImporter.assetBundleName = string.Empty;
                 }
                 if(isSpriteTag && imageExts.IndexOf(ext) != -1)
                 {
-                    TextureImporter importer = TextureImporter.GetAtPath(path) as TextureImporter;
+                    TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
                     if(importer.textureType == TextureImporterType.Sprite && !string.IsNullOrEmpty(importer.spritePackingTag))
                     {
                         importer.assetBundleName = importer.spritePackingTag + assetbundleExt;
@@ -84,7 +86,7 @@ namespace GameFrame.Editor
             EditorUtility.ClearProgressBar();
             return nodeDict;
         }
-        //生成每个节点依赖的节点
+        
         public static void GenerateNodeDependencies(Dictionary<string, AssetNode> nodeDict)
         {
             int count = nodeDict.Count;
@@ -165,7 +167,7 @@ namespace GameFrame.Editor
             {
                 EditorUtility.DisplayProgressBar("寻找入度为0的节点",  index + "/" + count, 1f * (index++) / count);
                 AssetNode node = kvp.Value;
-                if (node.isRoot)
+                if (node.IsRoot)
                 {
                     roots.Add(node);
                 }
@@ -181,7 +183,7 @@ namespace GameFrame.Editor
             int index = 0;
             foreach(AssetNode node in roots)
             {
-                EditorUtility.DisplayProgressBar("寻找入度为0的节点",  index + "/" + count, 1f * (index++) / count);
+                EditorUtility.DisplayProgressBar("移除父节点的依赖和自己依赖相同的节点",  index + "/" + count, 1f * (index++) / count);
                 node.RemoveParentShare();
             }
     
@@ -250,11 +252,11 @@ namespace GameFrame.Editor
         {
             foreach (KeyValuePair<string,AssetNode> keyValuePair in assetDict)
             {
-                if (keyValuePair.Value.isRoot)
+                if (keyValuePair.Value.IsRoot)
                 {
                      keyValuePair.Value.exportType = AssetBundleExportType.Root;
                 }
-                else if(keyValuePair.Value.childCount==0)
+                else if(keyValuePair.Value.ChildCount==0)
                 {
                     keyValuePair.Value.exportType = AssetBundleExportType.Asset;
                 }

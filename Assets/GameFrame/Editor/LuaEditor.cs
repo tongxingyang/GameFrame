@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 namespace GameFrame.Editor
 {
-    public static  class LuaEditor
+    public class LuaEditor
     {
         public static bool IsEncryptBatch = true;
         public static string SrcLuaPath = LuaConst.luaDir;

@@ -8,18 +8,36 @@ namespace GameFrame.Language
 {
     class LanguageManager:Singleton<LanguageManager>
     {
+        public delegate void RegisterLanguageEvent();
+
+        public RegisterLanguageEvent LanguageEvent;
+        
         private Language language;
+        private LanguageConfigs curConfigs;
         private LanguageConfig curConfig;
         private Dictionary<LanguageId, string> languageDic = new Dictionary<LanguageId, string>();
 
+        
+        // 1 step
+        public void LoadLanguageConfig()
+        {
+            curConfigs = Resources.Load<LanguageConfigs>("LanguageConfig");
+           
+        }
+        // 2 step
         public void SetCurrentLanguage(Language l)
         {
             language = l;
+            LoadLanguage();
+            if (LanguageEvent != null)
+            {
+                LanguageEvent();
+            }
         }
-        public void LoadLanguageConfig()
+        
+        private void LoadLanguage()
         {
-            LanguageConfigs languageConfigs = Resources.Load<LanguageConfigs>("LanguageConfig");
-            curConfig = Array.Find(languageConfigs.tpls, it => it.language == language);
+            curConfig = Array.Find(curConfigs.tpls, it => it.language == language);
             if (curConfig == null)
             {
                 Debuger.Log("找不到配置文件" + language);
@@ -30,9 +48,11 @@ namespace GameFrame.Language
                 languageDic.Add(item.id, item.value);
             }
         }
+        
 
         public string GetLanguage(LanguageId key)
         {
+            if (languageDic.Count == 0) return String.Empty;
             if (!string.IsNullOrEmpty(languageDic[key]))
             {
                 return languageDic[key];
