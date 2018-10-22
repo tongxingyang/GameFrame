@@ -22,9 +22,9 @@ namespace GameFrame
         public Language.Language Language = GameFrame.Language.Language.ZH_CN;
 
 #if UNITY_IPHONE
-        public  Vector2 Resolution = new Vector2(1280,720);
+        public static  Vector2 Resolution = new Vector2(1280,720);
 #else
-        public  Vector2 Resolution = new Vector2(1280,720);
+        public static  Vector2 Resolution = new Vector2(1280,720);
 #endif
     }
 

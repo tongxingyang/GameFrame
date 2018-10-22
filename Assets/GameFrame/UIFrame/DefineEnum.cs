@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace UIFrameWork
+﻿namespace UIFrameWork
 {
     /// <summary>
     /// 面板优先级枚举

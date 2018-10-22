@@ -73,9 +73,9 @@ namespace GameFrame.Scene
             AsyncOperation.allowSceneActivation = true;
             AsyncOperation = null;
             //切换完成的回调
-            if (BeforLoadScene != null)
+            if (AfterLoadScene != null)
             {
-                BeforLoadScene.Invoke();
+                AfterLoadScene.Invoke();
             }
             //关闭Loading界面
             Singleton<WindowManager>.GetInstance().CloseWindow(false, "Loading");

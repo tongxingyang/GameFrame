@@ -1,21 +1,20 @@
 ﻿using System.Collections.Generic;
 using GameFrame;
+using GameFrame.UGUI;
 using GameFrameDebuger;
+using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace UIFrameWork
 {
-    /// <summary>
-    /// Window 管理类
-    /// </summary>
     public class WindowManager : Singleton<WindowManager>
     {
         private List<WindowBase> m_windows;
         private List<WindowBase> m_pooledWindows;
         private int m_windowSequence;
-        private List<int> m_exitWindowSequences;
+        private Dictionary<enWindowPriority, List<int>> m_exitWindowSequences;
         private GameObject m_root; 
         public OnWindowSorted OnWindowSorted;
         private EventSystem m_eventSystem;
@@ -35,11 +34,10 @@ namespace UIFrameWork
             m_windows = new List<WindowBase>();
             m_pooledWindows = new List<WindowBase>();
             m_windowSequence = 0;
-            m_exitWindowSequences = new List<int>();
+            m_exitWindowSequences = new Dictionary<enWindowPriority, List<int>>();
             CreateUIRoot();
             CreateEventSystem();
             CreateCamera();
-            
         }
       
         private void CreateUIRoot()
@@ -84,7 +82,7 @@ namespace UIFrameWork
             this.m_windows.Sort();
             foreach (WindowBase t in this.m_windows)
             {
-                int openorder = this.GetWindowOpenOrder(t.GetSequence());
+                int openorder = this.GetWindowOpenOrder(t.WindowInfo.Priority,t.GetSequence());
                 t.SetDisplayOrder(openorder);
             }
             if (this.OnWindowSorted != null)
@@ -272,6 +270,7 @@ namespace UIFrameWork
             }
             return windowBase;
         }
+
         public void DisableInput()
         {
             if (this.m_eventSystem != null)
@@ -292,18 +291,7 @@ namespace UIFrameWork
             }
             return null;
         }
-       
-        private WindowBase GetHidedWindow(string name)
-        {
-            for (int i = 0; i < this.m_windows.Count; i++)
-            {
-                if (this.m_windows[i].WindowInfo.Name.Equals(name) && this.m_windows[i].IsHided())
-                {
-                    return this.m_windows[i];
-                }
-            }
-            return null;
-        }
+      
         public void EnableInput()
         {
             if (this.m_eventSystem != null)
@@ -319,25 +307,28 @@ namespace UIFrameWork
             }
             this.m_pooledWindows.Clear();
         }
-        public void AddToExitSquenceList(int squence)
+
+        public void AddToExitSquenceList(enWindowPriority priority,int squence)
         {
-            if (this.m_exitWindowSequences != null)
+            if (!m_exitWindowSequences.ContainsKey(priority))
             {
-                this.m_exitWindowSequences.Add(squence);
+                List<int> list = new List<int>();
+                m_exitWindowSequences[priority] = list;
+            }
+            m_exitWindowSequences[priority].Add(squence);
+        }
+
+        public void RemoveFromExitSquenceList(enWindowPriority priority,int squence)
+        {
+            if (m_exitWindowSequences.ContainsKey(priority))
+            {
+                m_exitWindowSequences[priority].Remove(squence);
             }
         }
 
-        public void RemoveFromExitSquenceList(int squence)
+        public int GetWindowOpenOrder(enWindowPriority priority, int squence)
         {
-            if (this.m_exitWindowSequences != null)
-            {
-                this.m_exitWindowSequences.Remove(squence);
-            }
-        }
-
-        public int GetWindowOpenOrder(int squence)
-        {
-            int num = this.m_exitWindowSequences.IndexOf(squence);
+            int num = this.m_exitWindowSequences[priority].IndexOf(squence);
             if (num >= 0)
             {
                 return (num + 1);
@@ -349,9 +340,9 @@ namespace UIFrameWork
             }
         }
 
-        public void RecycleWindow(WindowBase windowBase)
+        public void RecycleWindow(enWindowPriority priority,WindowBase windowBase)
         {
-            this.RemoveFromExitSquenceList(windowBase.GetSequence());
+            this.RemoveFromExitSquenceList(priority,windowBase.GetSequence());
             if (windowBase.m_isUsePool)
             {
                 this.m_pooledWindows.Add(windowBase);
@@ -367,9 +358,9 @@ namespace UIFrameWork
             WindowBase windowBase = GetUnClosedWindow(name);
             if (windowBase != null && windowBase.WindowInfo.IsSinglen)
             {
-                this.RemoveFromExitSquenceList(windowBase.GetSequence());
-                this.AddToExitSquenceList(this.m_windowSequence);
-                int openorder = this.GetWindowOpenOrder(this.m_windowSequence);
+                this.RemoveFromExitSquenceList(windowBase.WindowInfo.Priority,windowBase.GetSequence());
+                this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
+                int openorder = this.GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
                 windowBase.Appear(this.m_windowSequence, openorder, appear);
                 if (windowBase.WindowInfo.Group > 0)
                 {
@@ -421,8 +412,8 @@ namespace UIFrameWork
                                         AddCollider(windowBase); //添加遮罩
                                         windowBase.Init(useCameraRender ? m_UICamera : null);
                                     }
-                                    this.AddToExitSquenceList(this.m_windowSequence);
-                                    int openorder = GetWindowOpenOrder(this.m_windowSequence);
+                                    this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
+                                    int openorder = GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
                                     windowBase.Appear(this.m_windowSequence, openorder, appear);
                                     if (windowBase.WindowInfo.Group > 0)
                                     {
@@ -461,8 +452,8 @@ namespace UIFrameWork
                                     AddCollider(windowBase); //添加遮罩
                                     windowBase.Init(useCameraRender ? m_UICamera : null);
                                 }
-                                this.AddToExitSquenceList(this.m_windowSequence);
-                                int openorder = GetWindowOpenOrder(this.m_windowSequence);
+                                this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
+                                int openorder = GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
                                 windowBase.Appear(this.m_windowSequence, openorder, appear);
                                 if (windowBase.WindowInfo.Group > 0)
                                 {
@@ -477,8 +468,9 @@ namespace UIFrameWork
             }
             else
             {
-                this.AddToExitSquenceList(this.m_windowSequence);
-                int openorder = GetWindowOpenOrder(this.m_windowSequence);
+                windowBase = obj.GetComponent<WindowBase>();
+                this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
+                int openorder = GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
                 windowBase = obj.GetComponent<WindowBase>();
                 windowBase.Appear(this.m_windowSequence, openorder, appear);
                 if (windowBase.WindowInfo.Group > 0)
@@ -493,31 +485,24 @@ namespace UIFrameWork
         public void AddCollider(WindowBase windowBase)
         {
             Image image = null;
-            Button button = null;
+            Empty4Raycast empty4Raycast = null;
             GameObject go = null;
             switch (windowBase.WindowInfo.ColliderMode)
             {
                 case enWindowColliderMode.Node:
                     break;
                 case enWindowColliderMode.Dark:
-                    go = new GameObject("DarkCollider", typeof(RectTransform), typeof(Image), typeof(Button));
+                    go = new GameObject("DarkCollider", typeof(RectTransform), typeof(Image));
                     image = go.GetComponent<Image>();
                     image.color = new Color(0, 0, 0, 100 / 255f);
                     image.raycastTarget = true;
-                    button = go.GetComponent<Button>();
-                    button.transition = Selectable.Transition.SpriteSwap;
-                    button.targetGraphic = image;
-                    button.onClick.AddListener(windowBase.ColliderCallBack);
+                    UIEventListener.Get(image.gameObject).onClick += windowBase.ColliderCallBack;
                     break;
                 case enWindowColliderMode.Transparent:
-                    go = new GameObject("ansparencyCollider", typeof(RectTransform), typeof(Image), typeof(Button));
-                    image = go.GetComponent<Image>();
-                    image.color = new Color(0, 0, 0, 0);
-                    image.raycastTarget = true;
-                    button = go.GetComponent<Button>();
-                    button.transition = Selectable.Transition.SpriteSwap;
-                    button.targetGraphic = image;
-                    button.onClick.AddListener(windowBase.ColliderCallBack);
+                    go = new GameObject("AnsparencyCollider", typeof(RectTransform), typeof(Empty4Raycast));
+                    empty4Raycast = go.GetComponent<Empty4Raycast>();
+                    empty4Raycast.raycastTarget = true;
+                    UIEventListener.Get(empty4Raycast.gameObject).onClick += windowBase.ColliderCallBack;
                     break;
             }
             if (go != null)

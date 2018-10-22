@@ -93,7 +93,7 @@ namespace GameFrame.Editor
                 return BuildTarget.Android;
             }else if (index == 2)
             {
-                return BuildTarget.StandaloneOSX;
+                return BuildTarget.StandaloneOSXIntel64;
             }else if (index == 3)
             {
                 return BuildTarget.StandaloneWindows;
