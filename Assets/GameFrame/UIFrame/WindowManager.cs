@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using GameFrame;
 using GameFrame.UGUI;
 using GameFrameDebuger;
@@ -6,6 +7,7 @@ using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace UIFrameWork
 {
@@ -19,7 +21,6 @@ namespace UIFrameWork
         public OnWindowSorted OnWindowSorted;
         private EventSystem m_eventSystem;
         private Camera m_UICamera;
-
         private Queue<MessageBoxContent> messageBoxContexts = new Queue<MessageBoxContent>();
         private Queue<HintContent> hintContexts = new Queue<HintContent>();
         
@@ -284,7 +285,7 @@ namespace UIFrameWork
             
             for (int i = 0; i < this.m_windows.Count; i++)
             {
-                if (this.m_windows[i].WindowInfo.Name.Equals(name) && !this.m_windows[i].IsHided())
+                if (this.m_windows[i].WindowInfo.Name.Equals(name))
                 {
                     return this.m_windows[i];
                 }
@@ -340,16 +341,20 @@ namespace UIFrameWork
             }
         }
 
-        public void RecycleWindow(enWindowPriority priority,WindowBase windowBase)
+        public void RecycleWindow(enWindowPriority priority,WindowBase windowBase,bool isclose = false)
         {
             this.RemoveFromExitSquenceList(priority,windowBase.GetSequence());
-            if (windowBase.m_isUsePool)
+            if (windowBase.m_isUsePool && !isclose)
             {
                 this.m_pooledWindows.Add(windowBase);
             }
             if (m_windows.Contains(windowBase))
             {
                 this.m_windows.Remove(windowBase);
+            }
+            if (isclose)
+            {
+                Object.DestroyImmediate(windowBase.CacheGameObject);
             }
         }
 
@@ -358,6 +363,7 @@ namespace UIFrameWork
             WindowBase windowBase = GetUnClosedWindow(name);
             if (windowBase != null && windowBase.WindowInfo.IsSinglen)
             {
+                windowBase.IsPlayHide = false;windowBase.IsPlayOpen = false;//如果正在关闭动画直接打开
                 this.RemoveFromExitSquenceList(windowBase.WindowInfo.Priority,windowBase.GetSequence());
                 this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
                 int openorder = this.GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
@@ -385,85 +391,57 @@ namespace UIFrameWork
             if (obj == null)
             {
                 GameObject res = null;
+                Action<Object> callBack = delegate(Object loadobj)
+                {
+                    res = loadobj as GameObject;
+                    if (res != null)
+                    {
+                        obj = Object.Instantiate(res);
+                        windowBase = obj.GetComponent<WindowBase>();
+                        if (windowBase != null)
+                        {
+                            windowBase.m_isUsePool = isusePool;
+                        }
+                        string uiname = GetWindowName(name);
+                        obj.name = uiname;
+                        if (obj.transform.parent != this.m_root.transform)
+                        {
+                            obj.transform.SetParent(m_root.transform);
+                        }
+                        if (windowBase != null)
+                        {
+                            if (!windowBase.IsInitialized())
+                            {
+                                AddCollider(windowBase); 
+                                windowBase.Init(useCameraRender ? m_UICamera : null);
+                            }
+                            this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
+                            int openorder = GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
+                            windowBase.Appear(this.m_windowSequence, openorder, appear);
+                            if (windowBase.WindowInfo.Group > 0)
+                            {
+                                this.CloseGroupWindow(windowBase.WindowInfo.Group, false);
+                            }
+                            this.m_windows.Add(windowBase);
+                        }
+                        this.m_windowSequence++;
+                    }
+                };
                 if (Platform.IsLoadFromBundle)
                 {
                     Singleton<ResourceManager>.GetInstance().AddTask("assetbundles/" + name.ToLower() + ".assetbundle",
                         (loadobj) =>
                         {
-                            res = loadobj as GameObject;
-                            if (res != null)
-                            {
-                                obj = Object.Instantiate(res);
-                                windowBase = obj.GetComponent<WindowBase>();
-                                if (windowBase != null)
-                                {
-                                    windowBase.m_isUsePool = isusePool;
-                                }
-                                string uiname = GetWindowName(name);
-                                obj.name = uiname;
-                                if (obj.transform.parent != this.m_root.transform)
-                                {
-                                    obj.transform.SetParent(m_root.transform);
-                                }
-                                if (windowBase != null)
-                                {
-                                    if (!windowBase.IsInitialized())
-                                    {
-                                        AddCollider(windowBase); //添加遮罩
-                                        windowBase.Init(useCameraRender ? m_UICamera : null);
-                                    }
-                                    this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
-                                    int openorder = GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
-                                    windowBase.Appear(this.m_windowSequence, openorder, appear);
-                                    if (windowBase.WindowInfo.Group > 0)
-                                    {
-                                        this.CloseGroupWindow(windowBase.WindowInfo.Group, false);
-                                    }
-                                    this.m_windows.Add(windowBase);
-                                }
-                                this.m_windowSequence++;
-                            }
+                            callBack.Invoke(loadobj);
                         }, (int) AssetBundleLoadType.LoadBundleFromFile, (int) CachePriority.NoCache);
 
                 }
                 else
                 {
                     Singleton<ResourceManager>.GetInstance().LoadResourceAsync<GameObject>(name, (loadobj) =>
-                    {
-                        res = loadobj as GameObject;
-                        if (res != null)
                         {
-                            obj = Object.Instantiate(res);
-                            windowBase = obj.GetComponent<WindowBase>();
-                            if (windowBase != null)
-                            {
-                                windowBase.m_isUsePool = isusePool;
-                            }
-                            string uiname = GetWindowName(name);
-                            obj.name = uiname;
-                            if (obj.transform.parent != this.m_root.transform)
-                            {
-                                obj.transform.SetParent(m_root.transform);
-                            }
-                            if (windowBase != null)
-                            {
-                                if (!windowBase.IsInitialized())
-                                {
-                                    AddCollider(windowBase); //添加遮罩
-                                    windowBase.Init(useCameraRender ? m_UICamera : null);
-                                }
-                                this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
-                                int openorder = GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
-                                windowBase.Appear(this.m_windowSequence, openorder, appear);
-                                if (windowBase.WindowInfo.Group > 0)
-                                {
-                                    this.CloseGroupWindow(windowBase.WindowInfo.Group, false);
-                                }
-                                this.m_windows.Add(windowBase);
-                            }
-                            this.m_windowSequence++;
-                        }
-                    });
+                            callBack.Invoke(loadobj);
+                        });
                 }
             }
             else
@@ -471,7 +449,6 @@ namespace UIFrameWork
                 windowBase = obj.GetComponent<WindowBase>();
                 this.AddToExitSquenceList(windowBase.WindowInfo.Priority,this.m_windowSequence);
                 int openorder = GetWindowOpenOrder(windowBase.WindowInfo.Priority,this.m_windowSequence);
-                windowBase = obj.GetComponent<WindowBase>();
                 windowBase.Appear(this.m_windowSequence, openorder, appear);
                 if (windowBase.WindowInfo.Group > 0)
                 {
@@ -511,10 +488,10 @@ namespace UIFrameWork
                 rectTran.transform.SetParent(windowBase.CacheTransform);
                 rectTran.transform.SetSiblingIndex(0);
                 rectTran.localPosition = Vector3.zero;
-                rectTran.anchorMin = new Vector2(0.5f, 0.5f);
-                rectTran.anchorMax = new Vector2(0.5f, 0.5f);
+                rectTran.anchorMin = new Vector2(0f, 0f);
+                rectTran.anchorMax = new Vector2(1f, 1f);
                 rectTran.pivot = new Vector2(0.5f, 0.5f);
-                rectTran.sizeDelta = new Vector2(2000, 2000);
+                rectTran.sizeDelta = GameConfig.Resolution;
             }
         }
 
@@ -560,6 +537,20 @@ namespace UIFrameWork
                 return hintContexts.Dequeue();
             }
             return null;
+        }
+        
+        public virtual void UnInit()
+        {
+            m_windows = null;
+            m_pooledWindows= null;
+            m_windowSequence = 0;
+            m_exitWindowSequences= null;
+            m_root= null;
+            OnWindowSorted= null;
+            m_eventSystem= null;
+            m_UICamera= null;
+            messageBoxContexts = null;
+            hintContexts = null;
         }
     }
 }

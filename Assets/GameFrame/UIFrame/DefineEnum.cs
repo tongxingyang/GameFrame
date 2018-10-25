@@ -16,22 +16,10 @@
         Priority9
     }
     
-    /// <summary>
-    /// 打开时是否屏蔽ui事件
-    /// </summary>
     public enum enWindowColliderMode
     {
-        /// <summary>
-        /// 不处理
-        /// </summary>
         Node,
-        /// <summary>
-        /// 透明遮罩
-        /// </summary>
         Transparent,
-        /// <summary>
-        /// 黑色遮罩
-        /// </summary>
         Dark,
     }
     

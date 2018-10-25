@@ -13,7 +13,6 @@ namespace UIFrameWork
         public Vector2 m_referenceResolution = GameConfig.Resolution;
         public bool m_isUsePool;
         public bool m_isModel;
-
         private bool m_isInitialized;
         private enWindowPriority m_defaultPriority;
         private bool m_isClosed;
@@ -21,6 +20,7 @@ namespace UIFrameWork
         private bool m_isActivied;
         private float m_closeAniClipTime;
         private float m_hideAnimClipTime;
+        private float m_appearAnimClipTime;
         private Canvas m_canvas;
         private CanvasScaler m_canvasScaler;
         private GraphicRaycaster m_graphicRaycaster;
@@ -43,7 +43,6 @@ namespace UIFrameWork
             get { return m_isPlayOpen; }
             set { m_isPlayOpen = value; }
         }
-
         public bool IsPlayClose
         {
             get { return m_isPlayClose; }
@@ -97,6 +96,7 @@ namespace UIFrameWork
         }
 
         #region 调用Mono接口会相应调用虚方法
+        
         void Awake()
         {
             OnWindowAwake();
@@ -136,6 +136,19 @@ namespace UIFrameWork
                     }
                 }
             }
+
+            if (m_isPlayOpen)
+            {
+                if (m_appearAnimClipTime > 0)
+                {
+                    m_appearAnimClipTime -= Time.deltaTime;
+                    if (m_appearAnimClipTime <= 0)
+                    {
+                        m_appearAnimClipTime = 0;
+                        this.m_isPlayOpen = false;
+                    }
+                }
+            }
            
             OnWindowCustomUpdate();
         }
@@ -160,6 +173,7 @@ namespace UIFrameWork
         protected virtual void OnWindowCustomUpdate(){}
         protected virtual void OnWindowLateCustomUpdate(){}
         protected virtual void OnWindowDestory(){}
+        
         #endregion
         
         #region 自定义界面周期函数
@@ -179,7 +193,6 @@ namespace UIFrameWork
             windowState= enWindowState.Init;
             this.m_defaultPriority = this.WindowInfo.Priority;
             this.InitUIComponent(gameObject);
-            this.InitComponent();
             OnInit(UICamera);
             this.m_isInitialized = true;
             Debug.Log("<color=#FFFF00>" + "Init "+WindowInfo.Name +" ................."+ "</color>");
@@ -191,6 +204,10 @@ namespace UIFrameWork
             {
                 return;
             }
+            if (IsActivied())
+            {
+                return;
+            }
             this.m_sequence = sequence;
             this.m_isPlayClose = false;
             this.m_isPlayHide = false;
@@ -198,15 +215,17 @@ namespace UIFrameWork
             this.m_isHided = false;
             this.m_isClosed = false;
             this.m_isActivied = true;
+            m_appearAnimClipTime = 0;
             windowState= enWindowState.Appear;
             this.SetDisplayOrder(openOrder);
             PlayAppearMusic();
             if (m_openAnimClip != null)
             {
-                var animation = GetComponent<Animation>();
+                var animation = GetComponent<Animation>();  
                 if (animation != null)
                 {
                     animation.Play(m_openAnimClip.name);
+                    m_appearAnimClipTime = m_openAnimClip.length;
                     this.m_isPlayOpen = true;
                 }
                 else
@@ -243,9 +262,8 @@ namespace UIFrameWork
             this.m_isPlayClose = false;
             this.m_isPlayHide = false;
             this.m_isPlayOpen = false;
-            this.TryEnableInput(false);
             OnHide(context);
-            Singleton<WindowManager>.GetInstance().RecycleWindow(this.WindowInfo.Priority,this);
+            this.TryEnableInput(false);
             if (m_hideAnimClip != null)
             {
                 var animation = GetComponent<Animation>();
@@ -268,17 +286,7 @@ namespace UIFrameWork
             Debug.Log("<color=#FFFF00>" + "Hide " + WindowInfo.Name + " ................." + "</color>");
         }
 
-        public void HideWorker()
-        {
-            HideComponent();
-            if (this.m_canvas != null)
-            {
-                this.m_canvas.enabled = false;
-            }
-            //this.gameObject.SetActive(false);
-        }
-
-        public void Close(bool force ,WindowContext context)
+        public void Close( bool force ,WindowContext context)
         {
             if (this.WindowInfo.AlwaysKeepVisible && force==false)
             {
@@ -288,7 +296,7 @@ namespace UIFrameWork
             {
                 return;
             }
-            this.m_isHided = true;
+            this.m_isHided = false;
             this.m_isClosed = true;
             this.m_isActivied = false;
             this.m_isPlayClose = false;
@@ -297,7 +305,7 @@ namespace UIFrameWork
             windowState = enWindowState.Close;
             PlayCloseMusic();
             OnClose(context);
-            Singleton<WindowManager>.GetInstance().RecycleWindow(this.WindowInfo.Priority,this);
+            this.TryEnableInput(false);
             this.m_closeAniClipTime = 0;
             if (m_closeAnimClip != null)
             {
@@ -320,11 +328,24 @@ namespace UIFrameWork
             Debug.Log("<color=#FFFF00>" + "Close " + WindowInfo.Name + " ................." + "</color>");
         }
 
+        public void HideWorker()
+        {
+            HideComponent();
+            if (this.m_canvas != null)
+            {
+                this.m_canvas.enabled = false;
+            }
+            Singleton<WindowManager>.GetInstance().RecycleWindow(this.WindowInfo.Priority,this);
+        }
+        
         public void CloseWorker()
         {
             CloseComponent();
-            //this.gameObject.SetActive(false);
-            DestroyImmediate(CacheGameObject);
+            if (this.m_canvas != null)
+            {
+                this.m_canvas.enabled = false;
+            }
+            Singleton<WindowManager>.GetInstance().RecycleWindow(this.WindowInfo.Priority,this,true);
         }
 
         protected virtual void OnInit(Camera UICamera){}
@@ -345,17 +366,17 @@ namespace UIFrameWork
             OnColliderCallBack();
         }
         protected  virtual void OnColliderCallBack(){}
+        
         #endregion
-
 
         public int CompareTo(object obj)
         {
             WindowBase windowbase = obj as WindowBase;
-            if (this.m_sortingOrder > windowbase.m_sortingOrder)
+            if (windowbase != null && this.m_sortingOrder > windowbase.m_sortingOrder)
             {
                 return 1;
             }
-            if (this.m_sortingOrder == windowbase.m_sortingOrder)
+            if (windowbase != null && this.m_sortingOrder == windowbase.m_sortingOrder)
             {
                 return 0;
             }
@@ -379,39 +400,21 @@ namespace UIFrameWork
             this.m_canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             this.m_canvasScaler.referenceResolution= this.m_referenceResolution;
             this.m_canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            if ((float)Screen.width / this.m_canvasScaler.referenceResolution.x > (float)Screen.height / this.m_canvasScaler.referenceResolution.y)
+            if (Screen.width / this.m_canvasScaler.referenceResolution.x >
+                Screen.height / this.m_canvasScaler.referenceResolution.y)
             {
-                if (this.WindowInfo.FullScreenBG)
-                {
-                    this.m_canvasScaler.matchWidthOrHeight = 0;
-                }
-                else
-                {
-                    this.m_canvasScaler.matchWidthOrHeight = 1;
-                }
-            }
-            else if (this.WindowInfo.FullScreenBG)
-            {
-                this.m_canvasScaler.matchWidthOrHeight = 1;
+                this.m_canvasScaler.matchWidthOrHeight = this.WindowInfo.FullScreenBG ? 0 : 1;
             }
             else
             {
-                this.m_canvasScaler.matchWidthOrHeight = 0;
+                this.m_canvasScaler.matchWidthOrHeight = this.WindowInfo.FullScreenBG ? 1 : 0;
             }
-            
+
             if (this.m_canvasScaler != null)
             {
                 this.m_canvasScaler.enabled = false;
                 this.m_canvasScaler.enabled = true;
             }
-            if (this.m_graphicRaycaster)
-            {
-                this.m_graphicRaycaster.enabled = !this.WindowInfo.DisableInput;
-            }
-        }
-
-        public void ResetEventInput()
-        {
             if (this.m_graphicRaycaster)
             {
                 this.m_graphicRaycaster.enabled = !this.WindowInfo.DisableInput;
@@ -552,6 +555,7 @@ namespace UIFrameWork
             {
                 InitUIComponent(go.transform.GetChild(i).gameObject);
             }
+            this.InitComponent();
         }
 
         public void AddUIComponent(UIComponent component)

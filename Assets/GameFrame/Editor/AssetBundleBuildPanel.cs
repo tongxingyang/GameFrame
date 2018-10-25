@@ -149,24 +149,59 @@ namespace GameFrame.Editor
         public static void SetAssetBundleName()
         {
             //test
-            
-            string [] Filters = new string[1]{"Assets/BuildPath/"};
+//            
+//            string [] Filters = new string[1]{"Assets/BuildPath/"};
+//            
+//            List<string> list = new List<string>();
+//            //for (int i = 0; i < Filters.Length ; i++)
+////            {
+//                if (true)
+//                {
+//                    List<string> exts = new List<string>();
+//                    string[] strs = new[] {"*.mat", "*.prefab"};
+//                    string resourcesPath = Filters[0];
+//                    for (int j = 0; j < strs.Length; j++)
+//                    {
+//                        exts.Add(strs[j]);
+//                    }
+//                    FileManager.RecursiveFile(resourcesPath,list,exts);
+//                }
+//            //}
+//            
+//            if (list.Count==0)
+//            {
+//                return;
+//            }
+//            Dictionary<string, AssetNode> nodeDict = AssetNodeUtil.GenerateAllNode(list, filterDirList, filterExts,
+//                imageExts, _config.IsSpriteTag == 1, Platform.AssetBundleExt);
+//            AssetNodeUtil.GenerateNodeDependencies(nodeDict);
+//            List<AssetNode> roots = AssetNodeUtil.FindRoots(nodeDict);
+//            
+//            AssetNodeUtil.RemoveParentShare(roots);
+//            AssetNodeUtil.MergeParentCountOnce(roots);
+//            Dictionary<string, AssetNode> assetDict = AssetNodeUtil.GenerateAssetBundleNodes(roots);
+//            AssetNodeUtil.SetAssetBundleNames(assetDict,Platform.AssetBundleExt);
+//            AssetDatabase.RemoveUnusedAssetBundleNames();
+//            
+//            
+            //end
+
             
             List<string> list = new List<string>();
-            //for (int i = 0; i < Filters.Length ; i++)
-//            {
-                if (true)
+            for (int i = 0; i < _config.Filters.Count ; i++)
+            {
+                if (_config.Filters[i].vaild)
                 {
                     List<string> exts = new List<string>();
-                    string[] strs = new[] {"*.mat", "*.prefab"};
-                    string resourcesPath = Filters[0];
+                    string[] strs = _config.Filters[i].filter.Split('|');
+                    string resourcesPath = _config.Filters[i].path;
                     for (int j = 0; j < strs.Length; j++)
                     {
                         exts.Add(strs[j]);
                     }
                     FileManager.RecursiveFile(resourcesPath,list,exts);
                 }
-            //}
+            }
             
             if (list.Count==0)
             {
@@ -183,40 +218,6 @@ namespace GameFrame.Editor
             AssetNodeUtil.SetAssetBundleNames(assetDict,Platform.AssetBundleExt);
             AssetDatabase.RemoveUnusedAssetBundleNames();
             
-            
-            //end
-
-            
-//            List<string> list = new List<string>();
-//            for (int i = 0; i < _config.Filters.Count ; i++)
-//            {
-//                if (_config.Filters[i].vaild)
-//                {
-//                    List<string> exts = new List<string>();
-//                    string[] strs = _config.Filters[i].filter.Split('|');
-//                    string resourcesPath = _config.Filters[i].path;
-//                    for (int j = 0; j < strs.Length; j++)
-//                    {
-//                        exts.Add(strs[j]);
-//                    }
-//                    FileManager.RecursiveFile(resourcesPath,list,exts);
-//                }
-//            }
-//            
-//            if (list.Count==0)
-//            {
-//                return;
-//            }
-//            Dictionary<string, AssetNode> nodeDict = AssetNodeUtil.GenerateAllNode(list, filterDirList, filterExts,
-//                imageExts, _config.IsSpriteTag == 1, Platform.AssetBundleExt);
-//            AssetNodeUtil.GenerateNodeDependencies(nodeDict);
-//            List<AssetNode> roots = AssetNodeUtil.FindRoots(nodeDict);
-//            
-//            AssetNodeUtil.RemoveParentShare(roots);
-//            AssetNodeUtil.MergeParentCountOnce(roots);
-//            Dictionary<string, AssetNode> assetDict = AssetNodeUtil.GenerateAssetBundleNodes(roots);
-//            AssetNodeUtil.SetAssetBundleNames(assetDict,Platform.AssetBundleExt);
-//            AssetDatabase.RemoveUnusedAssetBundleNames();
         }
         
         [MenuItem("AssetBundle/Clear AssetBundle Name")]

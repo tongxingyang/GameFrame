@@ -9,7 +9,6 @@ namespace UIFrameWork
 	public enum EnumTouchEventType
 	{
 		OnClick,
-		OnDoubleClick,
 		OnDown,
 		OnUp,
 		OnEnter,
@@ -79,7 +78,6 @@ namespace UIFrameWork
     {
         //定义相关点击事件
         public TouchHandle onClick;  
-        public TouchHandle onDoubleClick; 
         public TouchHandle onDown;  
         public TouchHandle onEnter;  
         public TouchHandle onExit;  
@@ -106,7 +104,6 @@ namespace UIFrameWork
         void OnDestroy()
         {
             RemoveHandle (onClick);
-            RemoveHandle (onDoubleClick);
             RemoveHandle (onDown);
             RemoveHandle (onEnter);
             RemoveHandle (onExit);
@@ -242,12 +239,6 @@ namespace UIFrameWork
 					onClick = new TouchHandle();
 				}
 				onClick.SetHandle(_handle, _params);
-				break;
-			case EnumTouchEventType.OnDoubleClick:
-				if (null == onDoubleClick) {
-					onDoubleClick = new TouchHandle();
-				}
-				onDoubleClick.SetHandle(_handle, _params);
 				break;
 			case EnumTouchEventType.OnDown:
 				if (onDown == null) {
