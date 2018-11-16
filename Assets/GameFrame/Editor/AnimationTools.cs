@@ -8,7 +8,7 @@ using UnityEngine;
 /// </summary>
 public class AnimClipOptimize : EditorWindow
 {
-    private bool m_excludeScale;
+    private bool m_excludeScale; 
     
     [MenuItem("Tools/Animation/OptimizeAnimation")]
     protected static void Open()

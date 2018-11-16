@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using GameFrame;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace UIFrameWork
 {
@@ -11,6 +13,7 @@ namespace UIFrameWork
         private const int UIParticleLayer = (int) enLayer2Int.UIParticleLayer;
         public string m_resPath = string.Empty;
         public List<Renderer> m_renderList = new List<Renderer>();
+        private Dictionary<Transform,ScaleData> scaleData = new Dictionary<Transform, ScaleData>();
         public int index = 0;//相对于界面的排序值
         public GameObject PartObj = null;
         public override void Init(WindowBase windowBase)
@@ -72,6 +75,7 @@ namespace UIFrameWork
         {
             base.Appear();
             this.gameObject.SetActive(true);
+            Refresh();
         }
 
         public override void Close()
@@ -86,6 +90,36 @@ namespace UIFrameWork
             this.gameObject.SetActive(false);
         }
 
+        void Refresh()
+        {
+            float designScale = GameConfig.Resolution.x / GameConfig.Resolution.y;
+            float scaleRate = (float) Screen.width / (float) Screen.height;
+            foreach (ParticleSystem componentsInChild in transform.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                if (!scaleData.ContainsKey(componentsInChild.transform))
+                {
+                    scaleData[componentsInChild.transform] = new ScaleData(){transform =  componentsInChild.transform,beginScale = componentsInChild.transform.localScale};
+                }
+            }
+            foreach (KeyValuePair<Transform,ScaleData> keyValuePair in scaleData)
+            {
+                if (scaleRate < designScale)
+                {
+                    float scaleFactor = scaleRate / designScale;
+                    keyValuePair.Value.transform.localScale = keyValuePair.Value.beginScale * scaleFactor;
+                }
+                else
+                {
+                    keyValuePair.Value.transform.localScale = keyValuePair.Value.beginScale;
+                }
+            }
+        }
+
+        void OnTransformChildrenChanged()
+        {
+            Refresh();
+        }
+        
         public override void SetSortingOrder(int sortingOrder)
         {
             base.SetSortingOrder(sortingOrder);
@@ -133,6 +167,7 @@ namespace UIFrameWork
                     Hide();
                 }
             }
+            Refresh();
         }
         /// <summary>
         /// 清除粒子特效

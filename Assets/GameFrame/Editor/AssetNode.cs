@@ -66,6 +66,7 @@ namespace GameFrame.Editor
                 assets.Add(node);
                 node.parents.Add(this);
             }
+
         }
         /// <summary>
         /// 添加依赖

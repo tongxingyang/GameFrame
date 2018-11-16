@@ -1,4 +1,6 @@
-﻿namespace UIFrameWork
+﻿using UnityEngine;
+
+namespace UIFrameWork
 {
     /// <summary>
     /// 面板优先级枚举
@@ -14,6 +16,12 @@
         Priority7,
         Priority8,
         Priority9
+    }
+
+    public struct ScaleData
+    {
+        public Transform transform;
+        public Vector3 beginScale;
     }
     
     public enum enWindowColliderMode
